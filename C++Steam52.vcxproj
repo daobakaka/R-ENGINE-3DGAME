@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{f79732c3-bc82-4b62-a33e-80c85e56c07c}</ProjectGuid>
+    <RootNamespace>CSteam52</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PublicIncludeDirectories>
+    </PublicIncludeDirectories>
+    <GlfwLinkage>
+    </GlfwLinkage>
+    <Linkage-freetype>
+    </Linkage-freetype>
+    <GlfwPlatformToolset>v143</GlfwPlatformToolset>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AssemblerOutput>All</AssemblerOutput>
+      <UseUnicodeForAssemblerListing>true</UseUnicodeForAssemblerListing>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>E:\C++\FirstOne\C++Steam52\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AnimationIntergrated.cpp" />
+    <ClCompile Include="ScriptModel.cpp" />
+    <ClCompile Include="C++Steam52.cpp" />
+    <ClCompile Include="Controller.cpp" />
+    <ClCompile Include="CoroutineMethod.cpp" />
+    <ClCompile Include="CppOnly.cpp" />
+    <ClCompile Include="Cube.cpp" />
+    <ClCompile Include="CustomModel.cpp" />
+    <ClCompile Include="FileLoadIO.cpp" />
+    <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="IntergratedScripts.cpp" />
+    <ClCompile Include="LifecycleManager.cpp" />
+    <ClCompile Include="MeshDataManager.cpp" />
+    <ClCompile Include="Monster.cpp" />
+    <ClCompile Include="ObsoleteCode.cpp" />
+    <ClCompile Include="stb_image.cpp" />
+    <ClCompile Include="Test.cpp" />
+    <ClCompile Include="TextRender.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AnimationIntergrated.h" />
+    <ClInclude Include="CollisionBody.h" />
+    <ClInclude Include="IComponent.h" />
+    <ClInclude Include="Controller.h" />
+    <ClInclude Include="Cube.h" />
+    <ClInclude Include="CustomModel.h" />
+    <ClInclude Include="FileLoadIO.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="IntergratedScripts.h" />
+    <ClInclude Include="LifecycleManager.h" />
+    <ClInclude Include="MeshDataManager.h" />
+    <ClInclude Include="MicroCpp.h" />
+    <ClInclude Include="MonoBehaviour.h" />
+    <ClInclude Include="Monster.h" />
+    <ClInclude Include="Light.h" />
+    <ClInclude Include="PhysicalEngine.h" />
+    <ClInclude Include="ScriptModel.h" />
+    <ClInclude Include="shader.h" />
+    <ClInclude Include="stb_image.h" />
+    <ClInclude Include="Test.h" />
+    <ClInclude Include="EnumTotal.h" />
+    <ClInclude Include="TextRender.h" />
+    <ClInclude Include="CoroutineMethod.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="InlT.inl" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="packages\glfw.3.4.0\build\native\glfw.targets" Condition="Exists('packages\glfw.3.4.0\build\native\glfw.targets')" />
+    <Import Project="packages\glew.v140.1.12.0\build\native\glew.v140.targets" Condition="Exists('packages\glew.v140.1.12.0\build\native\glew.v140.targets')" />
+    <Import Project="packages\glm.1.0.1\build\native\glm.targets" Condition="Exists('packages\glm.1.0.1\build\native\glm.targets')" />
+    <Import Project="packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets" Condition="Exists('packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets')" />
+    <Import Project="packages\Assimp.3.0.0\build\native\Assimp.targets" Condition="Exists('packages\Assimp.3.0.0\build\native\Assimp.targets')" />
+    <Import Project="packages\freetype2.2.6.0.1\build\native\freetype2.targets" Condition="Exists('packages\freetype2.2.6.0.1\build\native\freetype2.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>这台计算机上缺少此项目引用的 NuGet 程序包。使用“NuGet 程序包还原”可下载这些程序包。有关更多信息，请参见 http://go.microsoft.com/fwlink/?LinkID=322105。缺少的文件是 {0}。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\glfw.3.4.0\build\native\glfw.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\glfw.3.4.0\build\native\glfw.targets'))" />
+    <Error Condition="!Exists('packages\glew.v140.1.12.0\build\native\glew.v140.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\glew.v140.1.12.0\build\native\glew.v140.targets'))" />
+    <Error Condition="!Exists('packages\glm.1.0.1\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\glm.1.0.1\build\native\glm.targets'))" />
+    <Error Condition="!Exists('packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets'))" />
+    <Error Condition="!Exists('packages\Assimp.3.0.0\build\native\Assimp.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Assimp.3.0.0\build\native\Assimp.targets'))" />
+    <Error Condition="!Exists('packages\freetype2.2.6.0.1\build\native\freetype2.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\freetype2.2.6.0.1\build\native\freetype2.targets'))" />
+  </Target>
+</Project>
