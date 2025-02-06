@@ -1,0 +1,58 @@
+基础库： Opengl
+！程序入口
+添加入口文件：C++Steam52
+
+！动画组件
+添加动画控制器：AnimationController 内含动画类 AnimationData  --已完成
+
+！碰撞组件
+添加碰撞控制器：CollisonBody  --设计中
+
+！物理组件
+添加物理引擎：PhysicalEngine  --设计中
+
+！资源管理逻辑
+添加文件导入逻辑：FileLoad 支持 OBJ JPG PNG 格式  
+添加图片采样库：stb_image
+
+！游戏逻辑
+添加基础游戏类：GameObject  
+添加IComponent接口：可调用泛型方法，返回组件
+添加综合脚本逻辑：IntergratedScripts
+添加生命周期接口：MonoBehaviour
+添加生命周期管理接口：LifecycleManager
+添加协程管理器：CoroutineMethod  --可在函数外部直接调用，并提供初始化泛型方法，目前主要是实现异步初始化功能，后期拓展
+
+！基础逻辑
+添加摄像机控制器：Controller
+
+！综合结构
+添加综合结构：EnumTotal--模型注册类型MoldeClass、模型初始化步长结构体StepVector3
+
+！模型管理
+添加基础测试模型：Cube
+添加自定义基础模型：CustomModel
+添加模型综合管理类：MeshDataManager
+添加脚本模型头：ScriptModel --管理模型的UpateVariant 方法，用于解耦对象内部的动态代码
+
+！渲染逻辑
+添加灯光模块：Light
+添加着色器代码模块：Shader  --后面模型着色器可以单独重写
+添加字体渲染模块：TextRender --目前部分字体渲染不清晰，后期改善
+
+！Cpp测试模块
+添加测试脚本：MicroCpp Monter Test lnlT.inl 
+添加废弃代码：ObsoleteCode
+
+
+！渲染逻辑
+添加灯光模块：Light  --在Light头中添加灯光控制器LightSpawner，外部可以直接生成点光源并添加控制方法
+
+！游戏逻辑
+添加帧率控制方法： TControlFrameRate  
+
+！渲染逻辑
+添加通用光照着色器：未增加平行光的情况下，模型的表面暗淡，添加光照模型接收模块
+
+！渲染逻辑
+添加灯光渲染器：LightRender --将GL渲染代码封装在LightRender中，外部调用只需传入基础控制器、模型shadergram、灯光生成器 LightSpawner

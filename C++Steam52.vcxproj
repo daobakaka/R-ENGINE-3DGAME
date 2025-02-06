@@ -141,6 +141,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AnimationIntergrated.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="ScriptModel.cpp" />
     <ClCompile Include="C++Steam52.cpp" />
     <ClCompile Include="Controller.cpp" />
@@ -187,6 +188,9 @@
   <ItemGroup>
     <None Include="InlT.inl" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Advance.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

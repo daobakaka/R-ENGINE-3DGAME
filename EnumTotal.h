@@ -11,6 +11,7 @@ namespace Game {
 		CubeEVarinat2,
 		ActorButterfly,
 		TsetButterfly,
+		LightColorTestCube,
 	};
 
 	//步长结构体

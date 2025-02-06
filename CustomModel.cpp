@@ -539,7 +539,7 @@ void CustomModel::Update(glm::mat4 view, glm::mat4 projection)
 void  CustomModel::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
    // scale = glm::vec3(0.3f, 0.3f, 0.3f);
-    position += glm::vec3(0, 0.01f,   0.0f);
+    position += glm::vec3(0, 0.002f,   0.0f);
 
 }
 // 根据动画帧更新顶点数据

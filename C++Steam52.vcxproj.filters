@@ -108,6 +108,9 @@
     <ClCompile Include="ScriptModel.cpp">
       <Filter>源文件\Model</Filter>
     </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>源文件\Render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Monster.h">
@@ -185,5 +188,8 @@
     <None Include="InlT.inl">
       <Filter>源文件</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Advance.txt" />
   </ItemGroup>
 </Project>

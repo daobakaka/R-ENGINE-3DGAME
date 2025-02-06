@@ -7,7 +7,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "Cube.h"
-#include "shader.h"  // 假设你有一个独立的着色器类
+#include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
 #include "Test.h"
 #include "MicroCpp.h"
 #include "Controller.h"
@@ -23,7 +23,7 @@
 #include "ScriptModel.h"
 #include <chrono>
 #include <thread>
-//调试宏，感觉这个挺有用
+//调试宏
 #define DEBUGLOG(msg) std::cout << "DEBUG: " << msg << std::endl;
 //末尾查看有无追踪提示
 
@@ -105,8 +105,13 @@ int GLins() {
         MeshDataManager* meshData = MeshDataManager::GetInstance();
         //获取字体渲染器
         auto* cusText = TextRender::GetInstance();
-        //获取携程控制器
+        //获取协程控制器
         auto* coroutine = CoroutineMethod::GetInstance();
+        //获取灯光生成器
+        auto* lightSpawner = LightSpawner::GetInstance();
+        //获取灯光渲染器
+        auto* lightRender = LightRender::GetInstance();
+        
 
 #pragma endregion
 #pragma region OPENGL 窗口初始化 深度 模板 alpha 设置
@@ -160,17 +165,16 @@ int GLins() {
         StepVector3 step;
         step.position = glm::vec3(0, -0.5f, 0);
         step.scale = glm::vec3(0.9f);
-
         coroutine->StartSpawnByTimerAnimation<ButterflyScript>(
             manager,
-            noneLightVertexShaderSource,
-            noneLightcubeFragmentShaderSource,
+            colorlightsArrayVertexShaderSource,
+            colorlightsArraySourceFragmentShaderSource,
             ModelDic["butterfly"],
             AnimationDic["butterfly"]["fly"],
             ModelClass::TsetButterfly,
             2, 15,
             step,
-            {},//赋默认值
+            glm::vec3(0.0f, 0.0f, 0.0f),//赋默认值
             {},
             glm::vec3(1.1f)           
         );
@@ -180,11 +184,7 @@ int GLins() {
        // 
         //这里利用多样化的子类继承CustomModel，来直接开展变体方法，模仿独立脚本，后期验证
       
-       
-
-
-
-
+       //这种基础方法，后期主要用于生成基础的测试模型
         CustomModel* customCone = new CustomModel(lightSourceVertexShaderSource, lightSourceFragmentShaderSource, meshData->cylinderVertices, meshData->cylinderIndices, meshData->cylinderVertexCount, meshData->cylinderIndexCount);
         customCone->SetVariant(ModelClass::CubeTestE);
         customCone->Initialize(glm::vec3(2.0f, 0.0f, 1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
@@ -195,21 +195,24 @@ int GLins() {
         customSphere->Initialize(glm::vec3(-2.0f, 0.0f, -1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(customSphere);
 
+
+      
+
 #pragma endregion
 #pragma region 光照区域
+        //预定义最大光源数量，这里可以做性能限定，目前光照的实现均为实时光照，目前没有提供注入模式
+        const int MAX_LIGHTS = 4;
 
-        CustomPointLight pointLight;
-        pointLight.position = glm::vec3(0.0f, 0.0f, 0.0f);
-        pointLight.color = glm::vec3(1.0f, .0f,.0f);
-        pointLight.intensity = 5.0f;
-
-        //GLuint lightshader = customCone->shaderProgram;
-        //GLuint lightPosLoc = glGetUniformLocation(lightshader, "lightPos");//获取shader中的相关的参数，这个参数可以自行设置，因为共用一个shader 所以改变一个等于改变全部
-        //GLuint lightColorLoc = glGetUniformLocation(lightshader, "lightColor");
-        //GLuint lightIntensityLoc = glGetUniformLocation(lightshader, "lightIntensity");
-
-
-
+        //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
+        auto pointLight2= lightSpawner->SpawPointLight(glm::vec3(0,0,0),glm::vec3(1,1,1),2);
+        auto pointLight= lightSpawner->SpawPointLight(glm::vec3(1, 0, 0), glm::vec3(0, 1, 1), 2);
+        auto pointLight3 = lightSpawner->SpawPointLight(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), 2);
+        auto pointLight4 = lightSpawner->SpawPointLight(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1), 2);
+        
+        //平行光使用灯光生成器生成，默认一个
+        auto parallelLight = lightSpawner->SpawParallelLight();//使用默认值 强度10
+        //手电筒光使用灯光生成器生成，默认支持4个
+        auto splashLight = lightSpawner->SpawFlashLight();//使用默认值 强度10
 #pragma endregion
         manager->StartAll();
 
@@ -278,6 +281,18 @@ int GLins() {
                 //这样也可以执行变体方法，待后期验证
                 item->UpdateVariant(view, projection);
                 item->PlayAnimation(0, 0.1f);
+                //将多光源照射效果封装在 灯光渲染器中
+                lightRender->RenderLights(item->shaderProgram, controller, lightSpawner);
+
+        
+
+
+            }
+            else if (item->GetVariant() == ModelClass::LightColorTestCube)
+            {
+              
+              
+
             }
         }
         //3.变体方法，类似于手动撰写脚本来实现，须在初始化时，注册脚本变体,通用脚本方法有一定局限性，变体方法后续还会使用

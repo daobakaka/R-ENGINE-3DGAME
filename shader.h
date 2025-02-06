@@ -1,6 +1,10 @@
 #ifndef SHADERS_Hero
 #define SHADERS_Hero
 //这种shader 常量只能被一个文件引用，在其他文件中使用则需要使用声明 extern 等声明参数
+
+/// <summary>
+/// 基础着色器
+/// </summary>
 const char* cubeVertexShaderSource = R"(
     #version 450 core
     layout (location = 0) in vec3 aPos;   // 顶点位置
@@ -27,7 +31,9 @@ const char* cubeFragmentShaderSource = R"(
         FragColor = vec4(ourColor+defaultColor, 0.5f);  // 使用传递的颜色，并设置透明度
     }
 )";
-
+/// <summary>
+/// 基础光照着色器
+/// </summary>
 const char* lightSourceVertexShaderSource = R"(
     #version 450 core
     layout (location = 0) in vec3 aPos;   // 顶点位置
@@ -81,6 +87,9 @@ const char* lightSourceFragmentShaderSource = R"(
         FragColor = vec4(result + emissionDefault + colorToUse, 0.5f);  // 使用光照结果和自发光结果
     }
 )";
+/// <summary>
+/// 基础附加颜色光照着色器
+/// </summary>
 const char* colorlightSourceVertexShaderSource = R"(
   #version 450 core
 
@@ -157,10 +166,173 @@ void main()
     FragColor = vec4(result, 1.0);
 }
 )";
+/// <summary>
+/// 有色光照通用着色器
+/// </summary>
+const char* colorlightsArrayVertexShaderSource = R"(
+#version 450 core
+layout(location = 0) in vec3 aPos;       // 顶点位置
+layout(location = 1) in vec2 aTexCoord;    // 纹理坐标
+layout(location = 2) in vec3 aNormal;      // 顶点法线
+
+// 输出到片段着色器
+out vec2 TexCoord;   // 传递纹理坐标
+out vec3 FragPos;    // 世界空间中的片段位置
+out vec3 Normal;     // 世界空间中的法线
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    // 计算世界空间坐标
+    vec4 worldPos = model * vec4(aPos, 1.0);
+    FragPos = worldPos.xyz;
+
+    // 传递纹理坐标
+    TexCoord = aTexCoord;
+
+    // 正确变换法线，防止非均匀缩放问题
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+
+    // 计算最终屏幕坐标
+    gl_Position = projection * view * worldPos;
+}
+)";
+
+
+
+
+const char* colorlightsArraySourceFragmentShaderSource = R"(
+#version 450 core
+
+in vec3 FragPos;  
+in vec3 Normal;
+in vec2 TexCoord;  // 传入纹理坐标
+out vec4 FragColor;
+
+//
+// 点光源参数
+//
+const int MAX_POINT_LIGHTS = 4;
+uniform vec3 lightPos[MAX_POINT_LIGHTS];
+uniform vec3 lightColor[MAX_POINT_LIGHTS];
+uniform float lightIntensity[MAX_POINT_LIGHTS];
+
+//
+// 平行光（方向光）参数
+//
+uniform vec3 parallelLightDirection; // 光线传播方向（通常为从光源指向场景方向，可根据需要取负）
+uniform vec3 parallelLightColor;
+uniform float parallelLightIntensity;
+
+//
+// 手电筒（聚光灯）参数
+//
+const int MAX_FLASHLIGHTS = 4;
+uniform vec3 flashLightPos[MAX_FLASHLIGHTS];
+uniform vec3 flashLightDirection[MAX_FLASHLIGHTS];
+uniform vec3 flashLightColor[MAX_FLASHLIGHTS];
+uniform float flashLightIntensity[MAX_FLASHLIGHTS];
+uniform float flashLightCutoff[MAX_FLASHLIGHTS]; // cutoff 值为余弦值
+
+//
+// 其他参数
+//
+uniform vec3 viewPos;
+uniform vec3 baseColor;   // 模型固有色
+uniform vec3 emission;    // 自发光（可选）
+uniform sampler2D texture1;  // 纹理采样器
+
+void main()
+{
+    // 使用 all(equal(...)) 判断 emission 和 baseColor 是否全为 0
+    vec3 emissionDefault = (all(equal(emission, vec3(0.0)))) ? vec3(0.1) : emission;
+    vec3 colorToUse = (all(equal(baseColor, vec3(0.0)))) ? vec3(0.1, 0.1, 0.1) : baseColor;
+
+    vec3 norm = normalize(Normal);
+
+    vec3 ambientTotal = vec3(0.0);
+    vec3 diffuseTotal = vec3(0.0);
+    vec3 specularTotal = vec3(0.0);
+    
+    // --- 点光源部分 ---
+    for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
+        if (lightIntensity[i] > 0.0001) {
+            // 环境光：每个点光源均贡献 10%
+            ambientTotal += 0.1 * lightColor[i];
+            
+            // 漫反射
+            vec3 lightDir = normalize(lightPos[i] - FragPos);
+            float diff = max(dot(norm, lightDir), 0.0);
+            diffuseTotal += diff * lightColor[i] * lightIntensity[i];
+            
+            // 镜面反射（Phong 模型）
+            vec3 viewDir = normalize(viewPos - FragPos);
+            vec3 reflectDir = reflect(-lightDir, norm);
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+            specularTotal += spec * lightColor[i] * lightIntensity[i] * 0.1;
+        }
+    }
+    
+    // --- 平行光（方向光）部分 ---
+    if (parallelLightIntensity > 0.0001) {
+        // 环境光贡献
+        ambientTotal += 0.1 * parallelLightColor;
+        
+        // 对于方向光，我们假设光线方向为 parallelLightDirection（如果需要从光源指向场景，请使用 -parallelLightDirection）
+        vec3 lightDir = normalize(-parallelLightDirection);
+        float diff = max(dot(norm, lightDir), 0.0);
+        diffuseTotal += diff * parallelLightColor * parallelLightIntensity;
+        
+        vec3 viewDir = normalize(viewPos - FragPos);
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+        specularTotal += spec * parallelLightColor * parallelLightIntensity * 0.1;
+    }
+    
+    // --- 手电筒（聚光灯）部分 ---
+    for (int j = 0; j < MAX_FLASHLIGHTS; j++) {
+        if (flashLightIntensity[j] > 0.0001) {
+            ambientTotal += 0.1 * flashLightColor[j];
+            
+            vec3 lightDir = normalize(flashLightPos[j] - FragPos);
+            // 计算聚光效果：使用光线与手电筒方向的点积
+            float theta = dot(lightDir, normalize(flashLightDirection[j]));
+            // 只有当 theta 大于 cutoff 时，光照有效
+            if (theta > flashLightCutoff[j]) {
+                float diff = max(dot(norm, lightDir), 0.0);
+                diffuseTotal += diff * flashLightColor[j] * flashLightIntensity[j];
+                
+                vec3 viewDir = normalize(viewPos - FragPos);
+                vec3 reflectDir = reflect(-lightDir, norm);
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+                specularTotal += spec * flashLightColor[j] * flashLightIntensity[j] * 0.1;
+            }
+        }
+    }
+    
+    vec3 lighting = ambientTotal + diffuseTotal + specularTotal;
+    
+    // 最终颜色 = (光照效果 × 物体固有色) + 自发光
+    vec3 result = lighting * colorToUse + emissionDefault;
+    
+    // 采样纹理颜色，并与光照结果相乘
+    vec4 texColor = texture(texture1, TexCoord);
+    FragColor = vec4(result, 1.0) * texColor;
+}
+)";
+
+
+/// <summary>
+/// 无光照通用着色器
+/// </summary>
+
 const char* noneLightVertexShaderSource = R"(
 #version 450 core
 layout(location = 0) in vec3 aPos;   // 顶点位置
-layout(location = 1) in vec2 aTexCoord;   // 纹理坐标
+layout(location = 1) in vec2 aTexCoord;   // 纹理坐标 
 layout(location = 2) in vec3 aNormal;   // 法线
 //这里对应初始化时，设置的顶点属性
 out vec2 TexCoord;  // 传递给片段着色器的纹理坐标
@@ -192,7 +364,9 @@ void main() {
     FragColor = texture(texture1, TexCoord)+vec4(baseColor,1.0);
 }
 )";
-
+/// <summary>
+/// 字体渲染着色器
+/// </summary>
 const char* textRenderVertex = R"(
 #version 450 core
 layout (location = 0) in vec2 aPos;

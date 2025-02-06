@@ -3,7 +3,7 @@ using namespace Game;
 Controller* Controller::instance = nullptr;  // ！在源文件中初始化静态成员变量,而且需要放在类外部进行，它是属于整个程序生命周期的级别，和类隶属同意级别
 //这里是定义指针方法的写法，即返回一个指向Controller的指针，需要显示声明
 Controller::Controller()
-    : position(0.0f, 0.0f, 3.0f),  // 位置初始化
+    : position(0.0f, 0.0f, 10.0f),  // 位置初始化
     front(0.0f, 0.0f, -1.0f),     // 前向向量初始化
     up(0.0f, 1.0f, 0.0f),        // 上向量初始化
     pitch(0.0f), yaw(-0.0f),    // 俯仰和偏航角初始化
