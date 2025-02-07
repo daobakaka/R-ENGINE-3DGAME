@@ -51,6 +51,9 @@ namespace Game {
         GLuint normalsVBO;
         GLint previousShader;
         GLint previousTexture;
+
+        //添加光照模型默认值
+        bool ifLight;
         //初始化判断参数模块
         bool justDrawVerteies = false;
         bool IsSkinnedMesh = false;
@@ -80,6 +83,7 @@ namespace Game {
     private:
         //初始化变体
         ModelClass variant = ModelClass::OriginalE;
+      
     };
 }
 #endif

@@ -6,6 +6,7 @@ GameObject::GameObject() {
     // 默认构造函数，调用 initialize() 设置默认变换
     Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
     variant = ModelClass::OriginalE;
+    ifLight = false;
     //controller = Controller::GetInstance();//获取控制器实例
     //view = controller->GetViewMatrix();
     //projection = controller->GetProjectionMatrix();

@@ -13,7 +13,7 @@ using namespace Game;
             instance = new CoroutineMethod();
         return instance;
     }
-
+      
     CoroutineMethod::CoroutineMethod() { }
 
     CoroutineMethod::~CoroutineMethod() { }

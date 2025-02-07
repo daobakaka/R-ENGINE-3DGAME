@@ -1,9 +1,10 @@
 #include "CustomModel.h"
 using namespace Game;
-CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat *vertices, GLuint *indices, size_t vertexCount, size_t indexCount)
+CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat *vertices, GLuint *indices, size_t vertexCount, size_t indexCount,bool ifLightIn)
 {
     
-    index = indexCount;   
+    index = indexCount; 
+    ifLight = ifLightIn;
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSourceIn, nullptr);
     glCompileShader(vertexShader);
@@ -60,9 +61,10 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
     glBindVertexArray(0);  //1 解绑当前绑定的 VAO，防止后续对 VAO 的不必要修改 2 解绑后，VAO 的配置被保存在 GPU 中，后续只需重新绑定即可使用
 }
 
-CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat* vertices, GLuint* indices, size_t vertexCount, size_t indexCount, bool light)
+CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat* vertices, GLuint* indices, size_t vertexCount, size_t indexCount,int ifVariant ,bool ifLightIn)
 {
     index = indexCount;
+    ifLight = ifLightIn;
 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSourceIn, nullptr);
@@ -113,11 +115,12 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
     glBindVertexArray(0);
 }
 
-CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn,std::vector<glm::vec3>& vertices, std::vector<glm::vec2>& uvs, std::vector<glm::vec3>& normals)
+CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn,std::vector<glm::vec3>& vertices, std::vector<glm::vec2>& uvs, std::vector<glm::vec3>& normals,bool ifLightIn)
 {
     
     justDrawVerteies = true;
     index = vertices.size();  // 获取索引的数量，即顶点索引的数量
+    ifLight = ifLightIn;
     // Create vertex and fragment shaders
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSourceIn, nullptr);
@@ -181,12 +184,15 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
     glBindVertexArray(0);  // Unbind VAO
 }
 
-CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndices)
+CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndices,bool ifLightIn)
 {
     vertexCount = vertices.size();
     index = finalIndices.size();
     verticesTras = vertices;
-    
+    ifLight = ifLightIn;
+   
+
+
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSourceIn, nullptr);
     glCompileShader(vertexShader);
@@ -255,13 +261,14 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 
 }
 
-CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndices,bool isSkinnedMesh)
+CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndices,bool isSkinnedMesh, bool ifLightIn)
 {
     //verticesTras = new std::vector<Vertex>(vertices);  // 这种才是指针的有效初始化，析构中才能使用delete
     vertexCount = vertices.size();
     index = finalIndices.size();
     verticesTras = vertices;
     IsSkinnedMesh = isSkinnedMesh;
+    ifLight = ifLightIn;
 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSourceIn, nullptr);
@@ -331,13 +338,14 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 
 }
 
-CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData &modelData,bool isSkinnedMesh)
+CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData &modelData,bool isSkinnedMesh, bool ifLightIn)
 {
     //verticesTras = new std::vector<Vertex>(vertices);  // 这种才是指针的有效初始化，析构中才能使用delete
     vertexCount = modelData.verticesStruct.size();
     index = modelData.indices.size();
     verticesTras = modelData.verticesStruct;
     IsSkinnedMesh =isSkinnedMesh;
+    ifLight = ifLightIn;
 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSourceIn, nullptr);

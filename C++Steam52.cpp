@@ -160,6 +160,10 @@ int GLins() {
         //批量创建对象可以并入这个协程类，只需传入注册控制器即可
      // coroutine->StartSpawnButterfliesAsync(manager);
      // std::thread spawnThread(coroutine->StartSpawnButterfliesAsync);
+     // 
+            
+     
+        //测试用的方法，生成注册器中的ActorButterFly 方法
         coroutine->StartSpawnButterfliesByTimer(manager);
         //综合性赋值方法泛型方法， 可以直接异步初始化各种继承customModel的对象
         StepVector3 step;
@@ -169,6 +173,7 @@ int GLins() {
             manager,
             colorlightsArrayVertexShaderSource,
             colorlightsArraySourceFragmentShaderSource,
+            true,
             ModelDic["butterfly"],
             AnimationDic["butterfly"]["fly"],
             ModelClass::TsetButterfly,
@@ -185,12 +190,12 @@ int GLins() {
         //这里利用多样化的子类继承CustomModel，来直接开展变体方法，模仿独立脚本，后期验证
       
        //这种基础方法，后期主要用于生成基础的测试模型
-        CustomModel* customCone = new CustomModel(lightSourceVertexShaderSource, lightSourceFragmentShaderSource, meshData->cylinderVertices, meshData->cylinderIndices, meshData->cylinderVertexCount, meshData->cylinderIndexCount);
+        CustomModel* customCone = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, meshData->cylinderVertices, meshData->cylinderIndices, meshData->cylinderVertexCount, meshData->cylinderIndexCount);
         customCone->SetVariant(ModelClass::CubeTestE);
         customCone->Initialize(glm::vec3(2.0f, 0.0f, 1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(customCone);
 
-        CustomModel* customSphere = new CustomModel(colorlightSourceVertexShaderSource, colorlightSourceFragmentShaderSource, meshData->colorCubeVertices, meshData->colorCubeIndices, meshData->colorCubeVertexCount, meshData->colorCubeIndexCount,true);
+        CustomModel* customSphere = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, meshData->colorCubeVertices, meshData->colorCubeIndices, meshData->colorCubeVertexCount, meshData->colorCubeIndexCount,true);
         customSphere->SetVariant(ModelClass::CubeTestE);
         customSphere->Initialize(glm::vec3(-2.0f, 0.0f, -1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(customSphere);
@@ -205,9 +210,9 @@ int GLins() {
 
         //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
         auto pointLight2= lightSpawner->SpawPointLight(glm::vec3(0,0,0),glm::vec3(1,1,1),2);
-        auto pointLight= lightSpawner->SpawPointLight(glm::vec3(1, 0, 0), glm::vec3(0, 1, 1), 2);
-        auto pointLight3 = lightSpawner->SpawPointLight(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), 2);
-        auto pointLight4 = lightSpawner->SpawPointLight(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1), 2);
+        auto pointLight = lightSpawner->SpawPointLight(glm::vec3(1, 0, 0), glm::vec3(0, 1, 1), 2);
+        auto pointLight3= lightSpawner->SpawPointLight(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), 2);
+        auto pointLight4= lightSpawner->SpawPointLight(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1), 2);
         
         //平行光使用灯光生成器生成，默认一个
         auto parallelLight = lightSpawner->SpawParallelLight();//使用默认值 强度10
@@ -243,6 +248,14 @@ int GLins() {
 
         //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
         for (CustomModel * item : manager->GetNativeObjects()) {
+            //将多光源照射效果封装在 灯光渲染器中.如果是光照shader，则需要加入这一段代码，引入光照渲染，如果不是则不需要
+            //现在更改为使用构造化方式，统一使用
+           //--是否光照模型判断
+            if (item->ifLight)
+            {
+                lightRender->RenderLights(item->shaderProgram, controller, lightSpawner);
+            }           
+            
             if (item->GetVariant() == 0)
             {
                
@@ -252,20 +265,7 @@ int GLins() {
             else if (item->GetVariant()==ModelClass::CubeTestE)
             {
               scripts->TestUpdateFun(item);
-              glUseProgram(item->shaderProgram);
-
-              // 获取每个物体的光源参数位置
-              GLuint lightPosLoc = glGetUniformLocation(item->shaderProgram, "lightPos");
-              GLuint lightColorLoc = glGetUniformLocation(item->shaderProgram, "lightColor");
-              GLuint lightIntensityLoc = glGetUniformLocation(item->shaderProgram, "lightIntensity");
-              GLuint viewPos = glGetUniformLocation(item->shaderProgram, "viewPos");
-              glm::vec3 viewP = glm::vec3(controller->front);
-
-              // 设置光源参数
-              glUniform3f(lightPosLoc, pointLight.position.x, pointLight.position.y, pointLight.position.z);
-              glUniform3f(lightColorLoc, pointLight.color.x, pointLight.color.y, pointLight.color.z);
-              glUniform3f(viewPos,viewP.x,viewP.y,viewP.z);
-              glUniform1f(lightIntensityLoc, pointLight.intensity);
+         
             }
             else if (item->GetVariant()==ModelClass::ActorButterfly)
             {
@@ -281,8 +281,7 @@ int GLins() {
                 //这样也可以执行变体方法，待后期验证
                 item->UpdateVariant(view, projection);
                 item->PlayAnimation(0, 0.1f);
-                //将多光源照射效果封装在 灯光渲染器中
-                lightRender->RenderLights(item->shaderProgram, controller, lightSpawner);
+                
 
         
 

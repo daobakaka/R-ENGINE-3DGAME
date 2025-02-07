@@ -61,6 +61,7 @@ namespace Game {
             LifecycleManager<CustomModel>* manager,
             const char* vertexShader,
             const char* fragmentShader,
+            bool ifLight,
             const ModelData& modelData,
             const AnimationData& animationData,
             ModelClass modelEnum = ModelClass::OriginalE,
@@ -85,7 +86,7 @@ namespace Game {
             AddTimerTask(interval, count,
                 [manager, vertexShader, fragmentShader, modelData, animationData,
                 modelEnum, ifTexture, ifPhysical, ifCollider, stepVector3,
-                position, rotation, scale, counterPtr]()
+                position, rotation, scale, counterPtr,ifLight]()
                 {
                     // 自增计数
                     (*counterPtr)++;
@@ -94,6 +95,7 @@ namespace Game {
                         vertexShader,
                         fragmentShader,
                         modelData,
+                        true,
                         true
                     );
                     manager->RegisterObject(model);
@@ -136,6 +138,7 @@ namespace Game {
             const char* vertexShader,
             const char* fragmentShader,
             const ModelData& modelData,
+            bool ifLight,
             ModelClass modelEnum = ModelClass::OriginalE,
             float interval = 1.0f,
             int count = 1,
@@ -155,7 +158,7 @@ namespace Game {
             AddTimerTask(interval, count,
                 [manager, vertexShader, fragmentShader, modelData, modelEnum,
                 ifTexture, ifPhysical, ifCollider, stepVector3,
-                position, rotation, scale, counterPtr]()
+                position, rotation, scale, counterPtr, ifLight]()
                 {
                     // 自增计数
                     (*counterPtr)++;
@@ -164,7 +167,8 @@ namespace Game {
                         vertexShader,
                         fragmentShader,
                         modelData,
-                        false
+                        false,
+                        true
                     );
                     manager->RegisterObject(model);
 

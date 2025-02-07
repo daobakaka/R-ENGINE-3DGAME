@@ -239,9 +239,23 @@ animator->AddAnimation(anim);
                  }
              }
 
-
-
              }
+
+             //--单光源影响 简单代码
+             glUseProgram(item->shaderProgram);
+
+             // 获取每个物体的光源参数位置
+             GLuint lightPosLoc = glGetUniformLocation(item->shaderProgram, "lightPos");
+             GLuint lightColorLoc = glGetUniformLocation(item->shaderProgram, "lightColor");
+             GLuint lightIntensityLoc = glGetUniformLocation(item->shaderProgram, "lightIntensity");
+             GLuint viewPos = glGetUniformLocation(item->shaderProgram, "viewPos");
+             glm::vec3 viewP = glm::vec3(controller->front);
+
+             // 设置光源参数
+             glUniform3f(lightPosLoc, pointLight.position.x, pointLight.position.y, pointLight.position.z);
+             glUniform3f(lightColorLoc, pointLight.color.x, pointLight.color.y, pointLight.color.z);
+             glUniform3f(viewPos, viewP.x, viewP.y, viewP.z);
+             glUniform1f(lightIntensityLoc, pointLight.intensity);
 
 
 
