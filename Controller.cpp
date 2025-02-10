@@ -1,7 +1,15 @@
 #include "Controller.h"
+#include "EnumTotal.h"
+#include "MeshDataManager.h"
+#include "LifecycleManager.h"
+#include "ScriptModel.h"
+//#include "CustomModel.h"
 using namespace Game;
+extern const char* axisVertexShaderSource;
+extern const char* axisFragmentShaderSource;
 Controller* Controller::instance = nullptr;  // ！在源文件中初始化静态成员变量,而且需要放在类外部进行，它是属于整个程序生命周期的级别，和类隶属同意级别
 //这里是定义指针方法的写法，即返回一个指向Controller的指针，需要显示声明
+extern CoordinateSystemCus* axisWidget = nullptr;//这种方式定义，避免多重引用错误
 Controller::Controller()
     : position(0.0f, 0.0f, 10.0f),  // 位置初始化
     front(0.0f, 0.0f, -1.0f),     // 前向向量初始化
@@ -166,4 +174,23 @@ glm::mat4 Controller::GetViewMatrix()
 glm::mat4 Controller::GetProjectionMatrix()
 {
     return projection = glm::perspective(glm::radians(fov), windowWidth / float(windowHeight), nearPlane, farPlane);//重新计算投影矩阵
+}
+
+
+void Controller::BuildWidgetShader(MeshDataManager* meshData, LifecycleManager<CustomModel>* manager)
+{
+     axisWidget = new CoordinateSystemCus(
+        axisVertexShaderSource,        // 坐标轴 widget 顶点着色器源码
+        axisFragmentShaderSource,      // 坐标轴 widget 片元着色器源码
+        meshData->axisWidgetVertices,        // 这里假设 meshData 中保存了上面 axisWidgetVertices 数据
+        meshData->axisWidgetIndices,         // 这里假设 meshData 中保存了 axisWidgetIndices 数据（可选）
+        meshData->axisWidgetVertexCount,     // 36
+        meshData->axisWidgetIndexCount,      // 6
+        false,
+        false// 坐标轴 widget 通常不需要光照
+    );
+    axisWidget->SetVariant(ModelClass::AxisWidget);
+    axisWidget->Initialize(glm::vec3(0.0f), glm::quat(glm::vec3(0.0f)), glm::vec3(1.0f));
+    manager->RegisterObject(axisWidget);
+
 }

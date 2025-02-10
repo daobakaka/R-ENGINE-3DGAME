@@ -10,6 +10,15 @@
 #include <glm/gtc/type_ptr.hpp>
 namespace Game {
 
+//前向声明--
+
+	class CustomModel;
+	class MeshDataManager;
+	template <typename T>
+	class LifecycleManager;
+	class CoordinateSystemCus;
+
+//---
 	class  Controller
 	{
 	public:
@@ -36,7 +45,8 @@ namespace Game {
 		bool mouseMovesContinuously;
 
 		// 屏幕大小
-		int windowWidth, windowHeight;
+		int windowWidth ;
+		int windowHeight ;
 
 		//键盘输入
 		void ProcessInput(GLFWwindow* window, glm::vec3& objectPosition);
@@ -47,12 +57,19 @@ namespace Game {
 		//鼠标输入旋转逻辑
 		void ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw, bool& rightMousePressed);
 
-		//综合方法
+		//综合方法，帧率控制
 		void FrameControlMethod(GLFWwindow* window);
+
+
+		//坐标选旋转角度参考
+		void RenderWidget(const char* widgetVertexShaderSource, const char* widgetFragmentShaderSource,
+			GLuint widgetVAO, int widgetSize, int widgetPosX, int widgetPosY);
 
 		// 获取摄像机视图矩阵
 		glm::mat4 GetViewMatrix();
 		glm::mat4 GetProjectionMatrix();
+		//构建坐标系
+		void BuildWidgetShader(MeshDataManager* meshData, LifecycleManager<CustomModel>* customModle);
 	private:
 		static Controller* instance;
 		glm::mat4 view;
@@ -60,6 +77,11 @@ namespace Game {
 		glm::mat4 projection;
 		Controller();
 		~Controller();
+		//构建特殊坐标系shader
+		GLuint widgetShaderProgram;
+		//CoordinateSystemCus* axisWidget ;
+
+		
 	};
 }
 

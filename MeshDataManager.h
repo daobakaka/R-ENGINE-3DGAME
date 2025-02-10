@@ -249,6 +249,32 @@
         };
 
 
+        // 坐标系标识模型：
+// 每个轴由两个顶点构成，每个顶点包含 3 个位置分量和 3 个颜色分量
+// 共计 3 * 2 = 6 个顶点，每个顶点 6 个浮点数，总共 6 * 6 = 36 个数据
+        GLfloat axisWidgetVertices[36] = {
+            // X轴 (红色)：从原点到 (1,0,0)
+            0.0f, 0.0f, 0.0f,   1.0f, 0.0f, 0.0f,  // 顶点 0
+            1.0f, 0.0f, 0.0f,   1.0f, 0.0f, 0.0f,  // 顶点 1
+
+            // Y轴 (绿色)：从原点到 (0,1,0)
+            0.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f,  // 顶点 2
+            0.0f, 1.0f, 0.0f,   0.0f, 1.0f, 0.0f,  // 顶点 3
+
+            // Z轴 (蓝色)：从原点到 (0,0,1)   
+            0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 1.0f,  // 顶点 4
+            0.0f, 0.0f, -1.0f,   0.0f, 0.0f, 1.0f   // 顶点 5
+        };
+        GLuint axisWidgetIndices[6] = {
+            0, 1,  // X轴
+            2, 3,  // Y轴
+            4, 5   // Z轴
+        };
+        size_t axisWidgetVertexCount = sizeof(axisWidgetVertices) / sizeof(axisWidgetVertices[0]);  // 应该为 36
+        size_t axisWidgetIndexCount = sizeof(axisWidgetIndices) / sizeof(axisWidgetIndices[0]);     // 应该为 6
+
+
+
 
 #pragma endregion
 

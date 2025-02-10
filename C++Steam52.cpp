@@ -113,6 +113,8 @@ int GLins() {
         auto* lightRender = LightRender::GetInstance();
         
 
+       
+
 #pragma endregion
 #pragma region OPENGL 窗口初始化 深度 模板 alpha 设置
 
@@ -155,6 +157,10 @@ int GLins() {
         //获取文字渲染器,制作字体
         DEBUGLOG("开始进入GL");
 
+        //特殊构建,这里构建坐标系
+        controller->BuildWidgetShader(meshData, manager);
+
+
         // Main render loop
  // 批量创建 对象
         //批量创建对象可以并入这个协程类，只需传入注册控制器即可
@@ -187,8 +193,7 @@ int GLins() {
 
 //-- 这里就类似于游戏引擎的加载组件的方法，可以定义为具体的模板类，可采用GetComponenet<T>等泛型方式来解决，加载中每个模型涉及不同的情况，需要分散到每个具体的子类
        // 
-        //这里利用多样化的子类继承CustomModel，来直接开展变体方法，模仿独立脚本，后期验证
-      
+
        //这种基础方法，后期主要用于生成基础的测试模型
         CustomModel* customCone = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, meshData->cylinderVertices, meshData->cylinderIndices, meshData->cylinderVertexCount, meshData->cylinderIndexCount);
         customCone->SetVariant(ModelClass::CubeTestE);
@@ -301,7 +306,7 @@ int GLins() {
         }
       
       //  LDmodel->PlayAnimation(0,0.1f);
-        //基础方法，运行场景的自动更新
+        //基础方法，运行场景的自动更新,包含transform更新和绘制更新
         manager->UpdateAll(view, projection);
         //变体方法，自动化脚本，目前,同第三条一样暂时弃用之
       //  manager->UpdateAllVariant(view, projection);

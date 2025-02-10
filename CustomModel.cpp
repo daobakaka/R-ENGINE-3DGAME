@@ -82,6 +82,8 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
     glLinkProgram(shaderProgram);
     CheckShaderProgramLinking(shaderProgram);
 
+
+
     glUseProgram(shaderProgram);
 
     glDeleteShader(vertexShader);
@@ -497,11 +499,9 @@ bool CustomModel::AttachCollider()
 {
     return false;
 }
-bool CustomModel::Draw(glm::mat4 view, glm::mat4 projection)
+bool CustomModel::Draw (glm::mat4 view, glm::mat4 projection)
 {
-
     glUseProgram(shaderProgram);
-
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
     GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
     GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
@@ -517,10 +517,99 @@ bool CustomModel::Draw(glm::mat4 view, glm::mat4 projection)
     justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
     //索引数组存储在 EBO（Element Buffer Object）中，EBO 已绑定到 VAO，三角形，36个索引，无符号整形数组，由0开始
     glBindVertexArray(0);
+    return true;
+}
+bool CustomModel::DrawLine(glm::mat4 view, glm::mat4 projection)
+{
+    
+    // 激活当前的着色器程序
+    glUseProgram(shaderProgram);
+
+    // 获取 shader 中 "model"、"view" 和 "projection" uniform 变量的位置
+    GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+    GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
+    GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+
+    // 传入变换矩阵到 shader（第三个参数为 GL_FALSE 表示矩阵不需要转置）
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(transform));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+    // 绑定当前模型的 VAO
+    glBindVertexArray(VAO);
+
+    // 直接使用 GL_LINES 模式绘制线段
+    glDrawElements(GL_LINES, index, GL_UNSIGNED_INT, 0);
+
+    // 解绑 VAO
+    glBindVertexArray(0);
+
 
     return true;
-
 }
+bool CustomModel::DrawLineFixedWidget(glm::mat4 view)
+{
+    // 1. 禁用深度测试，确保 widget 总在最前面显示
+    glDisable(GL_DEPTH_TEST);
+
+    // 2. 构造基于屏幕像素的正交投影矩阵
+    // 假设 Controller 是单例，这里取窗口尺寸
+    int winW = 2400;
+    int winH = 1600;
+    // 2. 构造覆盖整个窗口的正交投影矩阵（屏幕坐标：原点在左下角）
+    glm::mat4 orthoProj = glm::ortho(0.0f, static_cast<float>(winW),
+        0.0f, static_cast<float>(winH),
+        -1.0f, 1.0f);
+
+    // 3. 固定 widget 区域参数：例如 widget 距离屏幕左下边缘 50 像素，尺寸 150x150 像素
+    int widgetOffsetX = 50;
+    int widgetOffsetY = 50;
+    int widgetSize = 150;
+
+    // 计算 widget 在屏幕中的中心坐标
+    glm::vec3 widgetCenter(widgetOffsetX + widgetSize * 0.5f,
+        widgetOffsetY + widgetSize * 0.5f,
+        0.0f);
+
+    // 4. 构造 widget 的模型矩阵
+    // 假设 widget 的原始几何数据设计在 [-1,1]（宽度 2 个单位），则缩放因子为 widgetSize/2
+    float scaleFactor = widgetSize / 2.0f;
+    glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor, scaleFactor, 1.0f));
+
+    // 提取摄像机旋转：从 cameraView 中取上 3x3 部分并转置（反映摄像机旋转）
+    glm::mat3 camRot = glm::mat3(view);
+    glm::mat3 widgetRot = glm::transpose(camRot);
+    glm::mat4 rotMat = glm::mat4(widgetRot);
+
+    // 平移：将 widget 移到 widgetCenter
+    glm::mat4 transMat = glm::translate(glm::mat4(1.0f), widgetCenter);
+
+    // 最终 widget 模型矩阵：先缩放，再旋转，再平移
+    glm::mat4 widgetModel = transMat * rotMat * scaleMat;
+
+    // 5. 对于固定在屏幕上的 widget，view 设置为单位矩阵
+    glm::mat4 widgetView = glm::mat4(1.0f);
+
+    // 6. 激活 shader 程序并上传矩阵
+    glUseProgram(shaderProgram);
+    GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+    GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
+    GLuint projLoc = glGetUniformLocation(shaderProgram, "projection");
+
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(widgetModel));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(widgetView));
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(orthoProj));
+
+    // 7. 绑定 VAO 并以 GL_LINES 模式绘制 widget（假设 index 为索引总数，例如 6）
+    glBindVertexArray(VAO);
+    glDrawElements(GL_LINES, index, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+    // 6. 恢复深度测试（如果后续场景需要）
+    glEnable(GL_DEPTH_TEST);
+
+    return true;
+}
+
 
 CustomModel::~CustomModel()
 {

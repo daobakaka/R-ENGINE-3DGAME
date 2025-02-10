@@ -12,6 +12,7 @@ namespace Game {
 		ActorButterfly,
 		TsetButterfly,
 		LightColorTestCube,
+		AxisWidget,//坐标轴模型
 	};
 
 	//步长结构体

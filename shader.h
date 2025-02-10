@@ -32,6 +32,35 @@ const char* cubeFragmentShaderSource = R"(
     }
 )";
 /// <summary>
+/// 参考坐标轴旋转着色器
+/// </summary>
+const char* axisVertexShaderSource = R"(
+    #version 450 core
+layout (location = 0) in vec3 aPos;     // 顶点位置
+layout (location = 1) in vec3 aColor;   // 顶点颜色
+out vec3 ourColor;                      // 输出到片元着色器的颜色
+
+uniform mat4 model;       // 模型变换矩阵
+uniform mat4 view;        // 视图矩阵
+uniform mat4 projection;  // 投影矩阵
+
+void main() {
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    ourColor = aColor;
+}
+
+)";
+const char* axisFragmentShaderSource = R"(
+    #version 450 core
+    in vec3 ourColor;       // 从顶点着色器传入的颜色
+    out vec4 FragColor;     // 输出的片元颜色
+
+    void main() {
+        FragColor = vec4(ourColor, 1.0);
+    }
+)";
+
+/// <summary>
 /// 基础光照着色器
 /// </summary>
 const char* lightSourceVertexShaderSource = R"(
