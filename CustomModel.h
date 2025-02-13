@@ -21,7 +21,7 @@ namespace Game {
         //--继承GameObject 的声明
         virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
         virtual bool DrawLine(glm::mat4 view, glm::mat4 projection);//绘制线条方法，在custom 类添加的新方法，针对线条绘制，可重写
-        virtual bool DrawLineFixedWidget(glm::mat4 view);//绘制坐标系方法，固定在一个屏幕里面，可以重写
+        virtual bool DrawLineFixedWidget(glm::mat4 view, glm::mat4 projection);//绘制坐标系方法，固定在一个屏幕里面，可以重写
         ~CustomModel();
         //--继承MonoBehaviour的声明
         virtual void Update(glm::mat4 view, glm::mat4 projection) override;//常规移动可重写
@@ -33,7 +33,8 @@ namespace Game {
         virtual void PlayAnimation(int index, float frame = 0.0167f);//对象播放动画方法，避免外部传入对象，可重写
         virtual void StopPlayAnimation();//对象停止播放动画方法，可重写
         //
-        virtual bool AttachTexture() override;//附加纹理处理可重写
+        virtual bool AttachTexture(GLuint textureName, int order=0) override;//附加纹理处理可重写
+        virtual void RenderingTexture();
         //
         virtual bool AttachPhysicalEngine();//附加物理引擎可重写
         virtual bool AttachCollider();//附件碰撞体可重写
@@ -49,6 +50,9 @@ namespace Game {
         AnimationController* animator = nullptr;
         PhysicalEngine* physicsBody = nullptr;
         CollisionBody* collider = nullptr;
+        //贴图组件
+        GLuint texture;
+        int textureOrder;
 #pragma endregion
 
 

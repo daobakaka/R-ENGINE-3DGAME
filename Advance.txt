@@ -56,3 +56,10 @@
 
 ！渲染逻辑
 添加灯光渲染器：LightRender --将GL渲染代码封装在LightRender中，外部调用只需传入基础控制器、模型shadergram、灯光生成器 LightSpawner
+
+
+！基础逻辑
+添加场景旋转标识：Controller  -- 创建标识坐标 BuildWidgetShader， 待完善
+
+！资源管理逻辑
+添加场景基础形状：FileLoad --经纬球、圆柱体、圆锥体、立方体

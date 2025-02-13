@@ -245,6 +245,9 @@ bool LoadOBJ(const char* path, std::vector<Vertex>& out_vertices, std::vector<un
 
 bool LoadOBJ(const char* path, std::vector<Vertex>& out_vertices, std::vector<unsigned int>& out_indices)
 {
+    //资源清理，确保每次加载模型独立
+    out_vertices.clear();
+    out_indices.clear();
     // 临时存储：按索引存储每种属性
     std::vector<glm::vec3> temp_positions;
     std::vector<glm::vec2> temp_texcoords;
@@ -471,22 +474,73 @@ void MakeModel()
     LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\butterfly1.obj", verticesStruct, indices);
 
     ModelData modelData;
+    
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
 
     ModelDic["butterfly"] = modelData;
+
+#pragma region 基础形状区域
+    //立方体
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\baseCube.obj", verticesStruct, indices);
+ 
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["baseCube"] = modelData;
+    
+    //经纬球
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\baseSphere.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["baseSphere"] = modelData;
+
+
+    //圆锥
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\baseCone.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["baseCone"] = modelData;
+
+    //圆柱
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\baseCylinder.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["baseCylinder"] = modelData;
+    
+    //测试猴子
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\testMonkey.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["testMonkey"] = modelData;
+#pragma endregion
+
+
+
 
 
 }
 
 void MakeTxture()
 {
-
+    GLuint defaultTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\default.png");
     GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\1.png");
 
     std::vector<GLuint> pic;
+    pic.push_back(defaultTexture);
+
+    TextureDic["default"] = pic;
+    pic.clear();
     pic.push_back(picTexture);
-    
+
     TextureDic["butterfly"] = pic;
 
 }

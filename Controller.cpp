@@ -65,8 +65,53 @@ void Controller::ProcessInput(GLFWwindow* window, glm::vec3& objectPosition)
         objectPosition -= up * moveSpeed;  // X键：沿着上向向量向下移动
     }
 
-}
+    // 小键盘 1 => 前视图：摄像机位于 (0,0,10)，面向 -Z 轴，up=(0,1,0)
+    if (glfwGetKey(window, GLFW_KEY_KP_1) == GLFW_PRESS) {
+        objectPosition = glm::vec3(0.0f, 0.0f, 10.0f);
+        front = glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f));
+        up = glm::vec3(0.0f, 1.0f, 0.0f); // 与 front 不平行
+    }
 
+    // 小键盘 2 => 后视图：摄像机位于 (0,0,-10)，面向 +Z 轴
+    if (glfwGetKey(window, GLFW_KEY_KP_2) == GLFW_PRESS) {
+        objectPosition = glm::vec3(0.0f, 0.0f, -10.0f);
+        front = glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f));
+        up = glm::vec3(0.0f, 1.0f, 0.0f); // 同样保持 Y 轴向上
+    }
+
+    // 小键盘 3 => 上视图：摄像机位于 (0,10,0)，面向 -Y 轴
+    // 把 up 设置为 X 轴或 Z 轴，以避免与 front 平行
+    if (glfwGetKey(window, GLFW_KEY_KP_3) == GLFW_PRESS) {
+        objectPosition = glm::vec3(0.0f, 10.0f, 0.0f);
+        front = glm::normalize(glm::vec3(0.0f, -1.0f, 0.0f));
+        // 例如将 up 设置为 -Z，使 front(0,-1,0) 与 up(0,0,-1) 垂直
+        up = glm::vec3(0.0f, 0.0f, -1.0f);
+    }
+
+    // 小键盘 4 => 下视图：摄像机位于 (0,-10,0)，面向 +Y 轴
+    // 同理，为避免与 front 平行，可以把 up 设置为 +Z 或其它
+    if (glfwGetKey(window, GLFW_KEY_KP_4) == GLFW_PRESS) {
+        objectPosition = glm::vec3(0.0f, -10.0f, 0.0f);
+        front = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
+        // 例如 up=(0,0,1)，front 与 up 保持垂直
+        up = glm::vec3(0.0f, 0.0f, 1.0f);
+    }
+
+    // 小键盘 5 => 左视图：摄像机位于 (-10,0,0)，面向 +X 轴
+    if (glfwGetKey(window, GLFW_KEY_KP_5) == GLFW_PRESS) {
+        objectPosition = glm::vec3(-10.0f, 0.0f, 0.0f);
+        front = glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f));
+        up = glm::vec3(0.0f, 1.0f, 0.0f); // 与 front 不平行
+    }
+
+    // 小键盘 6 => 右视图：摄像机位于 (10,0,0)，面向 -X 轴
+    if (glfwGetKey(window, GLFW_KEY_KP_6) == GLFW_PRESS) {
+        objectPosition = glm::vec3(10.0f, 0.0f, 0.0f);
+        front = glm::normalize(glm::vec3(-1.0f, 0.0f, 0.0f));
+        up = glm::vec3(0.0f, 1.0f, 0.0f);
+    }
+
+}
 void Controller::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
 
@@ -171,6 +216,16 @@ glm::mat4 Controller::GetViewMatrix()
     return  glm::lookAt(position, position + front, up);
 }
 
+glm::mat4 Game::Controller::GetFixedViewMatrix()
+{
+    glm::mat4 cameraRotation = glm::rotate(glm::mat4(1.0f), glm::radians(3 * pitch), glm::vec3(1.0f, 0.0f, 0.0f)); //俯仰：绕X轴旋转 
+    cameraRotation = glm::rotate(cameraRotation, glm::radians(3 * yaw), glm::vec3(0.0f, 1.0f, 0.0f)); // 偏航：绕Y轴旋转
+
+    if (rightMousePressed)
+        front = glm::normalize(glm::vec3(cameraRotation * glm::vec4(front, 0.0f)));//每次完整后归一化
+    return  glm::lookAt(glm::vec3(0,0,-3),glm::vec3(0,0,-3)+ front, up);
+}
+
 glm::mat4 Controller::GetProjectionMatrix()
 {
     return projection = glm::perspective(glm::radians(fov), windowWidth / float(windowHeight), nearPlane, farPlane);//重新计算投影矩阵
@@ -182,8 +237,8 @@ void Controller::BuildWidgetShader(MeshDataManager* meshData, LifecycleManager<C
      axisWidget = new CoordinateSystemCus(
         axisVertexShaderSource,        // 坐标轴 widget 顶点着色器源码
         axisFragmentShaderSource,      // 坐标轴 widget 片元着色器源码
-        meshData->axisWidgetVertices,        // 这里假设 meshData 中保存了上面 axisWidgetVertices 数据
-        meshData->axisWidgetIndices,         // 这里假设 meshData 中保存了 axisWidgetIndices 数据（可选）
+        meshData->axisWidgetVertices,        //  meshData 中保存了上面 axisWidgetVertices 数据
+        meshData->axisWidgetIndices,         //  meshData 中保存了 axisWidgetIndices 数据
         meshData->axisWidgetVertexCount,     // 36
         meshData->axisWidgetIndexCount,      // 6
         false,

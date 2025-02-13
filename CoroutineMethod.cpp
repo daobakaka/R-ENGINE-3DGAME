@@ -33,7 +33,7 @@ using namespace Game;
                     glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)),
                     glm::vec3(0.1f, 0.1f, 0.1f)
                 );
-                model->AttachTexture();
+                model->AttachTexture(TextureDic["default"][0],0);
                 model->AttachAnimationController(AnimationDic["butterfly"]["fly"]);
                 model->AttachPhysicalEngine();
                 model->AttachCollider();
@@ -72,9 +72,9 @@ using namespace Game;
     }
 
     //事实上这个方法可以通过配置，转换成通用的初始化方法
-    void CoroutineMethod::StartSpawnButterfliesByTimer(LifecycleManager<CustomModel>* manager) {
+    void CoroutineMethod::StartSpawnButterfliesByTimer(LifecycleManager<CustomModel>* manager, GLuint textureName, int order) {
         // 重复 5 次、每次间隔 1 秒
-        AddTimerTask(1.0f, 20, [manager]() {
+        AddTimerTask(1.0f, 20, [manager, textureName,order]() {
              int counter = 0;
             std::cout << "[TimerTask] 创建蝴蝶对象 #" << counter << std::endl;
             counter++;
@@ -91,7 +91,7 @@ using namespace Game;
                 glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)),
                 glm::vec3(0.1f, 0.1f, 0.1f)
             );
-            model->AttachTexture();
+            model->AttachTexture(textureName,order);
             model->AttachAnimationController((AnimationDic["butterfly"]["fly"]));
             model->AttachPhysicalEngine();
             model->AttachCollider();

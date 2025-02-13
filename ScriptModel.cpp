@@ -11,8 +11,6 @@ void ButterflyScript:: UpdateVariant(glm::mat4 view, glm::mat4 projection)
 
 void CoordinateSystemCus::Update(glm::mat4 view, glm::mat4 projection)
 {
-	UpdateTransform();
-	DrawLineFixedWidget(view);
-
-
+	//UpdateTransform(); 这里可以不用更新位置信息了， 参考坐标系不需要移动 
+	DrawLineFixedWidget(view,projection);
 }

@@ -145,7 +145,7 @@ void Cube::UpdateVariant(glm::mat4 view, glm::mat4 projection)
    
 }
 
-bool Cube::AttachTexture()
+bool Cube::AttachTexture(GLuint textureName, int order)
 {
     return false;
 }

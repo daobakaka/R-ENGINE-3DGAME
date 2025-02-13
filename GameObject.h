@@ -69,7 +69,7 @@ namespace Game {
         //绘制物体动态方法，必须重写，交由 LifeCyleManager 进行管理
         virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) = 0;
         //加载物体texture
-        virtual bool AttachTexture();
+        virtual bool AttachTexture(GLuint name,int order);
 
         // 
 

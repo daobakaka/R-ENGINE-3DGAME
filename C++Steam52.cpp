@@ -167,45 +167,62 @@ int GLins() {
      // coroutine->StartSpawnButterfliesAsync(manager);
      // std::thread spawnThread(coroutine->StartSpawnButterfliesAsync);
      // 
-            
      
+     
+
+        CustomModel* baseCube = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCube"], false, true);
+        baseCube->SetVariant(ModelClass::CubeTestE);
+        baseCube->Initialize(glm::vec3(3.0f, -1.0f, 1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        manager->RegisterObject(baseCube);
+        baseCube->AttachTexture(TextureDic["butterfly"][0], 0);
+
+        CustomModel* baseSphere = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseSphere"], false, true);
+        baseSphere->SetVariant(ModelClass::CubeTestE);
+        baseSphere->Initialize(glm::vec3(-3.0f, -1.0f, -1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        manager->RegisterObject(baseSphere);
+        baseSphere->AttachTexture(TextureDic["default"][0], 0);
+
+
+        CustomModel* baseCylinder = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCylinder"], false, true);
+        baseCylinder->SetVariant(ModelClass::CubeTestE);
+        baseCylinder ->Initialize(glm::vec3(-0.0f, 1.0f, -1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        manager->RegisterObject(baseCylinder);
+        baseCylinder->AttachTexture(TextureDic["butterfly"][0], 0);
+
+
+
+        CustomModel* testMonkey = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["testMonkey"], false, true);
+        testMonkey->SetVariant(ModelClass::CubeTestE);
+        testMonkey->Initialize(glm::vec3(-0.0f, 3.0f, 1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        manager->RegisterObject(testMonkey);
+        testMonkey->AttachTexture(TextureDic["butterfly"][0], 0);
         //测试用的方法，生成注册器中的ActorButterFly 方法
-        coroutine->StartSpawnButterfliesByTimer(manager);
+       coroutine->StartSpawnButterfliesByTimer(manager, TextureDic["butterfly"][0],0);
         //综合性赋值方法泛型方法， 可以直接异步初始化各种继承customModel的对象
+
+      // baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);
         StepVector3 step;
         step.position = glm::vec3(0, -0.5f, 0);
         step.scale = glm::vec3(0.9f);
-        coroutine->StartSpawnByTimerAnimation<ButterflyScript>(
-            manager,
-            colorlightsArrayVertexShaderSource,
-            colorlightsArraySourceFragmentShaderSource,
-            true,
-            ModelDic["butterfly"],
-            AnimationDic["butterfly"]["fly"],
-            ModelClass::TsetButterfly,
-            2, 15,
-            step,
-            glm::vec3(0.0f, 0.0f, 0.0f),//赋默认值
-            {},
-            glm::vec3(1.1f)           
-        );
+        //coroutine->StartSpawnByTimerAnimation<ButterflyScript>(
+        //    manager,
+        //    colorlightsArrayVertexShaderSource,
+        //    colorlightsArraySourceFragmentShaderSource,
+        //    true,
+        //    ModelDic["butterfly"],
+        //    AnimationDic["butterfly"]["fly"],
+        //     TextureDic["default"][0],  
+        //    ModelClass::TsetButterfly,
+        //    2, 15,
+        //    step,
+        //    glm::vec3(0.0f, 0.0f, 0.0f),//赋默认值
+        //    {},
+        //    glm::vec3(1.1f)           
+        //);
      // spawnThread.detach();  // 分离线程
 
-//-- 这里就类似于游戏引擎的加载组件的方法，可以定义为具体的模板类，可采用GetComponenet<T>等泛型方式来解决，加载中每个模型涉及不同的情况，需要分散到每个具体的子类
-       // 
 
-       //这种基础方法，后期主要用于生成基础的测试模型
-        CustomModel* customCone = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, meshData->cylinderVertices, meshData->cylinderIndices, meshData->cylinderVertexCount, meshData->cylinderIndexCount);
-        customCone->SetVariant(ModelClass::CubeTestE);
-        customCone->Initialize(glm::vec3(2.0f, 0.0f, 1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-        manager->RegisterObject(customCone);
-
-        CustomModel* customSphere = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, meshData->colorCubeVertices, meshData->colorCubeIndices, meshData->colorCubeVertexCount, meshData->colorCubeIndexCount,true);
-        customSphere->SetVariant(ModelClass::CubeTestE);
-        customSphere->Initialize(glm::vec3(-2.0f, 0.0f, -1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-        manager->RegisterObject(customSphere);
-
-
+        
       
 
 #pragma endregion
@@ -270,6 +287,7 @@ int GLins() {
             else if (item->GetVariant()==ModelClass::CubeTestE)
             {
               scripts->TestUpdateFun(item);
+            //  baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);
          
             }
             else if (item->GetVariant()==ModelClass::ActorButterfly)

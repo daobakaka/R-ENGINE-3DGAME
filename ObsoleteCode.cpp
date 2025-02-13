@@ -352,17 +352,16 @@ manager->RegisterObject(axisWidget);
     //glDeleteShader(vertexShader);
     //glDeleteShader(fragmentShader);
 
-//视口渲染方法，就是增加了一个视口，暂时舍弃
-bool CustomModel::DrawLine(glm::mat4 view, glm::mat4 projection)
+bool CustomModel::DrawLineFixedWidget(glm::mat4 view, glm::mat4 projection)
 {
     //增加视口渲染
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
 
     // 固定区域参数：例如左下角区域，尺寸 150x150 像素
-    int widgetPosX = 100;
-    int widgetPosY = 100;
-    int widgetSize = 500;
+    int widgetPosX = 0;
+    int widgetPosY = 0;
+    int widgetSize = 300;
 
     // 切换视口到 widget 区域
     glViewport(widgetPosX, widgetPosY, widgetSize, widgetSize);
@@ -411,5 +410,40 @@ bool CustomModel::DrawLine(glm::mat4 view, glm::mat4 projection)
     return true;
 }
 
+//CUSTOMMOdel 的 ATTACHTEXTURE 方法
+////--- 增加状态机读写
+ //glGetIntegerv(GL_CURRENT_PROGRAM, &previousShader);  // 获取当前程序
+ //glGetIntegerv(GL_TEXTURE_BINDING_2D, &previousTexture);  // 获取当前绑定的纹理
+ //--
+// glUseProgram(shaderProgram);
+glUseProgram(shaderProgram);
+GLuint picData = glGetUniformLocation(shaderProgram, "texture1");//预写入图像的shader定义内容
+glActiveTexture(GL_TEXTURE0 + order);          // 激活纹理单元 0
+glBindTexture(GL_TEXTURE_2D, textureName);  // 绑定纹理对象到纹理单元 0,这里添加"butterfly"集合的纹理对象
+// 绑定纹理到纹理单元 0
+glUniform1i(picData, order);
+
+//// 3. 写回之前的shaderprogram
+//glUseProgram(previousShader);  // 恢复之前的着色器
+//glBindTexture(GL_TEXTURE_2D, previousTexture);  // 恢复之前的纹理绑定
+
+return true;
+
+
+
+//-- 这里就类似于游戏引擎的加载组件的方法，可以定义为具体的模板类，可采用GetComponenet<T>等泛型方式来解决，加载中每个模型涉及不同的情况，需要分散到每个具体的子类
+       // 
+
+       //这种基础方法，后期主要用于生成基础的测试模型
+CustomModel* customCone = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, meshData->cylinderVertices, meshData->cylinderIndices, meshData->cylinderVertexCount, meshData->cylinderIndexCount);
+customCone->SetVariant(ModelClass::CubeTestE);
+customCone->Initialize(glm::vec3(2.0f, 0.0f, 1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+manager->RegisterObject(customCone);
+
+CustomModel* customSphere = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, meshData->colorCubeVertices, meshData->colorCubeIndices, meshData->colorCubeVertexCount, meshData->colorCubeIndexCount, true);
+customSphere->SetVariant(ModelClass::CubeTestE);
+customSphere->Initialize(glm::vec3(-2.0f, 0.0f, -1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+manager->RegisterObject(customSphere);
+//--
 
 #endif // !OBSOLETE_CODE_KAKA

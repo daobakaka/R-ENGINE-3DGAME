@@ -33,7 +33,7 @@ namespace Game {
         void CoroutineUpdate();
 
         // 示例：每隔1秒创建蝴蝶，通过定时任务
-        void StartSpawnButterfliesByTimer(LifecycleManager<CustomModel>* manager);
+        void StartSpawnButterfliesByTimer(LifecycleManager<CustomModel>* manager,GLuint textureName, int order);
 
     private:
         CoroutineMethod();
@@ -64,6 +64,8 @@ namespace Game {
             bool ifLight,
             const ModelData& modelData,
             const AnimationData& animationData,
+            GLuint textureName = TextureDic["default"][0],
+            int order = 0,
             ModelClass modelEnum = ModelClass::OriginalE,
             float interval = 1.0f,
             int count = 1,
@@ -71,7 +73,6 @@ namespace Game {
             glm::vec3 position = glm::vec3(0, 0, 0),
             glm::vec3 rotation = glm::vec3(0, 0, 0),
             glm::vec3 scale = glm::vec3(1, 1, 1),
-            bool ifTexture = true,
             bool ifPhysical = true,
             bool ifCollider = true
         )
@@ -85,8 +86,8 @@ namespace Game {
 
             AddTimerTask(interval, count,
                 [manager, vertexShader, fragmentShader, modelData, animationData,
-                modelEnum, ifTexture, ifPhysical, ifCollider, stepVector3,
-                position, rotation, scale, counterPtr,ifLight]()
+                modelEnum,  ifPhysical, ifCollider, stepVector3,
+                position, rotation, scale, counterPtr,ifLight,textureName,order]()
                 {
                     // 自增计数
                     (*counterPtr)++;
@@ -96,7 +97,7 @@ namespace Game {
                         fragmentShader,
                         modelData,
                         true,
-                        true
+                        ifLight
                     );
                     manager->RegisterObject(model);
 
@@ -113,9 +114,8 @@ namespace Game {
                         )
                     );
 
-                    if (ifTexture) {
-                        model->AttachTexture();
-                    }
+                   
+                    model->AttachTexture(textureName,order);
                     model->AttachAnimationController(animationData);
 
                     if (ifPhysical) {
@@ -137,8 +137,10 @@ namespace Game {
             LifecycleManager<CustomModel>* manager,
             const char* vertexShader,
             const char* fragmentShader,
-            const ModelData& modelData,
             bool ifLight,
+            const ModelData& modelData,
+            GLuint textureName = TextureDic["default"][0],
+            int order=0,
             ModelClass modelEnum = ModelClass::OriginalE,
             float interval = 1.0f,
             int count = 1,
@@ -146,7 +148,6 @@ namespace Game {
             glm::vec3 position = glm::vec3(0, 0, 0),
             glm::vec3 rotation = glm::vec3(0, 0, 0),
             glm::vec3 scale = glm::vec3(1, 1, 1),
-            bool ifTexture = true,
             bool ifPhysical = true,
             bool ifCollider = true
         )
@@ -157,8 +158,8 @@ namespace Game {
 
             AddTimerTask(interval, count,
                 [manager, vertexShader, fragmentShader, modelData, modelEnum,
-                ifTexture, ifPhysical, ifCollider, stepVector3,
-                position, rotation, scale, counterPtr, ifLight]()
+                 ifPhysical, ifCollider, stepVector3,
+                position, rotation, scale, counterPtr, ifLight, textureName,order]()
                 {
                     // 自增计数
                     (*counterPtr)++;
@@ -168,7 +169,7 @@ namespace Game {
                         fragmentShader,
                         modelData,
                         false,
-                        true
+                        ifLight
                     );
                     manager->RegisterObject(model);
 
@@ -182,9 +183,9 @@ namespace Game {
                         )
                     );
 
-                    if (ifTexture) {
-                        model->AttachTexture();
-                    }
+     
+                    model->AttachTexture(textureName,order);
+                
                     if (ifPhysical) {
                         model->AttachPhysicalEngine();
                     }

@@ -53,7 +53,7 @@ namespace Game {
         //--¼Ì³ÐMonoBehaviourµÄÉùÃ÷
         void Update(glm::mat4 view, glm::mat4 projection) override;
         void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
-        virtual bool AttachTexture() override;
+        virtual bool AttachTexture(GLuint textureName, int order) override;
     };
 }
 #endif // CUBE_H

@@ -31,7 +31,7 @@ void GameObject::Initialize(glm::vec3 position, glm::quat rotation, glm::vec3 sc
 void GameObject::UpdateTransform() {
     // 计算变换矩阵：平移、旋转、缩放
     transform = glm::mat4(1.0f);  // 初始化为单位矩阵
-    transform = glm::translate(transform, position);  // 平移
+    transform = glm::translate(transform, position);  // 平移，这里对物体平移的实现事实上是调用了一个GL中 translate的API
     transform *= glm::mat4_cast(rotation);  // 旋转
     transform = glm::scale(transform, scale);  // 缩放
 }
@@ -94,7 +94,7 @@ bool GameObject::Draw(glm::mat4 view, glm::mat4 projection ) {
 
     return true;
 }
-bool GameObject::AttachTexture()
+bool GameObject::AttachTexture(GLuint name, int order)
 {
     return false;
 }

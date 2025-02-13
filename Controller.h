@@ -67,6 +67,7 @@ namespace Game {
 
 		// 获取摄像机视图矩阵
 		glm::mat4 GetViewMatrix();
+		glm::mat4 GetFixedViewMatrix();
 		glm::mat4 GetProjectionMatrix();
 		//构建坐标系
 		void BuildWidgetShader(MeshDataManager* meshData, LifecycleManager<CustomModel>* customModle);
