@@ -12,7 +12,12 @@ namespace Game {
 		ActorButterfly,
 		TsetButterfly,
 		LightColorTestCube,
+		Ray,//射线
 		AxisWidget,//坐标轴模型
+		PointLight,//点光源
+		FlashLight,//手电筒
+		ParallelLight,//平行光
+		
 	};
 
 	//步长结构体

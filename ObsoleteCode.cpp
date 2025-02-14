@@ -352,7 +352,7 @@ manager->RegisterObject(axisWidget);
     //glDeleteShader(vertexShader);
     //glDeleteShader(fragmentShader);
 
-bool CustomModel::DrawLineFixedWidget(glm::mat4 view, glm::mat4 projection)
+bool CustomModel::DrawLineFixedWidgetObsolete(glm::mat4 view, glm::mat4 projection)
 {
     //增加视口渲染
     GLint viewport[4];

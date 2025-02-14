@@ -14,6 +14,7 @@ namespace Game {
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<glm::vec3>& vertices, std::vector<glm::vec2>& uvs, std::vector<glm::vec3>& normals, bool ifLight = false);
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndicesm, bool ifLight = false);
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndices, bool isSkinnedMesh, bool ifLight = false);
+       //--最常用方法
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData& modelData, bool isSkinnedMesh, bool ifLight = false);
         void UpdateVerticesForAnimation(size_t animationFrame);
         void UpdateVerticesForAnimation(const std::vector<Vertex>& vertex);
@@ -34,7 +35,7 @@ namespace Game {
         virtual void StopPlayAnimation();//对象停止播放动画方法，可重写
         //
         virtual bool AttachTexture(GLuint textureName, int order=0) override;//附加纹理处理可重写
-        virtual void RenderingTexture();
+        virtual void RenderingTexture();//渲染纹理方法可重写
         //
         virtual bool AttachPhysicalEngine();//附加物理引擎可重写
         virtual bool AttachCollider();//附件碰撞体可重写
@@ -42,17 +43,20 @@ namespace Game {
 
     private:
 #pragma region   数组初始化原则：{}只能在声明时进行初始化
-        size_t index;
-        size_t vertexCount;
+
         std::vector<Vertex> verticesTras = {};
         //  GLfloat verticesIns[];
           //动画控制组件
         AnimationController* animator = nullptr;
         PhysicalEngine* physicsBody = nullptr;
         CollisionBody* collider = nullptr;
-        //贴图组件
+
+    protected:
+        //贴图组件,存在继承关系，这里子类需要访问
         GLuint texture;
         int textureOrder;
+        size_t index;
+        size_t vertexCount;
 #pragma endregion
 
 

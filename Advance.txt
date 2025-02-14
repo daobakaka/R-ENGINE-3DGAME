@@ -63,3 +63,9 @@
 
 ！资源管理逻辑
 添加场景基础形状：FileLoad --经纬球、圆柱体、圆锥体、立方体
+
+！渲染逻辑
+添加光源引导：点光源模型、手电筒模型、平行光模型  --LightModel
+
+!  渲染逻辑
+添加光源控制：SpawnerLight -- ParallelController FlashLightController PointLightController

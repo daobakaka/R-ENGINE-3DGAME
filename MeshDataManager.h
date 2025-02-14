@@ -273,8 +273,12 @@
         size_t axisWidgetVertexCount = sizeof(axisWidgetVertices) / sizeof(axisWidgetVertices[0]);  // 应该为 36
         size_t axisWidgetIndexCount = sizeof(axisWidgetIndices) / sizeof(axisWidgetIndices[0]);     // 应该为 6
 
-
-
+       //简单射线模型
+        GLfloat customizeRay[6] = { 0,0,0,5,0,0 };
+        GLuint customizeRayIncices[2] = { 0,1 };
+        size_t customizeRayCount = 6;
+        size_t customizeRayIndexCount = 2;
+      //--  
 
 #pragma endregion
 

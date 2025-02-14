@@ -28,6 +28,8 @@ namespace Game {
 		int TUpdateFPS();
 		//帧率控制
 		void TControlFrameRate(float targetFrameRate);
+		//平行光旋转
+		void TParallelLightRotation(GameObject *object);
 
 	private:
 

@@ -1,11 +1,23 @@
 #include "Light.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include "FileLoadIO.h"
+#include "CustomModel.h"
+#include "LifecycleManager.h"
+#include "ScriptModel.h"
+#include "MeshDataManager.h"
 
 using namespace Game;
 
 // 初始化静态单例指针
 LightSpawner* LightSpawner::instance = nullptr;
-
+//引用shader
+extern const char* noneLightLightVertexShaderSource;
+extern const char* noneLightLightFragmentShaderSource;
+extern const char* rayVertexShaderSource;
+extern const char* rayFragmentShaderSource;
+//C++的源文件中可以直接定义相关变量，而不必要在类中进行声明，更灵活
+LifecycleManager<CustomModel>* manager = nullptr;
+MeshDataManager* meshData = nullptr;
 LightSpawner* LightSpawner::GetInstance() {
     if (instance == nullptr) {
         instance = new LightSpawner();
@@ -15,7 +27,9 @@ LightSpawner* LightSpawner::GetInstance() {
 
 LightSpawner::LightSpawner() {
     // 初始化全局平行光默认参数
-
+    manager = LifecycleManager<CustomModel>::GetInstance();
+    meshData = MeshDataManager::GetInstance();
+    modelIdentification = true;
 }
 
 LightSpawner::~LightSpawner() {
@@ -33,6 +47,19 @@ CustomPointLight LightSpawner::SpawPointLight(glm::vec3 position, glm::vec3 colo
         pointLights.push_back(pointLight);
     }
     // 否则可以选择忽略或更新已有光源，根据具体需求处理
+    if (modelIdentification)
+    {
+        //--同时在相应的位置构建一个点光源模型
+        auto* pointLightPtr = new LightModel(noneLightLightVertexShaderSource, noneLightLightFragmentShaderSource, ModelDic["baseSphere"], false);
+        pointLightPtr->SetVariant(ModelClass::PointLight);
+        pointLightPtr->Initialize(position, glm::quat(glm::vec3(0, 0, 1.5f)), glm::vec3(0.3f));
+        manager->RegisterObject(pointLightPtr);
+        pointLightPtr->AttachTexture(TextureDic["light"][0]);
+        //子类的方法，设置灯光参数
+        pointLightPtr->SteLightParameters(color, intensity);
+    }
+
+   
     return pointLight;
 }
 
@@ -43,13 +70,27 @@ CustomParallelLight LightSpawner::SpawParallelLight(glm::vec3 direction, glm::ve
     parallelLight.color = color;
     parallelLight.intensity = intensity;
 
+    if (modelIdentification)
+    {
+        //--平行光是全局光照，位置无意义，类似光源的虚拟位置用其他的模型代替，设置0.1猴头显示是否定义，应无距离衰减
+        auto* pointLightPtr = new LightModel(noneLightLightVertexShaderSource, noneLightLightFragmentShaderSource, ModelDic["testMonkey"], false);
+        pointLightPtr->SetVariant(ModelClass::ParallelLight);
+        pointLightPtr->Initialize(glm::vec3(0), glm::vec3(0), glm::vec3(0.3f));
+        manager->RegisterObject(pointLightPtr);
+        pointLightPtr->AttachTexture(TextureDic["light"][0]);
+        //子类的方法，设置灯光参数
+        pointLightPtr->SteLightParameters(color, intensity);
+
+    }
+
+
     return parallelLight;
 }
 
 CustomFlashLight LightSpawner::SpawFlashLight(glm::vec3 position, glm::vec3 direction, glm::vec3 color, float intensity, float cutoff) {
     CustomFlashLight flashLight;
     flashLight.position = position;
-    flashLight.direction = glm::normalize(direction);
+    flashLight.direction = -glm::normalize(direction);
     flashLight.color = color;
     flashLight.intensity = intensity;
     flashLight.cutoff = cutoff;
@@ -57,7 +98,92 @@ CustomFlashLight LightSpawner::SpawFlashLight(glm::vec3 position, glm::vec3 dire
     {
         flashLights.push_back(flashLight);
     }
+    if (modelIdentification)
+    {
+        //处理手电筒朝向问题
+        glm::vec3 defaultDown = glm::vec3(0.0f, -1.0f, 0.0f);  // 圆锥底面默认朝向 Y,这里修正光线射出的方向
+        glm::vec3 dirNorm = glm::normalize(direction);
+
+        float dotVal = glm::dot(defaultDown, dirNorm);
+        glm::quat finalRotation;
+        const float epsilon = 1e-6f;
+
+        if (dotVal > 1.0f - epsilon) {
+            // 与 defaultDown 几乎同向 => 不旋转
+            finalRotation = glm::quat(1, 0, 0, 0);
+        }
+        else if (dotVal < -1.0f + epsilon) {
+            // 反向 => 绕任意水平轴旋转180度
+            finalRotation = glm::angleAxis(glm::pi<float>(), glm::vec3(1, 0, 0));
+        }
+        else {
+            float angle = acos(dotVal);
+            glm::vec3 axis = glm::normalize(glm::cross(defaultDown, dirNorm));
+            finalRotation = glm::angleAxis(angle, axis);
+        }
+
+
+
+        //--同时在相应的位置构建一个手电筒模型
+        auto* pointLightPtr = new LightModel(noneLightLightVertexShaderSource, noneLightLightFragmentShaderSource, ModelDic["baseCone"], false);
+        pointLightPtr->SetVariant(ModelClass::FlashLight);
+        pointLightPtr->Initialize(position, finalRotation, glm::vec3(0.3f));
+        manager->RegisterObject(pointLightPtr);
+        pointLightPtr->AttachTexture(TextureDic["light"][0]);
+        //子类的方法，设置灯光参数
+        pointLightPtr->SteLightParameters(color, intensity);
+
+        //--构建手电筒参考射线-------------
+        //这里采用自定义顶点，这样更方便，便于更改射线长度
+        GLfloat customizeRayLength[6] = { 0,0,0,0,-intensity,0 };
+        GLuint  customizeRayIndecis[2] = { 0,1 };
+        auto* rayCus = new CustomizeRay(rayVertexShaderSource, rayFragmentShaderSource, customizeRayLength, customizeRayIndecis, 6, 2, false);
+        rayCus->SetVariant(ModelClass::Ray);
+        rayCus->Initialize(position, finalRotation);
+        manager->RegisterObject(rayCus);
+        rayCus->SetRayPar(color, intensity);
+    }
     return flashLight;
+}
+
+void Game::LightSpawner::ParalletLightController(glm::vec3 dirction, glm::vec3 color, float intensity)
+{
+    // 2) 将增量角度(度)转为弧度
+    glm::vec3 radIncrements = glm::radians(dirction);
+
+    // 3) 构建旋转矩阵(初始为单位矩阵)
+    glm::mat4 rotMat(1.0f);
+
+    // 假设顺序：先绕X旋转pitch，再绕Y旋转yaw，再绕Z旋转roll
+    rotMat = glm::rotate(rotMat, radIncrements.x, glm::vec3(1, 0, 0));
+    rotMat = glm::rotate(rotMat, radIncrements.y, glm::vec3(0, 1, 0));
+    rotMat = glm::rotate(rotMat, radIncrements.z, glm::vec3(0, 0, 1));
+
+    // 4) 用这个增量旋转矩阵乘以当前光的 direction
+    //    parallelLight.direction是上帧(或初始)的朝向，这里做累加旋转
+    glm::vec4 oldDir(parallelLight.direction, 0.0f);
+    glm::vec4 newDir = rotMat * oldDir;
+
+    // 5) 写回并归一化
+    parallelLight.direction = glm::normalize(glm::vec3(newDir));
+   /* parallelLight.color = color;
+    parallelLight.intensity = intensity;*/
+
+}
+
+void Game::LightSpawner::PointLightController(glm::vec3 color, float intensity, int lightNumber)
+{
+    pointLights[lightNumber].color = color;
+    pointLights[lightNumber].intensity = intensity;
+}
+
+void Game::LightSpawner::FlashLightController(glm::vec3 dirction, glm::vec3 color, float intensity, float cutoff,int lightNumber)
+{
+    flashLights[lightNumber].direction = dirction;
+    flashLights[lightNumber].color = color;
+    flashLights[lightNumber].cutoff = cutoff;
+    flashLights[lightNumber].intensity = intensity;
+
 }
 
 #pragma region  渲染脚本区域

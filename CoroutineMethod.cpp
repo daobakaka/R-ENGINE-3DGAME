@@ -2,7 +2,7 @@
 
 // 全局变量（根据实际项目定义）
 extern const char* noneLightVertexShaderSource;
-extern const char* noneLightcubeFragmentShaderSource;
+extern const char* noneLightFragmentShaderSource;
 
 using namespace Game;
 
@@ -23,7 +23,7 @@ using namespace Game;
             for (int i = 0; i < 30; i++) {
                 CustomModel* model = new CustomModel(
                     noneLightVertexShaderSource,
-                    noneLightcubeFragmentShaderSource,
+                    noneLightFragmentShaderSource,
                     ModelDic["butterfly"],
                     true
                 );
@@ -81,7 +81,7 @@ using namespace Game;
 
             CustomModel* model = new CustomModel(
                 noneLightVertexShaderSource,
-                noneLightcubeFragmentShaderSource,
+                noneLightFragmentShaderSource,
                 ModelDic["butterfly"],
                 true
             );

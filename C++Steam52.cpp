@@ -36,6 +36,7 @@ using namespace Game;
 bool iftest = false;
 bool gameStart = true;
 bool gameEnd = true;
+float zRotation;
 //裸指针
 std::vector<GameObject*> nativeObjects;
 std::vector<GameObject*> variantObjects;
@@ -109,6 +110,8 @@ int GLins() {
         auto* coroutine = CoroutineMethod::GetInstance();
         //获取灯光生成器
         auto* lightSpawner = LightSpawner::GetInstance();
+        //开启灯光标识
+        lightSpawner->modelIdentification = true;
         //获取灯光渲染器
         auto* lightRender = LightRender::GetInstance();
         
@@ -172,20 +175,20 @@ int GLins() {
 
         CustomModel* baseCube = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCube"], false, true);
         baseCube->SetVariant(ModelClass::CubeTestE);
-        baseCube->Initialize(glm::vec3(3.0f, -1.0f, 1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        baseCube->Initialize(glm::vec3(3.0f, -2.0f, 2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseCube);
         baseCube->AttachTexture(TextureDic["butterfly"][0], 0);
 
         CustomModel* baseSphere = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseSphere"], false, true);
         baseSphere->SetVariant(ModelClass::CubeTestE);
-        baseSphere->Initialize(glm::vec3(-3.0f, -1.0f, -1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        baseSphere->Initialize(glm::vec3(-3.0f, -2.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseSphere);
         baseSphere->AttachTexture(TextureDic["default"][0], 0);
 
 
         CustomModel* baseCylinder = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCylinder"], false, true);
         baseCylinder->SetVariant(ModelClass::CubeTestE);
-        baseCylinder ->Initialize(glm::vec3(-0.0f, 1.0f, -1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        baseCylinder ->Initialize(glm::vec3(-0.0f, 1.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseCylinder);
         baseCylinder->AttachTexture(TextureDic["butterfly"][0], 0);
 
@@ -193,7 +196,7 @@ int GLins() {
 
         CustomModel* testMonkey = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["testMonkey"], false, true);
         testMonkey->SetVariant(ModelClass::CubeTestE);
-        testMonkey->Initialize(glm::vec3(-0.0f, 3.0f, 1.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        testMonkey->Initialize(glm::vec3(-0.0f, 3.0f, 2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(0.5f));
         manager->RegisterObject(testMonkey);
         testMonkey->AttachTexture(TextureDic["butterfly"][0], 0);
         //测试用的方法，生成注册器中的ActorButterFly 方法
@@ -231,15 +234,15 @@ int GLins() {
         const int MAX_LIGHTS = 4;
 
         //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
-        auto pointLight2= lightSpawner->SpawPointLight(glm::vec3(0,0,0),glm::vec3(1,1,1),2);
-        auto pointLight = lightSpawner->SpawPointLight(glm::vec3(1, 0, 0), glm::vec3(0, 1, 1), 2);
-        auto pointLight3= lightSpawner->SpawPointLight(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), 2);
-        auto pointLight4= lightSpawner->SpawPointLight(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1), 2);
+        auto pointLight2= lightSpawner->SpawPointLight(glm::vec3(2,2,2),glm::vec3(1,1,1),2);
+        auto pointLight = lightSpawner->SpawPointLight(glm::vec3(3, 0, 0), glm::vec3(0, 1, 1), 2);
+        auto pointLight3= lightSpawner->SpawPointLight(glm::vec3(0, 3, 0), glm::vec3(0, 1, 0), 2);
+        auto pointLight4= lightSpawner->SpawPointLight(glm::vec3(0, 0, 3), glm::vec3(0, 0, 1), 2);
         
         //平行光使用灯光生成器生成，默认一个
-        auto parallelLight = lightSpawner->SpawParallelLight();//使用默认值 强度10
+        auto parallelLight = lightSpawner->SpawParallelLight(glm::vec3(-1),glm::vec3(1,1,0),5);//使用默认值 强度10
         //手电筒光使用灯光生成器生成，默认支持4个
-        auto splashLight = lightSpawner->SpawFlashLight();//使用默认值 强度10
+        auto splashLight = lightSpawner->SpawFlashLight(glm::vec3(0,5,-2),glm::vec3(0,-1,0));//使用默认值 强度10
 #pragma endregion
         manager->StartAll();
 
@@ -287,8 +290,16 @@ int GLins() {
             else if (item->GetVariant()==ModelClass::CubeTestE)
             {
               scripts->TestUpdateFun(item);
-            //  baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);
-         
+            //  baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);        
+            }
+            else if (item->GetVariant()==ModelClass::ParallelLight)//平行光旋转，后面增加其他逻辑
+            {
+           
+                scripts->TParallelLightRotation(item);
+                //光源旋转不写在GameObject的逻辑里面，单独控制
+                lightSpawner->ParalletLightController(glm::vec3(0, 1, 0.0f));
+
+
             }
             else if (item->GetVariant()==ModelClass::ActorButterfly)
             {

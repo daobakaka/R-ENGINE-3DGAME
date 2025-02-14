@@ -83,6 +83,9 @@ namespace Game {
     private:
         //初始化变体
         ModelClass variant = ModelClass::OriginalE;
+
+    protected:
+       
       
     };
 }

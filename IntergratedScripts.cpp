@@ -144,6 +144,14 @@ void Game::IntergratedScripts::TControlFrameRate(float targetFrameRate)
     lastTime = glfwGetTime();
 }
 
+void Game::IntergratedScripts::TParallelLightRotation(GameObject *object)
+{
+
+    object->rotation *= glm::quat(glm::vec3(0, 0.1f + 0.1f * randomFloat, 0.0f));
+
+   
+}
+
 
 
 

@@ -531,18 +531,23 @@ void MakeModel()
 
 void MakeTxture()
 {
-    GLuint defaultTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\default.png");
+    GLuint defaultTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\default.bmp");
     GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\1.png");
-
+    GLuint lightTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\light.bmp");
+   
+    //初始化参数
     std::vector<GLuint> pic;
+    //加载默认纹理
     pic.push_back(defaultTexture);
-
     TextureDic["default"] = pic;
+    //加载蝴蝶纹理
     pic.clear();
     pic.push_back(picTexture);
-
     TextureDic["butterfly"] = pic;
-
+    //加载光源纹理
+    pic.clear();
+    pic.push_back(lightTexture);
+    TextureDic["light"] = pic;
 }
 
 void MakeFronts()

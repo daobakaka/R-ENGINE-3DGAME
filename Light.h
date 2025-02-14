@@ -27,7 +27,8 @@ namespace Game {
         glm::vec3 direction;
         glm::vec3 color;
         float intensity;
-        float cutoff;        // 聚光角度
+        //聚光角弧度
+        float cutoff;       
     };
 
     class LightSpawner {
@@ -44,8 +45,6 @@ namespace Game {
         CustomParallelLight SpawParallelLight(glm::vec3 direction = glm::vec3(1.0f, 1.0f, 1.0f),
             glm::vec3 color = glm::vec3(1.0f),
             float intensity = 10.0f);
-
-
         // 创建手电筒光（聚光灯），默认位置为 (1, 1, 1)，默认方向指向原点
         CustomFlashLight SpawFlashLight(
             glm::vec3 position = glm::vec3(1.0f, 1.0f, 1.0f),
@@ -55,6 +54,14 @@ namespace Game {
             float cutoff = cos(glm::radians(12.5f))
         );
 
+        //平行光控制器
+        void ParalletLightController(glm::vec3 dirction=glm::vec3(-1), glm::vec3 color = glm::vec3(1), float intensity = 10.0f);
+        //点光源控制器，目前支持4个
+        void PointLightController( glm::vec3 color = glm::vec3(1), float intensity = 1.0f,int lightNumber=0);
+        //手电筒光控制器，目前支持4个
+        void FlashLightController(glm::vec3 dirction = glm::vec3(-1), glm::vec3 color = glm::vec3(1), float intensity = 20.0f,float cutoff=12.5f,int lightNumber=0);
+
+
         // 获取所有点光源的容器,前置const 防止拷贝，后置const 确保外部对象调用该方法，对象本身可以是const类型，拓宽范围
         const std::vector<CustomPointLight>& GetPointLights() const { return pointLights; }
 
@@ -63,6 +70,9 @@ namespace Game {
 
         // 获取所有手电筒光的容器
         const std::vector<CustomFlashLight>& GetFlashLights() const { return flashLights; }
+
+        //是否开灯光模型标识
+        bool modelIdentification;
 
     private:
         LightSpawner();
@@ -76,6 +86,7 @@ namespace Game {
         std::vector<CustomFlashLight> flashLights;
 
         static LightSpawner* instance;
+       
     };
 
     class LightRender {
@@ -93,6 +104,7 @@ namespace Game {
         LightRender& operator=(const LightRender&) = delete;
 
         static LightRender* instance;
+       
 
     };
 

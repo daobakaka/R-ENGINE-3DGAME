@@ -60,6 +60,40 @@ const char* axisFragmentShaderSource = R"(
     }
 )";
 
+
+
+/// <summary>
+/// 射线着色器
+/// </summary>
+const char* rayVertexShaderSource = R"(
+#version 450 core
+layout (location = 0) in vec3 aPos;  // 顶点位置
+
+uniform mat4 model;       // 模型变换矩阵
+uniform mat4 view;        // 视图矩阵
+uniform mat4 projection;  // 投影矩阵
+
+void main()
+{
+    // 标准 MVP 变换
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+}
+)";
+const char* rayFragmentShaderSource = R"(
+#version 450 core
+out vec4 FragColor;
+
+// 射线颜色由 baseColor 控制，如果未传则默认(0.1,0.1,0.1)
+uniform vec3 baseColor;
+
+void main()
+{
+    // 如果 baseColor == vec3(0.0), 默认用(0.1,0.1,0.1)
+    vec3 colorUsed = (baseColor == vec3(0.0)) ? vec3(1, 1, 1) : baseColor;
+    
+    FragColor = vec4(colorUsed, 1.0);
+}
+)";
 /// <summary>
 /// 基础光照着色器
 /// </summary>
@@ -276,9 +310,11 @@ uniform sampler2D texture1;  // 纹理采样器
 
 void main()
 {
-    // 使用 all(equal(...)) 判断 emission 和 baseColor 是否全为 0
-    vec3 emissionDefault = (all(equal(emission, vec3(0.0)))) ? vec3(0.1) : emission;
-    vec3 colorToUse = (all(equal(baseColor, vec3(0.0)))) ? vec3(0.1, 0.1, 0.1) : baseColor;
+    // 自发光默认值(可选逻辑)
+    vec3 emissionDefault = (emission == vec3(0.0)) ? vec3(0.1) : emission;
+
+    // 如果 baseColor 没设置，默认给一个大概颜色
+    vec3 colorToUse = (baseColor == vec3(0.0)) ? vec3(0.1, 0.1, 0.1) : baseColor;
 
     vec3 norm = normalize(Normal);
 
@@ -310,7 +346,7 @@ void main()
         // 环境光贡献
         ambientTotal += 0.1 * parallelLightColor;
         
-        // 对于方向光，我们假设光线方向为 parallelLightDirection（如果需要从光源指向场景，请使用 -parallelLightDirection）
+        // 对于方向光，假设光线方向为 parallelLightDirection（如果需要从光源指向场景，请使用 -parallelLightDirection）
         vec3 lightDir = normalize(-parallelLightDirection);
         float diff = max(dot(norm, lightDir), 0.0);
         diffuseTotal += diff * parallelLightColor * parallelLightIntensity;
@@ -378,21 +414,78 @@ void main() {
 }
 )";
 
-const char* noneLightcubeFragmentShaderSource = R"(
+const char* noneLightFragmentShaderSource = R"(
 #version 450 core
+
 out vec4 FragColor;
 
-in vec2 TexCoord;  // 从顶点着色器接收的纹理坐标
-in vec3 FragPos;   // 从顶点着色器接收的片段位置
+in vec2 TexCoord;   // 从顶点着色器接收的纹理坐标
+in vec3 FragPos;    // 从顶点着色器接收的片段位置
 
-vec3 baseColor = vec3(0.1, 0.1, 0.1);  // 使用vec3
-
+uniform vec3 baseColor;      // 可以当作模型的固有色
 uniform sampler2D texture1;  // 纹理
 
+void main()
+{
+    // 如果 baseColor == (0,0,0)，则默认使用(0.1, 0.1, 0.1)
+    // 注意：对向量进行 == 比较在 GLSL 4.5 中是允许的，但如果要判断是否近似为零，可以改用 length(baseColor) < 1e-6 等。
+    vec3 colorToUse = (baseColor == vec3(0.0)) ? vec3(0.1, 0.1, 0.1) : baseColor;
+
+    // 无需把 baseColor 加到纹理颜色，可改为乘法叠加
+    FragColor = (texture(texture1, TexCoord) + vec4(colorToUse, 1.0)) ;
+} 
+)";
+/// <summary>
+/// 无光照光源渲染着色器
+/// </summary>
+const char* noneLightLightVertexShaderSource = R"(
+#version 450 core
+layout(location = 0) in vec3 aPos;   // 顶点位置
+layout(location = 1) in vec2 aTexCoord;   // 纹理坐标 
+layout(location = 2) in vec3 aNormal;   // 法线
+//这里对应初始化时，设置的顶点属性
+out vec2 TexCoord;  // 传递给片段着色器的纹理坐标
+out vec3 FragPos;   // 传递给片段着色器的片段位置
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
 void main() {
-    FragColor = texture(texture1, TexCoord)+vec4(baseColor,1.0);
+    FragPos = vec3(model * vec4(aPos, 1.0));
+    TexCoord = aTexCoord;
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
 )";
+
+const char* noneLightLightFragmentShaderSource = R"(
+#version 450 core
+
+out vec4 FragColor;
+
+in vec2 TexCoord;   // 从顶点着色器接收的纹理坐标
+in vec3 FragPos;    // 从顶点着色器接收的片段位置
+
+uniform vec3 baseColor;      // 可以当作模型的固有色
+uniform sampler2D texture1;  // 纹理
+uniform float lightIntensity; // 光强度可视化
+uniform float lightDirection;//光照方向，暂时不用
+void main()
+{
+    // 如果 baseColor == (0,0,0)，则默认使用(0.1, 0.1, 0.1)
+    // 注意：对向量进行 == 比较在 GLSL 4.5 中是允许的，但如果要判断是否近似为零，可以改用 length(baseColor) < 1e-6 等。
+    vec3 colorToUse = (baseColor == vec3(0.0)) ? vec3(0.1, 0.1, 0.1) : baseColor;
+
+    // 如果 lightIntensity==0，则默认值为0.1
+    float tempIntensity = (lightIntensity == 0.0) ? 0.1f : lightIntensity;
+
+    // 纹理取样 + baseColor，再乘以光强度
+    // 无需把 baseColor 加到纹理颜色，可改为乘法叠加
+    FragColor = (texture(texture1, TexCoord) *vec4(colorToUse, 1.0))* 0.5f* tempIntensity;
+} 
+)";
+
+
 /// <summary>
 /// 字体渲染着色器
 /// </summary>
