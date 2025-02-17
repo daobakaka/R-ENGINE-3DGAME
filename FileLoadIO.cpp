@@ -534,6 +534,7 @@ void MakeTxture()
     GLuint defaultTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\default.bmp");
     GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\1.png");
     GLuint lightTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\light.bmp");
+    GLuint skyboxTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\front.jpg");
    
     //初始化参数
     std::vector<GLuint> pic;
@@ -544,10 +545,14 @@ void MakeTxture()
     pic.clear();
     pic.push_back(picTexture);
     TextureDic["butterfly"] = pic;
-    //加载光源纹理
+    //加载光源点渲染纹理
     pic.clear();
     pic.push_back(lightTexture);
     TextureDic["light"] = pic;
+    //加载天空盒
+    pic.clear();
+    pic.push_back(skyboxTexture);
+    TextureDic["skybox"] = pic;
 }
 
 void MakeFronts()

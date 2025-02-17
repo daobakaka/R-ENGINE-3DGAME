@@ -4,8 +4,8 @@
 #include <iostream>
 #include "Monster.h"
 #include <vector>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <GL/glew.h>//加载Opengl扩展，
+#include <GLFW/glfw3.h>//创建Opengl扩展，以及管理Opengl上下文
 #include "Cube.h"
 #include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
 #include "Test.h"
@@ -128,13 +128,22 @@ int GLins() {
             std::cerr << "Failed to create OpenGL window!" << std::endl;
             return -1;
         }
-        glfwMakeContextCurrent(window);
+        //初始化
+        glfwMakeContextCurrent(window);//设置当前绘制的上下文环境，即当前窗体
 
         GLenum glewInitResult = glewInit();
+
+    
+        //设置Opengl使用版本，4.5
+       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+        //设置OpenGL渲染模式，核心模式，非立即渲染,这个添加了之后貌似不卡了
+       glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         if (GLEW_OK != glewInitResult) {
             std::cerr << "Error initializing GLEW: " << glewGetErrorString(glewInitResult) << std::endl;
             return -1;
         }
+      
 
         // 获取窗口尺寸
         glfwGetWindowSize(window, &controller->windowWidth, &controller->windowHeight);
@@ -170,8 +179,7 @@ int GLins() {
      // coroutine->StartSpawnButterfliesAsync(manager);
      // std::thread spawnThread(coroutine->StartSpawnButterfliesAsync);
      // 
-     
-     
+        auto* skybox = new Cube(TextureDic["skybox"][0]);
 
         CustomModel* baseCube = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCube"], false, true);
         baseCube->SetVariant(ModelClass::CubeTestE);
@@ -240,7 +248,7 @@ int GLins() {
         auto pointLight4= lightSpawner->SpawPointLight(glm::vec3(0, 0, 3), glm::vec3(0, 0, 1), 2);
         
         //平行光使用灯光生成器生成，默认一个
-        auto parallelLight = lightSpawner->SpawParallelLight(glm::vec3(-1),glm::vec3(1,1,0),5);//使用默认值 强度10
+        auto parallelLight = lightSpawner->SpawParallelLight(glm::vec3(-1),glm::vec3(1,1,1),5);//使用默认值 强度10
         //手电筒光使用灯光生成器生成，默认支持4个
         auto splashLight = lightSpawner->SpawFlashLight(glm::vec3(0,5,-2),glm::vec3(0,-1,0));//使用默认值 强度10
 #pragma endregion
@@ -271,6 +279,7 @@ int GLins() {
        // newCube1->position += glm::vec3(0.0f, 0.0f, -0.01f);
       //  newCube1->rotation *= glm::quat(glm::vec3(0.0f, 0.01f, 0.0f));  
 
+        
         //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
         for (CustomModel * item : manager->GetNativeObjects()) {
             //将多光源照射效果封装在 灯光渲染器中.如果是光照shader，则需要加入这一段代码，引入光照渲染，如果不是则不需要
@@ -316,16 +325,11 @@ int GLins() {
                 item->UpdateVariant(view, projection);
                 item->PlayAnimation(0, 0.1f);
                 
-
-        
-
-
             }
             else if (item->GetVariant() == ModelClass::LightColorTestCube)
             {
               
-              
-
+             
             }
         }
         //3.变体方法，类似于手动撰写脚本来实现，须在初始化时，注册脚本变体,通用脚本方法有一定局限性，变体方法后续还会使用
@@ -337,6 +341,7 @@ int GLins() {
       //  LDmodel->PlayAnimation(0,0.1f);
         //基础方法，运行场景的自动更新,包含transform更新和绘制更新
         manager->UpdateAll(view, projection);
+        skybox->Draw(view, projection);//渲染天空盒
         //变体方法，自动化脚本，目前,同第三条一样暂时弃用之
       //  manager->UpdateAllVariant(view, projection);
        // cusText->RenderText("abcdefghijklmnopqrstuvwxyz1234567890 *+!@#$%^&*(){}[];:''<>", 100.0f,1500.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));

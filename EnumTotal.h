@@ -17,6 +17,7 @@ namespace Game {
 		PointLight,//点光源
 		FlashLight,//手电筒
 		ParallelLight,//平行光
+		Skybox,//天空盒
 		
 	};
 

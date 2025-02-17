@@ -71,8 +71,6 @@ namespace Game {
         //加载物体texture
         virtual bool AttachTexture(GLuint name,int order);
 
-        // 
-
         //--mono 方法基础性重写
         virtual void Start() override;//事实上 unity 中的awake 或者enable就是构造的位置，所以start 在其后面
         // virtual void Update() override;//更新方法和每个模型的 顶点相关联，所以在具体的模型类中进行重写

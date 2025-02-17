@@ -67,5 +67,11 @@
 ！渲染逻辑
 添加光源引导：点光源模型、手电筒模型、平行光模型  --LightModel
 
-!  渲染逻辑
+！渲染逻辑
 添加光源控制：SpawnerLight -- ParallelController FlashLightController PointLightController
+
+！渲染逻辑
+添加光源衰减：Shader 距离平方衰减，默认衰减因子1 --1/(1+(s*distance*distance))
+
+！渲染逻辑
+增加天空盒：Cube --场景天空盒渲染，以前的测试模型，现在专用于天空盒渲染

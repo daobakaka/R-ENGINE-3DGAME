@@ -1,8 +1,10 @@
 #pragma once
 #include "Cube.h"
+#include "stb_image.h"
 using namespace Game;
 
-
+extern const char* skyboxVertexShaderSource;
+extern const char* skyboxFragmentShaderSource;
 Cube::Cube(const char* vertexShaderSourceIn, const  char* fragmentShaderSourceIn) {
     
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -91,29 +93,122 @@ Cube::Cube(const char* vertexShaderSourceIn, const  char* fragmentShaderSourceIn
     //整体流程--1.创建shander 2.编译shader 3.创建shader项目 4 加载shader到shader项目并链接  3.将数据加载到帧缓冲区 4.告诉OPENGL/显卡， 帧缓冲区数据的绘制规则 5 解绑VAO，防止串改
 
 }
+/// <summary>
+///新构建的构造函数，skybox 专用
+/// </summary>
+/// <param name="textureName"></param>
+Game::Cube::Cube(GLuint textureName)
+{
+    _ifCubeMap = true;//构造天空盒标识
+    _cubeMapID = textureName;
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &skyboxVertexShaderSource, nullptr);
+    glCompileShader(vertexShader);
+    CheckShaderCompilation(vertexShader);
 
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &skyboxFragmentShaderSource, nullptr);
+    glCompileShader(fragmentShader);
+    CheckShaderCompilation(fragmentShader);
+
+    //这里就是传入两个shader  一个顶点 一个片元，然后对代码的两个shader 进行编译 glcompileShaer,后面一个自定义检查方法，检查shader编译是否成功，nullptr 
+    //C风格的字符串以\0结尾,中间的数字1，代表字符串数组的资源数量 ，当前1个如果有多个则为const GLchar* sources[] = { source1, source2 }; glShaderSource(shader, 2, sources, nullptr);
+
+    shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+    CheckShaderProgramLinking(shaderProgram);  // 检查着色器程序是否链接成功，这也是一个自定义的方法，这里代表将创建的shader 附加到项目中，并且链接到项目程序中
+
+    glUseProgram(shaderProgram);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    //这一步完成之后，就可以使用这个项目了，同时也可以删除顶点和片元着色器，
+
+    glGenVertexArrays(1, &_skyboxVAO);
+    glGenBuffers(1, &_skyboxVBO);
+    glBindVertexArray(_skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, _skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(_skyboxVertices), _skyboxVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
+
+    glGenTextures(1, &_cubeMapID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, _cubeMapID);
+
+    GLint width, height;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+
+    for (GLuint i = 0; i < 6; i++) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+}
+ /// <summary>
+ /// CUBE 类现在为天空盒专用
+ /// </summary>
+ /// <param name="view"></param>
+ /// <param name="projection"></param>
+ /// <returns></returns>
  bool Cube::Draw(glm::mat4 view, glm::mat4 projection )//！继承的纯虚方法的实现，不用再加override关键字
  {
+     if (_ifCubeMap)
+     {
+         glDepthMask(GL_FALSE);//关闭深度测试，天空盒永远在物体后面进行渲染
+         glUseProgram(shaderProgram);
+         glBindVertexArray(_skyboxVAO);
+         view = glm::mat4(glm::mat3(view));  // 去除平移
 
-     size_t indicesLength = sizeof(indices) / sizeof(indices[0]);
+         GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
+         GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
+         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-     glUseProgram(shaderProgram);
+         // 激活纹理单元并绑定立方体纹理
+         glActiveTexture(GL_TEXTURE0);  // 激活纹理单元 0
+         glBindTexture(GL_TEXTURE_CUBE_MAP, _cubeMapID);  // 绑定立方体纹理
 
-     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
-     GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
-     GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-     //这里是对 三个定义的 参数进行抓取，在shaderProgram 里面，这个参数是写在对应的shader里面进行定义的
-     glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
-     glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
-     glUniformMatrix4fv(projectionLoc, 1, 0, glm::value_ptr(projection));
-     //这里的glm是一个常用的数学库，专门用与图形的矩阵操作，这里就充分诠释了 CPU之负责传输数据，GPU 来负责传输图形，
-     // shader语言里面 使用 gl_Position = projection * view * model * vec4(aPos, 1.0f);进行渲染计算 
-     glBindVertexArray(VAO);
-     //绑定顶点数组对象（VAO），激活与 VAO 关联的顶点缓冲对象（VBO）和索引缓冲对象（EBO）。
-     //保存顶点属性的配置，例如位置、颜色、法线、纹理坐标等，与 VBO 和 EBO 关联，用于存储顶点数据和绘制索引。
-     glDrawElements(GL_TRIANGLES, indicesLength, GL_UNSIGNED_INT, 0);
-     //索引数组存储在 EBO（Element Buffer Object）中，EBO 已绑定到 VAO，三角形，36个索引，无符号整形数组，由0开始
-     glBindVertexArray(0);
+         // 将纹理单元 0 传递给片段着色器中的 skybox
+         GLint skyboxLoc = glGetUniformLocation(shaderProgram, "skybox");
+         glUniform1i(skyboxLoc, 0);  // 绑定到纹理单元 0
+
+         // 绘制天空盒
+         glDrawArrays(GL_TRIANGLES, 0, 36);  // 绘制六个面（36个顶点）
+         glDepthMask(GL_TRUE);
+     }
+     else
+     {
+         size_t indicesLength = sizeof(indices) / sizeof(indices[0]);
+
+         glUseProgram(shaderProgram);
+
+         GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+         GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
+         GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+         //这里是对 三个定义的 参数进行抓取，在shaderProgram 里面，这个参数是写在对应的shader里面进行定义的
+         glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
+         glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
+         glUniformMatrix4fv(projectionLoc, 1, 0, glm::value_ptr(projection));
+         //这里的glm是一个常用的数学库，专门用与图形的矩阵操作，这里就充分诠释了 CPU之负责传输数据，GPU 来负责传输图形，
+         // shader语言里面 使用 gl_Position = projection * view * model * vec4(aPos, 1.0f);进行渲染计算 
+         glBindVertexArray(VAO);
+         //绑定顶点数组对象（VAO），激活与 VAO 关联的顶点缓冲对象（VBO）和索引缓冲对象（EBO）。
+         //保存顶点属性的配置，例如位置、颜色、法线、纹理坐标等，与 VBO 和 EBO 关联，用于存储顶点数据和绘制索引。
+         glDrawElements(GL_TRIANGLES, indicesLength, GL_UNSIGNED_INT, 0);
+         //索引数组存储在 EBO（Element Buffer Object）中，EBO 已绑定到 VAO，三角形，36个索引，无符号整形数组，由0开始
+         glBindVertexArray(0);
+
+     }
 
      return true;
 }
@@ -149,5 +244,7 @@ bool Cube::AttachTexture(GLuint textureName, int order)
 {
     return false;
 }
+
+
 
 

@@ -2,6 +2,7 @@
 #define CUBE_H
 #include "GameObject.h"
 
+
 namespace Game {
     class Cube : public GameObject
     {
@@ -21,20 +22,6 @@ namespace Game {
              0.5f,  0.5f,  0.5f,
             -0.5f,  0.5f,  0.5f
         };
-        //这种顶点就未包含颜色数，建议采用这种，但是后面的色彩初始化代码也应该进行相应的更改
-        //GLfloat vertices[216] = {
-        //    // 位置                // 颜色
-        //    -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, // 前面
-        //     0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-        //     0.5f,  0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
-        //    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
-
-        //    -0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 1.0f, // 后面
-        //     0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
-        //     0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f,
-        //    -0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.5f
-        //};
-        //OPENGL 里面 顶点其实是float 6类型 储存了位置和颜色数据
         GLuint indices[36] = {
             0, 1, 2, 2, 3, 0,  // 前面
             4, 5, 6, 6, 7, 4,  // 后面
@@ -47,6 +34,9 @@ namespace Game {
 
         Cube(const char* vertexShaderSourceIn, const  char* fragmentShaderSourceIn);
         //--继承GameObject 的声明
+        Cube(GLuint textureName);
+
+
         bool Draw(glm::mat4 view, glm::mat4 projection) override;//C++ 中对虚方法的重写，override 关键字加在方法后面，这一特征包括consnt等
         bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;
         ~Cube();
@@ -54,6 +44,68 @@ namespace Game {
         void Update(glm::mat4 view, glm::mat4 projection) override;
         void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
         virtual bool AttachTexture(GLuint textureName, int order) override;
+
+
+
+    protected:
+        GLuint _cubeMapID;
+        GLuint _skyboxVAO;
+        GLuint _skyboxVBO;
+        bool _ifCubeMap = false;
+        GLfloat _skyboxVertices[108] = {
+            // 顶点坐标
+            // 前面
+            -1.0f,  1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f,
+             1.0f, -1.0f, -1.0f,
+             1.0f, -1.0f, -1.0f,
+             1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            // 后面
+            -1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            // 左面
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f,
+
+            // 右面
+             1.0f, -1.0f, -1.0f,
+             1.0f, -1.0f,  1.0f,
+             1.0f,  1.0f,  1.0f,
+             1.0f,  1.0f,  1.0f,
+             1.0f,  1.0f, -1.0f,
+             1.0f, -1.0f, -1.0f,
+
+             // 上面
+             -1.0f,  1.0f, -1.0f,
+             -1.0f,  1.0f,  1.0f,
+              1.0f,  1.0f,  1.0f,
+              1.0f,  1.0f,  1.0f,
+              1.0f,  1.0f, -1.0f,
+             -1.0f,  1.0f, -1.0f,
+
+             // 下面
+             -1.0f, -1.0f, -1.0f,
+             -1.0f, -1.0f,  1.0f,
+              1.0f, -1.0f, -1.0f,
+              1.0f, -1.0f, -1.0f,
+             -1.0f, -1.0f,  1.0f,
+              1.0f, -1.0f,  1.0f
+        };
+
+
+
+
     };
 }
 #endif // CUBE_H
