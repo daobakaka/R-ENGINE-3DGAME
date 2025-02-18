@@ -97,10 +97,9 @@ Cube::Cube(const char* vertexShaderSourceIn, const  char* fragmentShaderSourceIn
 ///新构建的构造函数，skybox 专用
 /// </summary>
 /// <param name="textureName"></param>
-Game::Cube::Cube(GLuint textureName)
+Game::Cube::Cube()
 {
     _ifCubeMap = true;//构造天空盒标识
-    _cubeMapID = textureName;
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &skyboxVertexShaderSource, nullptr);
     glCompileShader(vertexShader);
@@ -135,23 +134,16 @@ Game::Cube::Cube(GLuint textureName)
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 
-    glGenTextures(1, &_cubeMapID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, _cubeMapID);
+    std::vector<std::string> faces = {
+        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/right.jpg",  // 右面
+        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/left.jpg",   // 左面
+        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/top.jpg",    // 上面
+        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/bottom.jpg", // 下面
+        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/front.jpg",  // 前面
+        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/back.jpg"    // 后面
+    };
 
-    GLint width, height;
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-
-    for (GLuint i = 0; i < 6; i++) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    }
-
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    LoadCubemap(faces);//天空盒的CUBEMAP 采用 专有的加载方式
 
 }
  /// <summary>
@@ -166,6 +158,14 @@ Game::Cube::Cube(GLuint textureName)
      {
          glDepthMask(GL_FALSE);//关闭深度测试，天空盒永远在物体后面进行渲染
          glUseProgram(shaderProgram);
+         // 激活纹理单元并绑定立方体纹理
+         glActiveTexture(GL_TEXTURE0);  // 激活纹理单元 0
+        // glBindTexture(GL_TEXTURE_2D, _cubeMapID);  // 绑定立方体纹理
+         glBindTexture(GL_TEXTURE_CUBE_MAP, _cubeMapID);//
+         // 将纹理单元 0 传递给片段着色器中的 skybox
+         GLint skyboxLoc = glGetUniformLocation(shaderProgram, "skybox");
+         glUniform1i(skyboxLoc, 0);  // 绑定到纹理单元 0
+
          glBindVertexArray(_skyboxVAO);
          view = glm::mat4(glm::mat3(view));  // 去除平移
 
@@ -173,14 +173,6 @@ Game::Cube::Cube(GLuint textureName)
          GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
          glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
          glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-         // 激活纹理单元并绑定立方体纹理
-         glActiveTexture(GL_TEXTURE0);  // 激活纹理单元 0
-         glBindTexture(GL_TEXTURE_CUBE_MAP, _cubeMapID);  // 绑定立方体纹理
-
-         // 将纹理单元 0 传递给片段着色器中的 skybox
-         GLint skyboxLoc = glGetUniformLocation(shaderProgram, "skybox");
-         glUniform1i(skyboxLoc, 0);  // 绑定到纹理单元 0
 
          // 绘制天空盒
          glDrawArrays(GL_TRIANGLES, 0, 36);  // 绘制六个面（36个顶点）
@@ -243,6 +235,37 @@ void Cube::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 bool Cube::AttachTexture(GLuint textureName, int order)
 {
     return false;
+}
+
+void Game::Cube::LoadCubemap(std::vector<std::string> &faces)
+{
+    glGenTextures(1, &_cubeMapID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, _cubeMapID);
+
+    int width, height, nrChannels;
+    for (GLuint i = 0; i < faces.size(); i++)
+    {
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+
+
 }
 
 

@@ -5,6 +5,7 @@
 #include "LifecycleManager.h"
 #include "ScriptModel.h"
 #include "MeshDataManager.h"
+#include <algorithm>  // 包含 std::sort
 
 using namespace Game;
 
@@ -59,13 +60,13 @@ CustomPointLight LightSpawner::SpawPointLight(glm::vec3 position, glm::vec3 colo
         pointLightPtr->SteLightParameters(color, intensity);
     }
 
-   
+
     return pointLight;
 }
 
 CustomParallelLight LightSpawner::SpawParallelLight(glm::vec3 direction, glm::vec3 color, float intensity) {
-   
-    
+
+
     parallelLight.direction = glm::normalize(direction);
     parallelLight.color = color;
     parallelLight.intensity = intensity;
@@ -94,7 +95,7 @@ CustomFlashLight LightSpawner::SpawFlashLight(glm::vec3 position, glm::vec3 dire
     flashLight.color = color;
     flashLight.intensity = intensity;
     flashLight.cutoff = cutoff;
-    if (flashLights.size()<4)
+    if (flashLights.size() < 4)
     {
         flashLights.push_back(flashLight);
     }
@@ -166,8 +167,8 @@ void Game::LightSpawner::ParalletLightController(glm::vec3 dirction, glm::vec3 c
 
     // 5) 写回并归一化
     parallelLight.direction = glm::normalize(glm::vec3(newDir));
-   /* parallelLight.color = color;
-    parallelLight.intensity = intensity;*/
+    /* parallelLight.color = color;
+     parallelLight.intensity = intensity;*/
 
 }
 
@@ -177,7 +178,7 @@ void Game::LightSpawner::PointLightController(glm::vec3 color, float intensity, 
     pointLights[lightNumber].intensity = intensity;
 }
 
-void Game::LightSpawner::FlashLightController(glm::vec3 dirction, glm::vec3 color, float intensity, float cutoff,int lightNumber)
+void Game::LightSpawner::FlashLightController(glm::vec3 dirction, glm::vec3 color, float intensity, float cutoff, int lightNumber)
 {
     flashLights[lightNumber].direction = dirction;
     flashLights[lightNumber].color = color;
@@ -210,76 +211,119 @@ LightRender::~LightRender() {
     // 如有必要进行资源清理
 }
 
-void LightRender::RenderLights(GLuint shaderProgram, const Controller* controllerPtr, const Game::LightSpawner* spawnerPtr) {
+void LightRender::RenderLights(GLuint shaderProgram, const Controller* controllerPtr, const Game::LightSpawner* spawnerPtr, glm::vec3 position) {
     if (!controllerPtr || !spawnerPtr) return; // 简单检查指针有效性
 
-     glUseProgram(shaderProgram);
-     // 获取摄像机数据：直接用 controller->front
-        GLuint viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
-        glm::vec3 viewP = glm::vec3(controllerPtr->front); // 假设 controller->front 是一个可直接使用的向量
-        glUniform3f(viewPosLoc, viewP.x, viewP.y, viewP.z);
-
+    glUseProgram(shaderProgram);
 
     // 2. 点光源数据
     const auto& pointLights = spawnerPtr->GetPointLights();
-    for (int i = 0; i < 4; i++) {
-        std::string posName = "lightPos[" + std::to_string(i) + "]";
-        std::string colorName = "lightColor[" + std::to_string(i) + "]";
-        std::string intensityName = "lightIntensity[" + std::to_string(i) + "]";
-        GLuint posLoc = glGetUniformLocation(shaderProgram, posName.c_str());
-        GLuint colorLoc = glGetUniformLocation(shaderProgram, colorName.c_str());
-        GLuint intensityLoc = glGetUniformLocation(shaderProgram, intensityName.c_str());
+    std::vector<std::pair<float, int>> pointLightDistances;  // 存储每个点光源到物体的距离平方和索引
 
-        if (i < pointLights.size()) {
-            const auto& light = pointLights[i];
-            glUniform3fv(posLoc, 1, glm::value_ptr(light.position));
-            glUniform3fv(colorLoc, 1, glm::value_ptr(light.color));
-            glUniform1f(intensityLoc, light.intensity);
-        }
-        else {
-            glUniform3f(posLoc, 0.0f, 0.0f, 0.0f);
-            glUniform3f(colorLoc, 0.0f, 0.0f, 0.0f);
-            glUniform1f(intensityLoc, 0.0f);
+    glm::vec3 objectPosition = position;  // 使用物体的当前位置作为参考
+
+    // 遍历点光源计算距离平方，并且筛选出距离小于等于 100 的光源
+    for (int i = 0; i < pointLights.size(); i++) {
+        const auto& light = pointLights[i];
+        float distanceSquared = glm::dot(objectPosition - light.position, objectPosition - light.position);
+        if (distanceSquared <= 100.0f) {  // 只选择距离平方小于等于 100 的光源
+            pointLightDistances.push_back({ distanceSquared, i });
         }
     }
 
+    // 按照距离平方升序排序
+    std::sort(pointLightDistances.begin(), pointLightDistances.end(), [](const std::pair<float, int>& a, const std::pair<float, int>& b) {
+        return a.first < b.first;  // 按照距离平方升序排序
+        });
+     //不能动态传入数组数量，shader里面不支持，数组索引需写死，但是可以通过常量来约束 
+    GLuint numPointLightsLoc = glGetUniformLocation(shaderProgram, "numPointLights");
+    glUniform1i(numPointLightsLoc, std::min(static_cast<int>(pointLightDistances.size()), 4));
+
+    // 只选择最近的 4 个点光源
+    for (int i = 0; i < std::min(4, static_cast<int>(pointLightDistances.size())); i++) {
+        int index = pointLightDistances[i].second;  // 获取最近的点光源的索引
+        const auto& light = pointLights[index];
+
+        // 计算距离平方并传递到 shader
+        float distanceSquared = pointLightDistances[i].first;
+
+        std::string posName = "lightPos[" + std::to_string(i) + "]";
+        std::string colorName = "lightColor[" + std::to_string(i) + "]";
+        std::string intensityName = "lightIntensity[" + std::to_string(i) + "]";
+        std::string distanceSquaredName = "lightDistanceSquared[" + std::to_string(i) + "]"; // 新增变量
+
+        GLuint posLoc = glGetUniformLocation(shaderProgram, posName.c_str());
+        GLuint colorLoc = glGetUniformLocation(shaderProgram, colorName.c_str());
+        GLuint intensityLoc = glGetUniformLocation(shaderProgram, intensityName.c_str());
+        GLuint distanceSquaredLoc = glGetUniformLocation(shaderProgram, distanceSquaredName.c_str()); // 获取距离平方位置
+
+        glUniform3fv(posLoc, 1, glm::value_ptr(light.position));
+        glUniform3fv(colorLoc, 1, glm::value_ptr(light.color));
+        glUniform1f(intensityLoc, light.intensity);
+        glUniform1f(distanceSquaredLoc, distanceSquared);  // 传递距离平方
+    }
+
     // 3. 平行光数据
+    // 平行光不使用距离判断，直接渲染
     Game::CustomParallelLight parallelLight = spawnerPtr->GetParallelLight();
     GLint parallelDirLoc = glGetUniformLocation(shaderProgram, "parallelLightDirection");
     GLint parallelColorLoc = glGetUniformLocation(shaderProgram, "parallelLightColor");
     GLint parallelIntensityLoc = glGetUniformLocation(shaderProgram, "parallelLightIntensity");
+
     glUniform3fv(parallelDirLoc, 1, glm::value_ptr(parallelLight.direction));
     glUniform3fv(parallelColorLoc, 1, glm::value_ptr(parallelLight.color));
     glUniform1f(parallelIntensityLoc, parallelLight.intensity);
 
     // 4. 手电筒（聚光灯）数据
     const auto& flashLights = spawnerPtr->GetFlashLights();
-    for (int j = 0; j < 4; j++) {
+    std::vector<std::pair<float, int>> flashLightDistances;  // 存储每个聚光灯到物体的距离平方和索引
+
+    // 遍历聚光灯计算距离平方，并且筛选出距离小于等于 100 的聚光灯
+    for (int j = 0; j < flashLights.size(); j++) {
+        const auto& flash = flashLights[j];
+        float distanceSquared = glm::dot(objectPosition - flash.position, objectPosition - flash.position);
+        if (distanceSquared <= 100.0f) {  // 只选择距离小于等于 100 的聚光灯
+            flashLightDistances.push_back({ distanceSquared, j });
+        }
+    }
+
+    // 按照距离平方升序排序
+    std::sort(flashLightDistances.begin(), flashLightDistances.end(), [](const std::pair<float, int>& a, const std::pair<float, int>& b) {
+        return a.first < b.first;  // 按照距离平方升序排序
+        });
+
+    GLuint numFlashLightsLoc = glGetUniformLocation(shaderProgram, "numFlashLights");
+    glUniform1i(numFlashLightsLoc, std::min(static_cast<int>(flashLightDistances.size()), 4));
+
+    // 只选择最近的 4 个聚光灯
+    for (int j = 0; j < std::min(4, static_cast<int>(flashLightDistances.size())); j++) {
+        int index = flashLightDistances[j].second;  // 获取最近的聚光灯的索引
+        const auto& flash = flashLights[index];
+
+        // 计算距离平方并传递到 shader
+        float distanceSquared = flashLightDistances[j].first;
+
         std::string flashPosName = "flashLightPos[" + std::to_string(j) + "]";
         std::string flashDirName = "flashLightDirection[" + std::to_string(j) + "]";
         std::string flashColorName = "flashLightColor[" + std::to_string(j) + "]";
         std::string flashIntensityName = "flashLightIntensity[" + std::to_string(j) + "]";
         std::string flashCutoffName = "flashLightCutoff[" + std::to_string(j) + "]";
+        std::string flashDistanceSquaredName = "flashLightDistanceSquared[" + std::to_string(j) + "]"; // 新增变量
+
         GLuint flashPosLoc = glGetUniformLocation(shaderProgram, flashPosName.c_str());
         GLuint flashDirLoc = glGetUniformLocation(shaderProgram, flashDirName.c_str());
         GLuint flashColorLoc = glGetUniformLocation(shaderProgram, flashColorName.c_str());
         GLuint flashIntensityLoc = glGetUniformLocation(shaderProgram, flashIntensityName.c_str());
         GLuint flashCutoffLoc = glGetUniformLocation(shaderProgram, flashCutoffName.c_str());
+        GLuint flashDistanceSquaredLoc = glGetUniformLocation(shaderProgram, flashDistanceSquaredName.c_str()); // 获取距离平方位置
 
-        if (j < flashLights.size()) {
-            const auto& flash = flashLights[j];
-            glUniform3fv(flashPosLoc, 1, glm::value_ptr(flash.position));
-            glUniform3fv(flashDirLoc, 1, glm::value_ptr(flash.direction));
-            glUniform3fv(flashColorLoc, 1, glm::value_ptr(flash.color));
-            glUniform1f(flashIntensityLoc, flash.intensity);
-            glUniform1f(flashCutoffLoc, flash.cutoff);
-        }
-        else {
-            glUniform3f(flashPosLoc, 0.0f, 0.0f, 0.0f);
-            glUniform3f(flashDirLoc, 0.0f, 0.0f, 0.0f);
-            glUniform3f(flashColorLoc, 0.0f, 0.0f, 0.0f);
-            glUniform1f(flashIntensityLoc, 0.0f);
-            glUniform1f(flashCutoffLoc, 0.0f);
-        }
+        glUniform3fv(flashPosLoc, 1, glm::value_ptr(flash.position));
+        glUniform3fv(flashDirLoc, 1, glm::value_ptr(flash.direction));
+        glUniform3fv(flashColorLoc, 1, glm::value_ptr(flash.color));
+        glUniform1f(flashIntensityLoc, flash.intensity);
+        glUniform1f(flashCutoffLoc, flash.cutoff);
+        glUniform1f(flashDistanceSquaredLoc, distanceSquared);  // 传递距离平方
     }
 }
+
+

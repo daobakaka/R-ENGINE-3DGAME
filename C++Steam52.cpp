@@ -179,13 +179,14 @@ int GLins() {
      // coroutine->StartSpawnButterfliesAsync(manager);
      // std::thread spawnThread(coroutine->StartSpawnButterfliesAsync);
      // 
-        auto* skybox = new Cube(TextureDic["skybox"][0]);
+        //天空盒的渲染是特殊的立方体贴图，并且去除摄像机平移，所以在这里单独声明
+        auto* skybox = new Cube();
 
         CustomModel* baseCube = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCube"], false, true);
-        baseCube->SetVariant(ModelClass::CubeTestE);
-        baseCube->Initialize(glm::vec3(3.0f, -2.0f, 2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        baseCube->SetVariant(ModelClass::StaticPlan);
+        baseCube->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(10.0f, .050f, 10.0f));
         manager->RegisterObject(baseCube);
-        baseCube->AttachTexture(TextureDic["butterfly"][0], 0);
+        baseCube->AttachTexture(TextureDic["stone"][0], 0,glm::vec2(20,20));
 
         CustomModel* baseSphere = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseSphere"], false, true);
         baseSphere->SetVariant(ModelClass::CubeTestE);
@@ -198,7 +199,7 @@ int GLins() {
         baseCylinder->SetVariant(ModelClass::CubeTestE);
         baseCylinder ->Initialize(glm::vec3(-0.0f, 1.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseCylinder);
-        baseCylinder->AttachTexture(TextureDic["butterfly"][0], 0);
+        baseCylinder->AttachTexture(TextureDic["default"][0], 0);
 
 
 
@@ -206,7 +207,7 @@ int GLins() {
         testMonkey->SetVariant(ModelClass::CubeTestE);
         testMonkey->Initialize(glm::vec3(-0.0f, 3.0f, 2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(0.5f));
         manager->RegisterObject(testMonkey);
-        testMonkey->AttachTexture(TextureDic["butterfly"][0], 0);
+        testMonkey->AttachTexture(TextureDic["butterfly"][0], 0,glm::vec2(1,1));
         //测试用的方法，生成注册器中的ActorButterFly 方法
        coroutine->StartSpawnButterfliesByTimer(manager, TextureDic["butterfly"][0],0);
         //综合性赋值方法泛型方法， 可以直接异步初始化各种继承customModel的对象
@@ -238,17 +239,17 @@ int GLins() {
 
 #pragma endregion
 #pragma region 光照区域
-        //预定义最大光源数量，这里可以做性能限定，目前光照的实现均为实时光照，目前没有提供注入模式
-        const int MAX_LIGHTS = 4;
-
+        //预定义最大光源数量，这里可以做性能限定，目前光照的实现均为实时光照，目前没有提供注入模式，目前没有限制
+        //但通过灯光渲染逻辑，现在实现了类似游戏引擎的光线渲染逻辑判断
+       
         //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
-        auto pointLight2= lightSpawner->SpawPointLight(glm::vec3(2,2,2),glm::vec3(1,1,1),2);
-        auto pointLight = lightSpawner->SpawPointLight(glm::vec3(3, 0, 0), glm::vec3(0, 1, 1), 2);
-        auto pointLight3= lightSpawner->SpawPointLight(glm::vec3(0, 3, 0), glm::vec3(0, 1, 0), 2);
-        auto pointLight4= lightSpawner->SpawPointLight(glm::vec3(0, 0, 3), glm::vec3(0, 0, 1), 2);
+        auto pointLight2= lightSpawner->SpawPointLight(glm::vec3(2,2,2),glm::vec3(1,1,1),10);
+        auto pointLight = lightSpawner->SpawPointLight(glm::vec3(3, 0, 0), glm::vec3(0, 1, 1), 10);
+        auto pointLight3= lightSpawner->SpawPointLight(glm::vec3(0, 3, 0), glm::vec3(0, 1, 0), 20);
+        auto pointLight4= lightSpawner->SpawPointLight(glm::vec3(-3, 0, -3), glm::vec3(0, 0, 1), 20);
         
         //平行光使用灯光生成器生成，默认一个
-        auto parallelLight = lightSpawner->SpawParallelLight(glm::vec3(-1),glm::vec3(1,1,1),5);//使用默认值 强度10
+        auto parallelLight = lightSpawner->SpawParallelLight(glm::vec3(-1),glm::vec3(1,1,1),10);//使用默认值 强度10
         //手电筒光使用灯光生成器生成，默认支持4个
         auto splashLight = lightSpawner->SpawFlashLight(glm::vec3(0,5,-2),glm::vec3(0,-1,0));//使用默认值 强度10
 #pragma endregion
@@ -287,7 +288,8 @@ int GLins() {
            //--是否光照模型判断
             if (item->ifLight)
             {
-                lightRender->RenderLights(item->shaderProgram, controller, lightSpawner);
+                lightRender->RenderLights(item->shaderProgram,controller,lightSpawner,item->position);//更改渲染逻辑，减少访问次数
+                
             }           
             
             if (item->GetVariant() == 0)
@@ -340,8 +342,9 @@ int GLins() {
       
       //  LDmodel->PlayAnimation(0,0.1f);
         //基础方法，运行场景的自动更新,包含transform更新和绘制更新
+        skybox->Draw(view, projection);//保持天空盒在其他物体之前渲染,渲染天空盒
         manager->UpdateAll(view, projection);
-        skybox->Draw(view, projection);//渲染天空盒
+       // skybox->Draw(view, projection);//保持天空盒在其他物体之前渲染,渲染天空盒
         //变体方法，自动化脚本，目前,同第三条一样暂时弃用之
       //  manager->UpdateAllVariant(view, projection);
        // cusText->RenderText("abcdefghijklmnopqrstuvwxyz1234567890 *+!@#$%^&*(){}[];:''<>", 100.0f,1500.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));

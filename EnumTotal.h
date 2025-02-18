@@ -18,6 +18,7 @@ namespace Game {
 		FlashLight,//手电筒
 		ParallelLight,//平行光
 		Skybox,//天空盒
+		StaticPlan,//静态地板
 		
 	};
 

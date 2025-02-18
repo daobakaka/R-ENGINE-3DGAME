@@ -56,7 +56,7 @@ void IntergratedScripts::TestUpdateFun(GameObject* gameObject)
 
     //gameObject->position += glm::vec3(-0.01 + randomFloat, 0, -0.01f + randomFloat);
     gameObject->rotation *= glm::quat(glm::vec3(0, 0.01f + 0.1f*randomFloat, 0.0f));
-    gameObject->position += glm::vec3(0, 0.001f, 0);
+   // gameObject->position += glm::vec3(0, 0.001f, 0);
 
 }
 

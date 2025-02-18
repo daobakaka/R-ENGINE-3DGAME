@@ -458,11 +458,12 @@ bool CustomModel::DrawDynamical(glm::mat4 view, glm::mat4 projection)
 /// <param name="textureName"></param>
 /// <param name="order"></param>
 /// <returns></returns>
-bool CustomModel::AttachTexture(GLuint textureName, int order)//opengl 采用的是状态机模式
+bool CustomModel::AttachTexture(GLuint textureName, int order, glm::vec2 textureScale)//opengl 采用的是状态机模式
 {  
 
     texture = textureName;
     textureOrder = order;
+    _textureScale = textureScale;
    // RenderingTexture();
     return true;
 }
@@ -471,7 +472,12 @@ void CustomModel::RenderingTexture()
 
     //这里传入的order 应该是从前面每一个纹理单元都进行更改，也就是大的order 可以覆盖小的order
     glUseProgram(shaderProgram);
-    GLuint picData = glGetUniformLocation(shaderProgram, "texture1");//预写入图像的shader定义内容
+
+    // 传入纹理缩放因子
+    GLuint textureScaleLoc = glGetUniformLocation(shaderProgram, "textureScale");
+    glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y); // 设置纹理缩放因子
+
+    GLuint picData = glGetUniformLocation(shaderProgram, "baseTexture");//预写入图像的shader定义内容
     glActiveTexture(GL_TEXTURE0 + textureOrder);          // 激活纹理单元 0+order
     glBindTexture(GL_TEXTURE_2D,texture );  // 绑定纹理对象到纹理单元 0+order,这里添加DicTexture集合的纹理对象
     // 绑定纹理到纹理单元 0+order，这个顺序的所有纹理单元都遍历绑定一次

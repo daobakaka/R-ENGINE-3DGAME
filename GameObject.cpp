@@ -94,10 +94,10 @@ bool GameObject::Draw(glm::mat4 view, glm::mat4 projection ) {
 
     return true;
 }
-bool GameObject::AttachTexture(GLuint name, int order)
-{
-    return false;
-}
+//bool GameObject::AttachTexture(GLuint name, int order)
+//{
+//    return false;
+//}
 //×ÅÉ«Æ÷±àÒë¼ì²é
 void GameObject::CheckShaderCompilation(GLuint shader)
 {
@@ -120,7 +120,7 @@ void GameObject::CheckShaderProgramLinking(GLuint program)
     glGetProgramiv(program, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(program, 512, nullptr, infoLog);
-        std::cerr << "Shader Program Linking Failed: " << infoLog << std::endl;
+        std::cerr << "Shader Program Linking Failed test: " << infoLog << std::endl;
     }
     else {
         std::cout << "Shader Program Linking Success!" << std::endl;

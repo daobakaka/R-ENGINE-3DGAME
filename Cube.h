@@ -34,7 +34,7 @@ namespace Game {
 
         Cube(const char* vertexShaderSourceIn, const  char* fragmentShaderSourceIn);
         //--继承GameObject 的声明
-        Cube(GLuint textureName);
+        Cube();
 
 
         bool Draw(glm::mat4 view, glm::mat4 projection) override;//C++ 中对虚方法的重写，override 关键字加在方法后面，这一特征包括consnt等
@@ -43,8 +43,8 @@ namespace Game {
         //--继承MonoBehaviour的声明
         void Update(glm::mat4 view, glm::mat4 projection) override;
         void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
-        virtual bool AttachTexture(GLuint textureName, int order) override;
-
+        virtual bool AttachTexture(GLuint textureName, int order) ;
+        
 
 
     protected:
@@ -104,7 +104,8 @@ namespace Game {
         };
 
 
-
+    private:
+        void LoadCubemap(std::vector<std::string>& faces);
 
     };
 }

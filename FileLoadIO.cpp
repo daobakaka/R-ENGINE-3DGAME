@@ -386,7 +386,7 @@ GLuint LoadPicTexture(const char* picImagePath)
     glGenTextures(1, &picTextureID);
     glBindTexture(GL_TEXTURE_2D, picTextureID);
 
-    // 4. 设置纹理参数
+    // 4. 设置纹理参数，这里加载纹理的时候，选择各种不同的采样方式
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);   // S轴环绕方式
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);   // T轴环绕方式
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // 缩小时使用线性双线性过滤和mipmap
@@ -535,7 +535,9 @@ void MakeTxture()
     GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\1.png");
     GLuint lightTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\light.bmp");
     GLuint skyboxTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\front.jpg");
-   
+    //--地形
+    GLuint grassTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\grass.jpg");
+    GLuint stoneTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\stone.jpg");
     //初始化参数
     std::vector<GLuint> pic;
     //加载默认纹理
@@ -553,6 +555,14 @@ void MakeTxture()
     pic.clear();
     pic.push_back(skyboxTexture);
     TextureDic["skybox"] = pic;
+    //加载草地
+    pic.clear();
+    pic.push_back(grassTexture);
+    TextureDic["grass"] = pic;
+    //加载石头地
+    pic.clear();
+    pic.push_back(stoneTexture);
+    TextureDic["stone"] = pic;
 }
 
 void MakeFronts()

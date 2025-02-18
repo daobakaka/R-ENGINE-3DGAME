@@ -69,7 +69,7 @@ namespace Game {
         //绘制物体动态方法，必须重写，交由 LifeCyleManager 进行管理
         virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) = 0;
         //加载物体texture
-        virtual bool AttachTexture(GLuint name,int order);
+       // virtual bool AttachTexture(GLuint name,int order);
 
         //--mono 方法基础性重写
         virtual void Start() override;//事实上 unity 中的awake 或者enable就是构造的位置，所以start 在其后面

@@ -242,10 +242,12 @@ layout(location = 2) in vec3 aNormal;      // 顶点法线
 out vec2 TexCoord;   // 传递纹理坐标
 out vec3 FragPos;    // 世界空间中的片段位置
 out vec3 Normal;     // 世界空间中的法线
+out vec3 ViewPos;   // 相机位置
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform vec2 textureScale ; // uniform 变量设计赋值非法，只能外部传递纹理缩放因子,改变纹理的缩放方式
 
 void main()
 {
@@ -254,10 +256,13 @@ void main()
     FragPos = worldPos.xyz;
 
     // 传递纹理坐标
-    TexCoord = aTexCoord;
-
+    TexCoord = aTexCoord * textureScale;
+  
     // 正确变换法线，防止非均匀缩放问题
     Normal = mat3(transpose(inverse(model))) * aNormal;
+
+ // 计算相机位置 (viewPos)，视图矩阵是从世界空间转换到相机空间的
+    ViewPos = -mat3(view) * vec3(view[3]);
 
     // 计算最终屏幕坐标
     gl_Position = projection * view * worldPos;
@@ -271,49 +276,56 @@ const char* colorlightsArraySourceFragmentShaderSource = R"(
 in vec3 FragPos;  
 in vec3 Normal;
 in vec2 TexCoord;  // 传入纹理坐标
+in vec3 ViewPos;   // 相机位置传入（从顶点着色器） 
 out vec4 FragColor;
 
-//
+// 基本参数
+uniform float metallic = 0.5f; // 金属度
+uniform float roughness = 0.5f; // 粗糙度
+uniform float opacity = 1.0f; // 透明度
+uniform float IOR = 1.0f; // 折射率
+uniform float ao = 1.0f; // 环境光遮蔽率
+
+// 颜色
+uniform vec3 baseColor;   // 模型固有色
+uniform vec3 emission;    // 自发光（可选）
+
+// 贴图
+uniform sampler2D baseTexture;  // 基础纹理采样器
+uniform sampler2D normalTexture; // 法线纹理采样器
+uniform sampler2D heightTexture; // 高度贴图
+uniform sampler2D roughnessTexture; // 糙度贴图
+uniform samplerCube reflectionTexture; // 高光反射贴图
+uniform sampler2D aoTexture;  // 环境光遮蔽贴图
+
 // 点光源参数
-//
-const int MAX_POINT_LIGHTS = 4;
+const int MAX_POINT_LIGHTS =4;
+uniform int numPointLights=0;
 uniform vec3 lightPos[MAX_POINT_LIGHTS];
 uniform vec3 lightColor[MAX_POINT_LIGHTS];
 uniform float lightIntensity[MAX_POINT_LIGHTS];
-uniform float lightAttenuation=1.0f; // 距离衰减系数
+uniform float lightAttenuation=1; // 距离衰减系数
+uniform float lightDistanceSquared[MAX_POINT_LIGHTS]; // 传入的距离平方
 
-//
 // 平行光（方向光）参数
-//
-uniform vec3 parallelLightDirection; // 光线传播方向（通常为从光源指向场景方向，可根据需要取负）
+uniform vec3 parallelLightDirection;
 uniform vec3 parallelLightColor;
 uniform float parallelLightIntensity;
 
-//
 // 手电筒（聚光灯）参数
-//
-const int MAX_FLASHLIGHTS = 4;
+const int MAX_FLASHLIGHTS =4;//数组计算不能是动态值，只能是空值，参照上下文索引符号
+uniform int numFlashLights=0;//可以采用传入数据变量来进行更改
 uniform vec3 flashLightPos[MAX_FLASHLIGHTS];
 uniform vec3 flashLightDirection[MAX_FLASHLIGHTS];
 uniform vec3 flashLightColor[MAX_FLASHLIGHTS];
 uniform float flashLightIntensity[MAX_FLASHLIGHTS];
 uniform float flashLightCutoff[MAX_FLASHLIGHTS]; // cutoff 值为余弦值
-uniform float flashlightAttenuation=1.0f; // 手电筒光的衰减系数
+uniform float flashlightAttenuation=1; // 手电筒光的衰减系数
+uniform float flashLightDistanceSquared[MAX_FLASHLIGHTS]; // 传入的聚光灯距离平方
 
-//
-// 其他参数
-//
-uniform vec3 viewPos;
-uniform vec3 baseColor;   // 模型固有色
-uniform vec3 emission;    // 自发光（可选）
-uniform sampler2D texture1;  // 纹理采样器
-
-void main()
-{
-    // 自发光默认值(可选逻辑)
+void main() {
     vec3 emissionDefault = (emission == vec3(0.0)) ? vec3(0.1) : emission;
 
-    // 如果 baseColor 没设置，默认给一个大概颜色
     vec3 colorToUse = (baseColor == vec3(0.0)) ? vec3(0.1, 0.1, 0.1) : baseColor;
 
     vec3 norm = normalize(Normal);
@@ -325,12 +337,9 @@ void main()
     // --- 点光源部分 ---
     for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
         if (lightIntensity[i] > 0.0001) {
-            // 计算当前片段到点光源的距离
-            float distance = length(lightPos[i] - FragPos);
-            
-            // 使用线性衰减公式
-            float attenuation = 1.0 / (1.0 + lightAttenuation *distance* distance);  // 线性衰减
-            
+            // 使用传入的距离平方进行衰减
+            float attenuation = 1.0 / (1.0 + lightAttenuation * lightDistanceSquared[i]);
+
             // 环境光：每个点光源均贡献 10%
             ambientTotal += 0.1 * lightColor[i];
             
@@ -340,7 +349,7 @@ void main()
             diffuseTotal += diff * lightColor[i] * lightIntensity[i] * attenuation;
             
             // 镜面反射（Phong 模型）
-            vec3 viewDir = normalize(viewPos - FragPos);
+            vec3 viewDir = normalize(ViewPos - FragPos);
             vec3 reflectDir = reflect(-lightDir, norm);
             float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
             specularTotal += spec * lightColor[i] * lightIntensity[i] * 0.1 * attenuation;
@@ -349,15 +358,13 @@ void main()
     
     // --- 平行光（方向光）部分 ---
     if (parallelLightIntensity > 0.0001) {
-        // 环境光贡献
-        ambientTotal += 0.1 * parallelLightColor;
+        ambientTotal += 0.2f * parallelLightColor;//平行光单独贡献20%
         
-        // 对于方向光，假设光线方向为 parallelLightDirection（如果需要从光源指向场景，使用 -parallelLightDirection）
         vec3 lightDir = normalize(-parallelLightDirection);
         float diff = max(dot(norm, lightDir), 0.0);
         diffuseTotal += diff * parallelLightColor * parallelLightIntensity;
         
-        vec3 viewDir = normalize(viewPos - FragPos);
+        vec3 viewDir = normalize(ViewPos - FragPos);
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
         specularTotal += spec * parallelLightColor * parallelLightIntensity * 0.1;
@@ -366,25 +373,20 @@ void main()
     // --- 手电筒（聚光灯）部分 ---
     for (int j = 0; j < MAX_FLASHLIGHTS; j++) {
         if (flashLightIntensity[j] > 0.0001) {
-            ambientTotal += 0.1 * flashLightColor[j];
-            
             vec3 lightDir = normalize(flashLightPos[j] - FragPos);
             
-            // 计算到光源的距离
-            float distance = length(flashLightPos[j] - FragPos);
+            // 使用传入的聚光灯距离平方进行衰减
+            float attenuation = 1.0 / (1.0 + flashlightAttenuation * flashLightDistanceSquared[j]);
             
-            // 线性平方衰减
-            float attenuation = 1.0 / (1.0 + flashlightAttenuation*distance * distance);  // 线性衰减
-            
-            // 计算聚光效果：使用光线与手电筒方向的点积
+            // 计算聚光效果
             float theta = dot(lightDir, normalize(flashLightDirection[j]));
-            
-            // 只有当 theta 大于 cutoff 时，光照有效
             if (theta > flashLightCutoff[j]) {
+                ambientTotal += 0.1 * flashLightColor[j];
+                
                 float diff = max(dot(norm, lightDir), 0.0);
                 diffuseTotal += diff * flashLightColor[j] * flashLightIntensity[j] * attenuation;
                 
-                vec3 viewDir = normalize(viewPos - FragPos);
+                vec3 viewDir = normalize(ViewPos - FragPos);
                 vec3 reflectDir = reflect(-lightDir, norm);
                 float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
                 specularTotal += spec * flashLightColor[j] * flashLightIntensity[j] * 0.1 * attenuation;
@@ -398,9 +400,10 @@ void main()
     vec3 result = lighting * colorToUse + emissionDefault;
     
     // 采样纹理颜色，并与光照结果相乘
-    vec4 texColor = texture(texture1, TexCoord);
+    vec4 texColor = texture(baseTexture, TexCoord);
     FragColor = vec4(result, 1.0) * texColor;
 }
+
 )";
 
 /// <summary>
@@ -548,7 +551,7 @@ const char* skyboxVertexShaderSource = R"(
 
     void main() {
         // 去除平移部分，只保留旋转，确保天空盒永远在相机的背景
-        view = mat4(mat3(view));  // 去除平移
+      //  view = mat4(mat3(view));  // 去除平移
         gl_Position = projection * view * vec4(aPos, 1.0f);  // 计算最终的屏幕坐标
         TexCoords = aPos;  // 将顶点坐标传递给片段着色器
     }
