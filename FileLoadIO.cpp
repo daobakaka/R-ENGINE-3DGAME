@@ -513,6 +513,15 @@ void MakeModel()
     modelData.indices = indices;
 
     ModelDic["baseCylinder"] = modelData;
+
+
+    //Æ½Ãæ
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\basePlane.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["basePlane"] = modelData;
     
     //²âÊÔºï×Ó
     LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\testMonkey.obj", verticesStruct, indices);

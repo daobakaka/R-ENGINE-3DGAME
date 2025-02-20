@@ -111,7 +111,7 @@ int GLins() {
         //获取灯光生成器
         auto* lightSpawner = LightSpawner::GetInstance();
         //开启灯光标识
-        lightSpawner->modelIdentification = true;
+        lightSpawner->modelIdentification = false;
         //获取灯光渲染器
         auto* lightRender = LightRender::GetInstance();
         
@@ -154,10 +154,10 @@ int GLins() {
         glEnable(GL_STENCIL_TEST);//模板测试
         //启用混合
        // glEnable(GL_BLEND);
-        glDisable(GL_BLEND);  // 禁用混合
+       // glDisable(GL_BLEND);  // 禁用混合
         // glDepthFunc(GL_LESS);
         // glEnable(GL_CULL_FACE);
-        glDisable(GL_CULL_FACE);
+       // glDisable(GL_CULL_FACE);
         // glCullFace(GL_FRONT);   // 只剔除背面//背面剔除
 #pragma endregion
 
@@ -182,11 +182,11 @@ int GLins() {
         //天空盒的渲染是特殊的立方体贴图，并且去除摄像机平移，所以在这里单独声明
         auto* skybox = new Cube();
 
-        CustomModel* baseCube = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCube"], false, true);
-        baseCube->SetVariant(ModelClass::StaticPlan);
-        baseCube->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(10.0f, .050f, 10.0f));
-        manager->RegisterObject(baseCube);
-        baseCube->AttachTexture(TextureDic["stone"][0], 0,glm::vec2(20,20));
+        CustomModel* basePlane = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["basePlane"], false, true);
+        basePlane->SetVariant(ModelClass::StaticPlane);
+        basePlane->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(50.0f, 0.1f, 50.0f));
+        manager->RegisterObject(basePlane);
+        basePlane->AttachTexture(TextureDic["stone"][0], 0,glm::vec2(1,1));
 
         CustomModel* baseSphere = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseSphere"], false, true);
         baseSphere->SetVariant(ModelClass::CubeTestE);
@@ -195,21 +195,21 @@ int GLins() {
         baseSphere->AttachTexture(TextureDic["default"][0], 0);
 
 
-        CustomModel* baseCylinder = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCylinder"], false, true);
-        baseCylinder->SetVariant(ModelClass::CubeTestE);
-        baseCylinder ->Initialize(glm::vec3(-0.0f, 1.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-        manager->RegisterObject(baseCylinder);
-        baseCylinder->AttachTexture(TextureDic["default"][0], 0);
+        //CustomModel* baseCylinder = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCylinder"], false, true);
+        //baseCylinder->SetVariant(ModelClass::CubeTestE);
+        //baseCylinder ->Initialize(glm::vec3(-0.0f, 1.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        //manager->RegisterObject(baseCylinder);
+        //baseCylinder->AttachTexture(TextureDic["default"][0], 0);
 
 
 
-        CustomModel* testMonkey = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["testMonkey"], false, true);
-        testMonkey->SetVariant(ModelClass::CubeTestE);
-        testMonkey->Initialize(glm::vec3(-0.0f, 3.0f, 2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(0.5f));
-        manager->RegisterObject(testMonkey);
-        testMonkey->AttachTexture(TextureDic["butterfly"][0], 0,glm::vec2(1,1));
+        //CustomModel* testMonkey = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["testMonkey"], false, true);
+        //testMonkey->SetVariant(ModelClass::CubeTestE);
+        //testMonkey->Initialize(glm::vec3(-0.0f, 3.0f, 2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(0.5f));
+        //manager->RegisterObject(testMonkey);
+        //testMonkey->AttachTexture(TextureDic["butterfly"][0], 0,glm::vec2(1,1));
         //测试用的方法，生成注册器中的ActorButterFly 方法
-       coroutine->StartSpawnButterfliesByTimer(manager, TextureDic["butterfly"][0],0);
+      // coroutine->StartSpawnButterfliesByTimer(manager, TextureDic["butterfly"][0],0);
         //综合性赋值方法泛型方法， 可以直接异步初始化各种继承customModel的对象
 
       // baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);
@@ -241,7 +241,8 @@ int GLins() {
 #pragma region 光照区域
         //预定义最大光源数量，这里可以做性能限定，目前光照的实现均为实时光照，目前没有提供注入模式，目前没有限制
         //但通过灯光渲染逻辑，现在实现了类似游戏引擎的光线渲染逻辑判断
-       
+        //初始化用于渲染阴影的平行光深度图，可以在类中直接构造
+        lightRender->CreateShadowMapForParallelLight();
         //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
         auto pointLight2= lightSpawner->SpawPointLight(glm::vec3(2,2,2),glm::vec3(1,1,1),10);
         auto pointLight = lightSpawner->SpawPointLight(glm::vec3(3, 0, 0), glm::vec3(0, 1, 1), 10);
@@ -273,6 +274,13 @@ int GLins() {
         // 获取视图矩阵和投影矩阵
         glm::mat4 view = controller->GetViewMatrix();//摄像机的朝向
         glm::mat4 projection = controller->GetProjectionMatrix();//摄像机的裁剪方向
+
+
+        //--全局执行区域
+       // lightRender->CreateShadowMapForParallelLight();
+        lightRender->RenderDepthMapForParallelLight(lightSpawner->GetParallelLight().direction);//渲染深度缓冲图，用于阴影
+        //光源旋转不写在GameObject的逻辑里面，单独控制
+        lightSpawner->ParalletLightController(glm::vec3(0, 1, 0.0f));
 #pragma endregion
 
 #pragma region  完成类似脚本功能的三种实现模式，根据需要选择   
@@ -282,14 +290,15 @@ int GLins() {
 
         
         //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
+        //遍历执行区域
         for (CustomModel * item : manager->GetNativeObjects()) {
             //将多光源照射效果封装在 灯光渲染器中.如果是光照shader，则需要加入这一段代码，引入光照渲染，如果不是则不需要
             //现在更改为使用构造化方式，统一使用
            //--是否光照模型判断
             if (item->ifLight)
-            {
-                lightRender->RenderLights(item->shaderProgram,controller,lightSpawner,item->position);//更改渲染逻辑，减少访问次数
-                
+            {             
+               lightRender->RenderLights(item->shaderProgram,controller,lightSpawner,item->position);//更改渲染逻辑，减少访问次数
+        
             }           
             
             if (item->GetVariant() == 0)
@@ -307,9 +316,6 @@ int GLins() {
             {
            
                 scripts->TParallelLightRotation(item);
-                //光源旋转不写在GameObject的逻辑里面，单独控制
-                lightSpawner->ParalletLightController(glm::vec3(0, 1, 0.0f));
-
 
             }
             else if (item->GetVariant()==ModelClass::ActorButterfly)

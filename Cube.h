@@ -51,6 +51,7 @@ namespace Game {
         GLuint _cubeMapID;
         GLuint _skyboxVAO;
         GLuint _skyboxVBO;
+        GLuint _skyboxEBO;
         bool _ifCubeMap = false;
         GLfloat _skyboxVertices[108] = {
             // ¶¥µã×ø±ê

@@ -298,6 +298,11 @@ uniform sampler2D roughnessTexture; // 糙度贴图
 uniform samplerCube reflectionTexture; // 高光反射贴图
 uniform sampler2D aoTexture;  // 环境光遮蔽贴图
 
+//--平行光贴图
+uniform sampler2D autoParallelShadowMap;//平行光光照贴图，用于生成主阴影
+// 接收光源的阴影矩阵
+uniform mat4 lightSpaceMatrix;  // 从光源视角计算的矩阵
+
 // 点光源参数
 const int MAX_POINT_LIGHTS =4;
 uniform int numPointLights=0;
@@ -368,6 +373,36 @@ void main() {
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
         specularTotal += spec * parallelLightColor * parallelLightIntensity * 0.1;
+
+        // 计算阴影
+        vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
+        vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+        projCoords = projCoords * 0.5 + 0.5;  // 将坐标从[-1, 1]映射到[0, 1]
+
+        // 从阴影贴图中获取深度值
+        float closestDepth = texture(autoParallelShadowMap, projCoords.xy).r;
+        float currentDepth = projCoords.z;
+
+        // 阴影判断：比较当前片段的深度与从阴影贴图中取出的深度
+        float bias = 0.005;  // 阴影偏差，用来避免自阴影问题
+        float shadow = currentDepth > (closestDepth + bias) ? 1.0 : 0.0;
+
+        // 如果在阴影中，漫反射和镜面反射会变暗
+        diffuseTotal *= (1.0 - shadow);
+        specularTotal *= (1.0 - shadow);
+
+        // 计算阴影平滑（PCF）
+        //float shadowPCF = 0.0f;
+        //for(int x = -1; x <= 1; ++x) {
+        //    for(int y = -1; y <= 1; ++y) {
+        //        float pcf = texture(autoParallelShadowMap, projCoords.xy + vec2(x, y) * 0.005).r;
+        //        shadowPCF += pcf;
+        //    }
+        //}
+        //shadowPCF /= 9.0f;  // 平均结果
+        //diffuseTotal *= (1.0 - shadowPCF);
+        //specularTotal *= (1.0 - shadowPCF);
+
     }
     
     // --- 手电筒（聚光灯）部分 ---
@@ -550,8 +585,6 @@ const char* skyboxVertexShaderSource = R"(
     uniform mat4 view;  // 视图矩阵
 
     void main() {
-        // 去除平移部分，只保留旋转，确保天空盒永远在相机的背景
-      //  view = mat4(mat3(view));  // 去除平移
         gl_Position = projection * view * vec4(aPos, 1.0f);  // 计算最终的屏幕坐标
         TexCoords = aPos;  // 将顶点坐标传递给片段着色器
     }

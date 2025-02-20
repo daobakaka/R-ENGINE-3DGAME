@@ -124,15 +124,33 @@ Game::Cube::Cube()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
     //这一步完成之后，就可以使用这个项目了，同时也可以删除顶点和片元着色器，
+    //glGenVertexArrays(1, &_skyboxVAO);
+    //glGenBuffers(1, &_skyboxVBO);
+    //glBindVertexArray(_skyboxVAO);
+    //glBindBuffer(GL_ARRAY_BUFFER, _skyboxVBO);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(_skyboxVertices), _skyboxVertices, GL_STATIC_DRAW);
+    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+    //glEnableVertexAttribArray(0);
+    //glBindVertexArray(0);
 
+    //附加绘制索引的方法
     glGenVertexArrays(1, &_skyboxVAO);
-    glGenBuffers(1, &_skyboxVBO);
-    glBindVertexArray(_skyboxVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, _skyboxVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(_skyboxVertices), _skyboxVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-    glBindVertexArray(0);
+    glGenBuffers(1, &_skyboxVBO);//获取缓冲区buffer 索引
+    glGenBuffers(1, &_skyboxEBO);
+
+    glBindVertexArray(_skyboxVAO);//绑定顶点数组 
+
+    glBindBuffer(GL_ARRAY_BUFFER, _skyboxVBO);//绑定顶点缓冲对象
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);//将缓冲数据 写入缓冲区，并设定绘制方式，准备绘制
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _skyboxEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);//设置数据读取的指针偏移方式，根据传入的顶点格式来动态配置
+    glEnableVertexAttribArray(0);//启用顶点着色器中 预定的分组数据
+
+    glBindVertexArray(0);//解除当前顶点数组的绑定
+
 
     std::vector<std::string> faces = {
         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/right.jpg",  // 右面
@@ -140,7 +158,7 @@ Game::Cube::Cube()
         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/top.jpg",    // 上面
         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/bottom.jpg", // 下面
         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/front.jpg",  // 前面
-        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/back.jpg"    // 后面
+        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/back.jpg",    // 后面
     };
 
     LoadCubemap(faces);//天空盒的CUBEMAP 采用 专有的加载方式
@@ -156,27 +174,35 @@ Game::Cube::Cube()
  {
      if (_ifCubeMap)
      {
-         glDepthMask(GL_FALSE);//关闭深度测试，天空盒永远在物体后面进行渲染
-         glUseProgram(shaderProgram);
-         // 激活纹理单元并绑定立方体纹理
-         glActiveTexture(GL_TEXTURE0);  // 激活纹理单元 0
-        // glBindTexture(GL_TEXTURE_2D, _cubeMapID);  // 绑定立方体纹理
-         glBindTexture(GL_TEXTURE_CUBE_MAP, _cubeMapID);//
-         // 将纹理单元 0 传递给片段着色器中的 skybox
-         GLint skyboxLoc = glGetUniformLocation(shaderProgram, "skybox");
-         glUniform1i(skyboxLoc, 0);  // 绑定到纹理单元 0
+        
 
-         glBindVertexArray(_skyboxVAO);
          view = glm::mat4(glm::mat3(view));  // 去除平移
+
+         glUseProgram(shaderProgram);
+         glActiveTexture(GL_TEXTURE2);  // 激活纹理单元 2
+         glBindTexture(GL_TEXTURE_CUBE_MAP, _cubeMapID);
+
+         GLint skyboxLoc = glGetUniformLocation(shaderProgram, "skybox");
+         glUniform1i(skyboxLoc, 2);  // 绑定到纹理单元 2
 
          GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
          GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
          glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
          glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
+
+
+         glBindVertexArray(_skyboxVAO);
+
+         glDepthMask(GL_FALSE);  // 关闭深度写入
+         glDisable(GL_CULL_FACE);  // 禁用背面剔除，确保所有面都渲染
          // 绘制天空盒
-         glDrawArrays(GL_TRIANGLES, 0, 36);  // 绘制六个面（36个顶点）
-         glDepthMask(GL_TRUE);
+        // glDrawArrays(GL_TRIANGLES, 0, 36);  // 绘制六个面（36个顶点）
+         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+         glBindVertexArray(0);
+         glDepthMask(GL_TRUE);  // 恢复深度写入
+         glEnable(GL_CULL_FACE);  // 恢复背面剔除
+
      }
      else
      {
@@ -254,7 +280,7 @@ void Game::Cube::LoadCubemap(std::vector<std::string> &faces)
         else
         {
             std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
-            stbi_image_free(data);
+           // stbi_image_free(data);
         }
     }
 

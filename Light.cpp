@@ -6,6 +6,8 @@
 #include "ScriptModel.h"
 #include "MeshDataManager.h"
 #include <algorithm>  // 包含 std::sort
+#include <iostream>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace Game;
 
@@ -203,6 +205,60 @@ LightRender* LightRender::GetInstance() {
     return instance;
 }
 
+GLuint Game::LightRender::CreateShadowMapForParallelLight()
+{
+
+    // 创建深度贴图
+    glGenFramebuffers(1, &_depthMapParallelFBO);//基于深度贴图的帧缓冲贴图对象GLuint
+    glGenTextures(1, &_depthMapParallel);//深度贴图
+    glBindTexture(GL_TEXTURE_2D, _depthMapParallel);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 2400, 1600, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    //这里同样设置几种纹理参数 近线性
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindFramebuffer(GL_FRAMEBUFFER, _depthMapParallelFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _depthMapParallel, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return _depthMapParallelFBO;  // 返回生成的深度贴图FBO
+}
+
+void Game::LightRender::RenderDepthMapForParallelLight(glm::vec3 lightDirection)
+{
+    // 设置平行光的视角矩阵（正交投影）
+   // glm::mat4 lightProjection = glm::perspective(glm::radians(45.0f), 1.5f, 0.1f, 1000.0f);
+   glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.10f, 10.0f);
+
+
+    // 平行光的视角矩阵，注意：平行光没有位置，只有方向
+    glm::vec3 lightPos =  lightDirection * 10.0f;  // 通过光线方向向远处拉伸来设定虚拟光源位置
+
+
+    glm::mat4 lightView = glm::lookAt(lightPos, lightPos + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f)); // 视角矩阵
+    //std::cout << "lightDirection: (" << lightDirection.x << ", " << lightDirection.y << ", " << lightDirection.z << ")" << std::endl;
+    //glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f),
+    /*    glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f));*/
+    //glm::vec3 lightPos = glm::vec3(-0,50,0);  // 通过光线方向向远处拉伸来设定虚拟光源位置
+
+
+    //glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(-3,-2,-2), glm::vec3(0.0f, 1.0f, 0.0f)); // 视角矩阵
+
+    // 计算光源空间矩阵
+    _lightSpaceMatrix = lightProjection * lightView* glm::mat4(1.0);
+
+    // 绑定深度贴图的帧缓冲区
+   // glViewport(0, 0, 2400, 2000);//设置GL 窗口大小
+    glBindFramebuffer(GL_FRAMEBUFFER, _depthMapParallelFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);  // 清空深度缓冲
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);//解除绑定
+}
+
+
 LightRender::LightRender() {
     // 构造函数为空
 }
@@ -216,10 +272,24 @@ void LightRender::RenderLights(GLuint shaderProgram, const Controller* controlle
 
     glUseProgram(shaderProgram);
 
+
+    // 1. 将平行光的阴影贴图传递到片段着色器
+    GLuint depthMapLoc = glGetUniformLocation(shaderProgram, "autoParallelShadowMap");
+    //这里是上传贴图的操作,必须先绑定纹理单元
+    glActiveTexture(GL_TEXTURE1);//这里使用纹理单元1
+    glBindTexture(GL_TEXTURE_2D, _depthMapParallel);  // 绑定平行光的深度贴图
+    glUniform1i(depthMapLoc, 1);  // 将深度贴图传递给片段着色器
+
+
+    // 2. 将预计算的 `lightSpaceMatrix` 传递给片段着色器
+    GLuint lightSpaceMatrixLoc = glGetUniformLocation(shaderProgram, "lightSpaceMatrix");
+    glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));  // 传递光源视角矩阵
+
+
+
     // 2. 点光源数据
     const auto& pointLights = spawnerPtr->GetPointLights();
     std::vector<std::pair<float, int>> pointLightDistances;  // 存储每个点光源到物体的距离平方和索引
-
     glm::vec3 objectPosition = position;  // 使用物体的当前位置作为参考
 
     // 遍历点光源计算距离平方，并且筛选出距离小于等于 100 的光源
