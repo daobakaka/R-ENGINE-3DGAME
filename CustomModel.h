@@ -15,7 +15,7 @@ namespace Game {
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndicesm, bool ifLight = false);
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndices, bool isSkinnedMesh, bool ifLight = false);
        //--最常用方法
-        CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData& modelData, bool isSkinnedMesh, bool ifLight = false);
+        CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData& modelData, bool isSkinnedMesh, bool ifLight = false,bool ifShadow=false);
         void UpdateVerticesForAnimation(size_t animationFrame);
         void UpdateVerticesForAnimation(const std::vector<Vertex>& vertex);
 
@@ -33,6 +33,11 @@ namespace Game {
         virtual void AttachAnimationController(); //附加动画控制器，无默认参数，完全内部构造，可重写
         virtual void PlayAnimation(int index, float frame = 0.0167f);//对象播放动画方法，避免外部传入对象，可重写
         virtual void StopPlayAnimation();//对象停止播放动画方法，可重写
+        //深度图模块,重写基类
+        virtual void DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader) override; //静态绘制深度图，可重写
+        virtual void DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix,GLuint shader) override;//动态绘制深度图，可重写
+        virtual void UpdateDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader) override;//深度图更新方法，可重写
+
         /// <summary>
         /// 附加纹理方法，添加了压缩因子
         /// </summary>

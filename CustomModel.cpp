@@ -1,5 +1,7 @@
 #include "CustomModel.h"
 using namespace Game;
+extern const char* depthShaderVertexShaderSource;
+extern const char* depthShaderFragmentShaderSource;
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat *vertices, GLuint *indices, size_t vertexCount, size_t indexCount,bool ifLightIn)
 {
     
@@ -340,7 +342,7 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 
 }
 
-CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData &modelData,bool isSkinnedMesh, bool ifLightIn)
+CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData &modelData,bool isSkinnedMesh, bool ifLightIn,bool ifShadow)
 {
     //verticesTras = new std::vector<Vertex>(vertices);  // 这种才是指针的有效初始化，析构中才能使用delete
     vertexCount = modelData.verticesStruct.size();
@@ -348,7 +350,33 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
     verticesTras = modelData.verticesStruct;
     IsSkinnedMesh =isSkinnedMesh;
     ifLight = ifLightIn;
+    _ifShadow = ifShadow;
+    //--阴影着色器模块
+    if (_ifShadow)
+    {
+        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertexShader, 1, &depthShaderVertexShaderSource, nullptr);
+        glCompileShader(vertexShader);
+        CheckShaderCompilation(vertexShader);
 
+        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragmentShader, 1, &depthShaderFragmentShaderSource, nullptr);
+        glCompileShader(fragmentShader);
+        CheckShaderCompilation(fragmentShader);
+
+        // 2) 创建着色器程序
+        _depthShaderProgram = glCreateProgram();
+        glAttachShader(_depthShaderProgram, vertexShader);
+        glAttachShader(_depthShaderProgram, fragmentShader);
+        glLinkProgram(_depthShaderProgram);
+        CheckShaderProgramLinking(_depthShaderProgram);
+
+        // 删除临时Shader
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+
+    }
+    //通用着色器模块 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSourceIn, nullptr);
     glCompileShader(vertexShader);
@@ -505,6 +533,77 @@ void CustomModel::StopPlayAnimation()
 {
 
     animator->StopAnimation();
+}
+void CustomModel::DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
+{
+    glUseProgram(_depthShaderProgram);
+    // 将光源视角矩阵传递给着色器
+    GLuint lightSpaceMatrixLoc = glGetUniformLocation(_depthShaderProgram, "lightSpaceMatrix");
+    glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+    
+    
+    //传入模型世界坐标，视图和透视矩阵，在lightRender中生成
+    GLuint modelLoc = glGetUniformLocation(_depthShaderProgram, "model");
+    glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
+
+
+    glBindVertexArray(VAO);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+
+    // 打印 lightSpaceMatrix
+    //std::cout << "LightSpaceMatrix: \n";
+    //for (int i = 0; i < 4; i++) {
+    //    std::cout << lightSpaceMatrix[i][0] << " "
+    //        << lightSpaceMatrix[i][1] << " "
+    //        << lightSpaceMatrix[i][2] << " "
+    //        << lightSpaceMatrix[i][3] << std::endl;
+    //}
+    //// 打印 transform（模型矩阵）
+    //std::cout << "Transform (Model Matrix): \n";
+    //for (int i = 0; i < 4; i++) {
+    //    std::cout << transform[i][0] << " "
+    //        << transform[i][1] << " "
+    //        << transform[i][2] << " "
+    //        << transform[i][3] << std::endl;
+    //}
+
+
+}
+void CustomModel::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shader)
+{
+    glUseProgram(_depthShaderProgram);
+    // 将光源视角矩阵传递给着色器
+    GLuint lightSpaceMatrixLoc = glGetUniformLocation(_depthShaderProgram, "lightSpaceMatrix");
+    glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+
+    //传入模型世界坐标，视图和透视矩阵，在lightRender中生成
+    GLuint modelLoc = glGetUniformLocation(_depthShaderProgram, "model");
+    glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glBufferData(GL_ARRAY_BUFFER,
+        verticesTras.size() * sizeof(Vertex),
+        verticesTras.data(),
+        GL_DYNAMIC_DRAW);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+    //集成纹理渲染方法
+
+
+}
+void Game::CustomModel::UpdateDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader)
+{
+    //因为通用的update方法已经传入了 UpdateTransform(),所以这里就没有必要再次传入了
+    if (_ifShadow)
+    {
+        UpdateTransform();
+        IsSkinnedMesh == true ? DrawDepthPicDynamical(lightSpaceMatrix,shader) : DrawDepthPic(lightSpaceMatrix,shader);
+
+
+    }
 }
 bool CustomModel::AttachPhysicalEngine()
 {

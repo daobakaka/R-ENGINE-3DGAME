@@ -361,7 +361,34 @@ void main() {
         }
     }
     
-    // --- 平行光（方向光）部分 ---
+    
+    // --- 手电筒（聚光灯）部分 ---
+    for (int j = 0; j < MAX_FLASHLIGHTS; j++) {
+        if (flashLightIntensity[j] > 0.0001) {
+            vec3 lightDir = normalize(flashLightPos[j] - FragPos);
+            
+            // 使用传入的聚光灯距离平方进行衰减
+            float attenuation = 1.0 / (1.0 + flashlightAttenuation * flashLightDistanceSquared[j]);
+            
+            // 计算聚光效果
+            float theta = dot(lightDir, normalize(flashLightDirection[j]));
+            if (theta > flashLightCutoff[j]) {
+                ambientTotal += 0.1 * flashLightColor[j];
+                
+                float diff = max(dot(norm, lightDir), 0.0);
+                diffuseTotal += diff * flashLightColor[j] * flashLightIntensity[j] * attenuation;
+                
+                vec3 viewDir = normalize(ViewPos - FragPos);
+                vec3 reflectDir = reflect(-lightDir, norm);
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+                specularTotal += spec * flashLightColor[j] * flashLightIntensity[j] * 0.1 * attenuation;
+            }
+        }
+    }
+
+
+
+ // --- 平行光（方向光）部分 ---
     if (parallelLightIntensity > 0.0001) {
         ambientTotal += 0.2f * parallelLightColor;//平行光单独贡献20%
         
@@ -403,30 +430,6 @@ void main() {
         //diffuseTotal *= (1.0 - shadowPCF);
         //specularTotal *= (1.0 - shadowPCF);
 
-    }
-    
-    // --- 手电筒（聚光灯）部分 ---
-    for (int j = 0; j < MAX_FLASHLIGHTS; j++) {
-        if (flashLightIntensity[j] > 0.0001) {
-            vec3 lightDir = normalize(flashLightPos[j] - FragPos);
-            
-            // 使用传入的聚光灯距离平方进行衰减
-            float attenuation = 1.0 / (1.0 + flashlightAttenuation * flashLightDistanceSquared[j]);
-            
-            // 计算聚光效果
-            float theta = dot(lightDir, normalize(flashLightDirection[j]));
-            if (theta > flashLightCutoff[j]) {
-                ambientTotal += 0.1 * flashLightColor[j];
-                
-                float diff = max(dot(norm, lightDir), 0.0);
-                diffuseTotal += diff * flashLightColor[j] * flashLightIntensity[j] * attenuation;
-                
-                vec3 viewDir = normalize(ViewPos - FragPos);
-                vec3 reflectDir = reflect(-lightDir, norm);
-                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-                specularTotal += spec * flashLightColor[j] * flashLightIntensity[j] * 0.1 * attenuation;
-            }
-        }
     }
     
     vec3 lighting = ambientTotal + diffuseTotal + specularTotal;
@@ -600,6 +603,35 @@ const char* skyboxFragmentShaderSource = R"(
     void main() {
         FragColor = texture(skybox, TexCoords);  // 从立方体纹理中取样并输出颜色
     }
+)";
+/// <summary>
+/// 深度图着色器
+/// </summary>
+const char* depthShaderVertexShaderSource = R"(
+#version 450 core
+layout(location = 0) in vec3 aPos;   // 顶点位置
+
+uniform mat4 model;                  // 物体模型矩阵
+uniform mat4 lightSpaceMatrix;       // 从光源视角计算的矩阵
+
+void main() {
+    // 将顶点从世界空间转换到光源视角空间
+    gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);  // model 矩阵用于世界空间转换
+}
+)";
+/// <summary>
+/// 可以不渲染，因为深度值将会储存在深度缓冲区中，这里可以进行格式化
+/// </summary>
+const char* depthShaderFragmentShaderSource = R"(
+#version 450 core
+
+out vec4 FragColor;
+
+void main() {
+    // 输出深度值：将深度值映射到[0, 1]范围，并用深度值控制颜色
+    float depth = gl_FragCoord.z;  // 获取当前片段的深度值
+    FragColor = vec4(depth, depth, depth, 1.0);  // 灰度颜色，显示深度
+}
 )";
 
 

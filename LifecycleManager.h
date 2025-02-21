@@ -2,6 +2,8 @@
 #define LIFECYCLE_MANAGER_H
 
 #include <vector>//容器
+#include <GL/glew.h>
+#include <glm/glm.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -22,8 +24,13 @@ namespace Game {
         void StartAll();
         void UpdateAll(glm::mat4 view, glm::mat4 projection);
         void DestroyAll();
-        //--
+        //--变体更新方法
         void UpdateAllVariant(glm::mat4 view, glm::mat4 projection);
+
+        //光源深度模型绘制
+        void UpdateDepthPic(glm::mat4 projection,GLuint shader);
+        
+
     private:
         std::vector<T*> nativeObjects;   // 存储注册的对象
         std::vector<T*> variantObjects;//变体对象，用于作用预制体

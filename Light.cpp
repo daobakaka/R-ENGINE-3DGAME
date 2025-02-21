@@ -18,9 +18,13 @@ extern const char* noneLightLightVertexShaderSource;
 extern const char* noneLightLightFragmentShaderSource;
 extern const char* rayVertexShaderSource;
 extern const char* rayFragmentShaderSource;
+//深度着色器，利用opengl面向过程机制，定义一个，全局渲染
+extern const char* depthShaderVertexShaderSource;
+extern const char* depthShaderFragmentShaderSource;
 //C++的源文件中可以直接定义相关变量，而不必要在类中进行声明，更灵活
 LifecycleManager<CustomModel>* manager = nullptr;
 MeshDataManager* meshData = nullptr;
+Controller* controller = nullptr;
 LightSpawner* LightSpawner::GetInstance() {
     if (instance == nullptr) {
         instance = new LightSpawner();
@@ -32,6 +36,7 @@ LightSpawner::LightSpawner() {
     // 初始化全局平行光默认参数
     manager = LifecycleManager<CustomModel>::GetInstance();
     meshData = MeshDataManager::GetInstance();
+    controller = Controller::GetInstance();
     modelIdentification = true;
 }
 
@@ -224,35 +229,87 @@ GLuint Game::LightRender::CreateShadowMapForParallelLight()
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+
+    //创建阴影贴图，然后编译深度着色器
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &depthShaderVertexShaderSource, nullptr);
+    glCompileShader(vertexShader);
+
+
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &depthShaderFragmentShaderSource, nullptr);
+    glCompileShader(fragmentShader);
+
+
+    // 2) 创建着色器程序
+    _depthShaderProgram = glCreateProgram();
+    glAttachShader(_depthShaderProgram, vertexShader);
+    glAttachShader(_depthShaderProgram, fragmentShader);
+    glLinkProgram(_depthShaderProgram);
+
+
+    // 删除临时Shader
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+
+
+
     return _depthMapParallelFBO;  // 返回生成的深度贴图FBO
 }
-
+/// <summary>
+/// 计算光源视图，绑定深度图进入帧缓冲区
+/// </summary>
+/// <param name="lightDirection"></param>
 void Game::LightRender::RenderDepthMapForParallelLight(glm::vec3 lightDirection)
 {
     // 设置平行光的视角矩阵（正交投影）
-   // glm::mat4 lightProjection = glm::perspective(glm::radians(45.0f), 1.5f, 0.1f, 1000.0f);
-   glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.10f, 10.0f);
+   glm::mat4 lightProjection = glm::perspective(glm::radians(45.0f), 1.5f, 0.1f, 1000.0f);
+   //  glm::mat4 lightProjection = glm::ortho(-3.0f, 3.0f, -2.0f, 2.0f, 0.10f, 1000.0f);
+    // glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.5f, 7.5f);
 
 
-    // 平行光的视角矩阵，注意：平行光没有位置，只有方向
-    glm::vec3 lightPos =  lightDirection * 10.0f;  // 通过光线方向向远处拉伸来设定虚拟光源位置
+      // 平行光的视角矩阵，注意：平行光没有位置，只有方向
+    glm::vec3 lightPos = -lightDirection * 10.0f;  // 通过光线方向向远处拉伸来设定虚拟光源位置
 
 
-    glm::mat4 lightView = glm::lookAt(lightPos, lightPos + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f)); // 视角矩阵
-    //std::cout << "lightDirection: (" << lightDirection.x << ", " << lightDirection.y << ", " << lightDirection.z << ")" << std::endl;
-    //glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f),
-    /*    glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f));*/
+    // glm::mat4 lightView = glm::lookAt(lightPos, lightPos + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f)); // 视角矩阵
+     //std::cout << "lightDirection: (" << lightDirection.x << ", " << lightDirection.y << ", " << lightDirection.z << ")" << std::endl;
+    glm::mat4 lightView = glm::lookAt(glm::vec3(0.0f, 3.0f, 10.0f),
+        glm::vec3(0, 3, 10) + glm::vec3(0.0f, 0.0f, -1.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f));
     //glm::vec3 lightPos = glm::vec3(-0,50,0);  // 通过光线方向向远处拉伸来设定虚拟光源位置
 
 
     //glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(-3,-2,-2), glm::vec3(0.0f, 1.0f, 0.0f)); // 视角矩阵
 
     // 计算光源空间矩阵
-    _lightSpaceMatrix = lightProjection * lightView* glm::mat4(1.0);
+    _lightSpaceMatrix = lightProjection * lightView * glm::mat4(1.0);
 
-    // 绑定深度贴图的帧缓冲区
-   // glViewport(0, 0, 2400, 2000);//设置GL 窗口大小
+}
+glm::mat4 Game::LightRender::GetLightMatrix()
+{
+    return _lightSpaceMatrix;
+}
+GLuint Game::LightRender::GetDepthShaderProgram()
+{
+    return _depthShaderProgram;
+}
+void Game::LightRender::UseDepthShaderProgram()
+{
+    glUseProgram(_depthShaderProgram);
+}
+/// <summary>
+/// 清空帧缓冲深度绑定
+/// </summary>
+void Game::LightRender::UnbindFramebuffer()
+{
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);//解除绑定
+}
+
+void Game::LightRender::BindFramebuffer()
+{
     glBindFramebuffer(GL_FRAMEBUFFER, _depthMapParallelFBO);
     glClear(GL_DEPTH_BUFFER_BIT);  // 清空深度缓冲
     glBindFramebuffer(GL_FRAMEBUFFER, 0);//解除绑定
@@ -261,6 +318,7 @@ void Game::LightRender::RenderDepthMapForParallelLight(glm::vec3 lightDirection)
 
 LightRender::LightRender() {
     // 构造函数为空
+    controller = Controller::GetInstance();
 }
 
 LightRender::~LightRender() {

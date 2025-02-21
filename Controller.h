@@ -69,8 +69,9 @@ namespace Game {
 		glm::mat4 GetViewMatrix();
 		glm::mat4 GetFixedViewMatrix();
 		glm::mat4 GetProjectionMatrix();
-		//构建坐标系
+		//构建坐标系，全局深度图shader
 		void BuildWidgetShader(MeshDataManager* meshData, LifecycleManager<CustomModel>* customModle);
+	
 	private:
 		static Controller* instance;
 		glm::mat4 view;
@@ -80,8 +81,13 @@ namespace Game {
 		~Controller();
 		//构建特殊坐标系shader
 		GLuint widgetShaderProgram;
-		//CoordinateSystemCus* axisWidget ;
-
+		GLuint _depthShaderProgram;
+			//编译深度着色器
+		void BuildDepthShader();
+		//调用全局着色器
+		void UseDepthShaderProgram();
+		//获取shader
+		GLint GetDepthShaderProgram();
 		
 	};
 }

@@ -99,7 +99,7 @@ int GLins() {
         // 获取 Controller 实例,自定义类用于初始化主摄像机，及相关的图形窗口参数
         Controller* controller = Controller::GetInstance();
         //获取生命周期管理器,内含动画控制等
-        LifecycleManager<CustomModel>* manager = LifecycleManager<CustomModel>::GetInstance();//管理所有继承了MonoBehaviour的类,这里实例化为了GameObject
+        LifecycleManager<CustomModel>* manager = LifecycleManager<CustomModel>::GetInstance();//管理所有继承了MonoBehaviour的类,这里实例化为了CustomModel
         //获取综合脚本控制器
         IntergratedScripts* scripts = IntergratedScripts::GetInstance();
         //获取网格管理器
@@ -152,6 +152,7 @@ int GLins() {
         glEnable(GL_DEPTH_TEST);//深度测试
         glEnable(GL_ALPHA_TEST);//alpha测试
         glEnable(GL_STENCIL_TEST);//模板测试
+        glDepthFunc(GL_LESS); // 设置深度函数，通常使用GL_LESS
         //启用混合
        // glEnable(GL_BLEND);
        // glDisable(GL_BLEND);  // 禁用混合
@@ -170,7 +171,7 @@ int GLins() {
         DEBUGLOG("开始进入GL");
 
         //特殊构建,这里构建坐标系
-        controller->BuildWidgetShader(meshData, manager);
+       // controller->BuildWidgetShader(meshData, manager);
 
 
         // Main render loop
@@ -182,26 +183,24 @@ int GLins() {
         //天空盒的渲染是特殊的立方体贴图，并且去除摄像机平移，所以在这里单独声明
         auto* skybox = new Cube();
 
-        CustomModel* basePlane = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["basePlane"], false, true);
-        basePlane->SetVariant(ModelClass::StaticPlane);
-        basePlane->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(50.0f, 0.1f, 50.0f));
-        manager->RegisterObject(basePlane);
-        basePlane->AttachTexture(TextureDic["stone"][0], 0,glm::vec2(1,1));
-
-        CustomModel* baseSphere = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseSphere"], false, true);
+        CustomModel* baseSphere = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseSphere"], false, true,true);
         baseSphere->SetVariant(ModelClass::CubeTestE);
         baseSphere->Initialize(glm::vec3(-3.0f, -2.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseSphere);
         baseSphere->AttachTexture(TextureDic["default"][0], 0);
 
 
-        //CustomModel* baseCylinder = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCylinder"], false, true);
-        //baseCylinder->SetVariant(ModelClass::CubeTestE);
-        //baseCylinder ->Initialize(glm::vec3(-0.0f, 1.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-        //manager->RegisterObject(baseCylinder);
-        //baseCylinder->AttachTexture(TextureDic["default"][0], 0);
+        CustomModel* baseCylinder = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCylinder"], false, true,true);
+        baseCylinder->SetVariant(ModelClass::CubeTestE);
+        baseCylinder ->Initialize(glm::vec3(-0.0f, 1.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        manager->RegisterObject(baseCylinder);
+        baseCylinder->AttachTexture(TextureDic["default"][0], 0);
 
-
+        CustomModel* basePlane = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["basePlane"], false, true, true);
+        basePlane->SetVariant(ModelClass::StaticPlane);
+        basePlane->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(50.0f, 0.1f, 50.0f));
+        manager->RegisterObject(basePlane);
+        basePlane->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
 
         //CustomModel* testMonkey = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["testMonkey"], false, true);
         //testMonkey->SetVariant(ModelClass::CubeTestE);
@@ -268,7 +267,7 @@ int GLins() {
     while (!glfwWindowShouldClose(window)) {
 #pragma region 初始化区域
         // 渲染代码
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
+         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
         // 调用函数处理键盘输入并更新物体位置,这里采用自定以的帧综合控制方法
         controller->FrameControlMethod(window);
         // 获取视图矩阵和投影矩阵
@@ -276,10 +275,16 @@ int GLins() {
         glm::mat4 projection = controller->GetProjectionMatrix();//摄像机的裁剪方向
 
 
-        //--全局执行区域
-       // lightRender->CreateShadowMapForParallelLight();
-        lightRender->RenderDepthMapForParallelLight(lightSpawner->GetParallelLight().direction);//渲染深度缓冲图，用于阴影
-        //光源旋转不写在GameObject的逻辑里面，单独控制
+        //--全局执行区域阴影
+       // glViewport(0, 0, 2400, 1600);  // 为深度图设置正确的视口大小
+        //使用Controller内部全局着色器
+       // lightRender->UseDepthShaderProgram();
+        lightRender->RenderDepthMapForParallelLight(lightSpawner->GetParallelLight().direction);//渲染深度缓冲图，用于阴影，内含绑定_paralleLightDepthMapFBO
+       // lightRender->BindFramebuffer();
+        manager->UpdateDepthPic(lightRender->GetLightMatrix(),lightRender->GetDepthShaderProgram());//获取light的光源矩阵，并为场景中的每个对象绘制进入_paralleLightDepthMapFBO,独立对象的绘制采用模板方法
+        //lightRender->UnbindFramebuffer();//绘制完成之后，解除绑定阴影渲染的深度贴图
+       // baseSphere->Draw(view,projection);
+        //--全局执行区域光照，光源旋转不写在GameObject的逻辑里面，在灯光生成器里单独控制
         lightSpawner->ParalletLightController(glm::vec3(0, 1, 0.0f));
 #pragma endregion
 
@@ -287,71 +292,78 @@ int GLins() {
         //1.简易对象动态参数设置区域
        // newCube1->position += glm::vec3(0.0f, 0.0f, -0.01f);
       //  newCube1->rotation *= glm::quat(glm::vec3(0.0f, 0.01f, 0.0f));  
+       // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        
-        //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
-        //遍历执行区域
-        for (CustomModel * item : manager->GetNativeObjects()) {
-            //将多光源照射效果封装在 灯光渲染器中.如果是光照shader，则需要加入这一段代码，引入光照渲染，如果不是则不需要
-            //现在更改为使用构造化方式，统一使用
-           //--是否光照模型判断
-            if (item->ifLight)
-            {             
-               lightRender->RenderLights(item->shaderProgram,controller,lightSpawner,item->position);//更改渲染逻辑，减少访问次数
-        
-            }           
-            
-            if (item->GetVariant() == 0)
-            {
-               
-                scripts->TChangeRandom(-0.01f, 0.01f);//改变构造随机种子
-               // scripts->CubeUpdateFun(item); // 使用迭代器遍历链表并调用每个,暂时理解为一个遍历语法糖
-            }
-            else if (item->GetVariant()==ModelClass::CubeTestE)
-            {
-              scripts->TestUpdateFun(item);
-            //  baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);        
-            }
-            else if (item->GetVariant()==ModelClass::ParallelLight)//平行光旋转，后面增加其他逻辑
-            {
-           
-                scripts->TParallelLightRotation(item);
+        if (false)
+        {
+           // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
 
+
+            //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
+            //遍历执行区域
+            for (CustomModel* item : manager->GetNativeObjects()) {
+                //将多光源照射效果封装在 灯光渲染器中.如果是光照shader，则需要加入这一段代码，引入光照渲染，如果不是则不需要
+                //现在更改为使用构造化方式，统一使用
+               //--是否光照模型判断
+                if (item->ifLight)
+                {
+                    lightRender->RenderLights(item->shaderProgram, controller, lightSpawner, item->position);//更改渲染逻辑，减少访问次数
+
+                }
+
+                if (item->GetVariant() == 0)
+                {
+
+                    scripts->TChangeRandom(-0.01f, 0.01f);//改变构造随机种子
+                    // scripts->CubeUpdateFun(item); // 使用迭代器遍历链表并调用每个,暂时理解为一个遍历语法糖
+                }
+                else if (item->GetVariant() == ModelClass::CubeTestE)
+                {
+                    scripts->TestUpdateFun(item);
+                    //  baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);        
+                }
+                else if (item->GetVariant() == ModelClass::ParallelLight)//平行光旋转，后面增加其他逻辑
+                {
+
+                    scripts->TParallelLightRotation(item);
+
+                }
+                else if (item->GetVariant() == ModelClass::ActorButterfly)
+                {
+                    //目前这种统一脚本的方式，并不能完全独立于对象脚本，只能在一定程度上进行独立
+                    scripts->ActorButtfly(item);
+                    item->PlayAnimation(0, 0.1f);
+
+
+                }
+                else if (item->GetVariant() == ModelClass::TsetButterfly)
+                {
+
+                    //这样也可以执行变体方法，待后期验证
+                    item->UpdateVariant(view, projection);
+                    item->PlayAnimation(0, 0.1f);
+
+                }
+                else if (item->GetVariant() == ModelClass::LightColorTestCube)
+                {
+
+
+                }
             }
-            else if (item->GetVariant()==ModelClass::ActorButterfly)
-            {
-              //目前这种统一脚本的方式，并不能完全独立于对象脚本，只能在一定程度上进行独立
-                scripts->ActorButtfly(item);
-                item->PlayAnimation(0, 0.1f);
-                
-                
+            //3.变体方法，类似于手动撰写脚本来实现，须在初始化时，注册脚本变体,通用脚本方法有一定局限性，变体方法后续还会使用
+            //变体即其模型类型注册不为0，主要用于场景中的需要批量设置相关变换的对象
+            for (auto* item : manager->GetVariantObjects()) {
+                // item->UpdateVariant(view, projection);
             }
-            else if (item->GetVariant()==ModelClass::TsetButterfly)
-            {
-             
-                //这样也可以执行变体方法，待后期验证
-                item->UpdateVariant(view, projection);
-                item->PlayAnimation(0, 0.1f);
-                
-            }
-            else if (item->GetVariant() == ModelClass::LightColorTestCube)
-            {
-              
-             
-            }
+
+            //  LDmodel->PlayAnimation(0,0.1f);
+              //基础方法，运行场景的自动更新,包含transform更新和绘制更新
+            skybox->Draw(view, projection);//保持天空盒在其他物体之前渲染,渲染天空盒
+            manager->UpdateAll(view, projection);
+            // skybox->Draw(view, projection);//保持天空盒在其他物体之前渲染,渲染天空盒
+             //变体方法，自动化脚本，目前,同第三条一样暂时弃用之
         }
-        //3.变体方法，类似于手动撰写脚本来实现，须在初始化时，注册脚本变体,通用脚本方法有一定局限性，变体方法后续还会使用
-        //变体即其模型类型注册不为0，主要用于场景中的需要批量设置相关变换的对象
-        for (auto* item : manager->GetVariantObjects()) {
-           // item->UpdateVariant(view, projection);
-        }
-      
-      //  LDmodel->PlayAnimation(0,0.1f);
-        //基础方法，运行场景的自动更新,包含transform更新和绘制更新
-        skybox->Draw(view, projection);//保持天空盒在其他物体之前渲染,渲染天空盒
-        manager->UpdateAll(view, projection);
-       // skybox->Draw(view, projection);//保持天空盒在其他物体之前渲染,渲染天空盒
-        //变体方法，自动化脚本，目前,同第三条一样暂时弃用之
+       //skybox->Draw(view, projection);//保持天空盒在其他物体之前渲染,渲染天空盒
       //  manager->UpdateAllVariant(view, projection);
        // cusText->RenderText("abcdefghijklmnopqrstuvwxyz1234567890 *+!@#$%^&*(){}[];:''<>", 100.0f,1500.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
         cusText->RenderText("FPS:" + std::to_string(scripts->TUpdateFPS()), 100.0f, 1400.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));//帧率渲染

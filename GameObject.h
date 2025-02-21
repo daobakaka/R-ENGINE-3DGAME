@@ -77,13 +77,19 @@ namespace Game {
         virtual void Destroy() override;//这里的销毁 本身的逻辑就是删除引用的实例类，所以可以直接默认
         virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
 
+        //--光源深度图绘制
+
+        virtual void DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader);
+        virtual void DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix,GLuint shader);
+        virtual void UpdateDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader) override;
 
     private:
         //初始化变体
         ModelClass variant = ModelClass::OriginalE;
 
     protected:
-       
+        bool _ifShadow;
+        GLuint  _depthShaderProgram;
       
     };
 }

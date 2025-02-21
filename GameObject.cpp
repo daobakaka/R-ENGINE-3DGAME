@@ -70,6 +70,18 @@ void GameObject::UpdateVariant(glm::mat4 view, glm::mat4 projection)
     std::cout << "Object type: " << typeid(*this).name() << " the varaint is not active" << std::endl;
 }
 
+void Game::GameObject::DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
+{
+}
+
+void Game::GameObject::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shader)
+{
+}
+
+void Game::GameObject::UpdateDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
+{
+}
+
 #pragma endregion
 #pragma region 渲染模块
 //传入默认空指针的定义，通常在头文件中进行，不然会报错

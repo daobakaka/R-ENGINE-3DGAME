@@ -7,11 +7,14 @@
 using namespace Game;
 extern const char* axisVertexShaderSource;
 extern const char* axisFragmentShaderSource;
+//深度着色器，利用opengl面向过程机制，定义一个，全局渲染
+extern const char* depthShaderVertexShaderSource;
+extern const char* depthShaderFragmentShaderSource;
 Controller* Controller::instance = nullptr;  // ！在源文件中初始化静态成员变量,而且需要放在类外部进行，它是属于整个程序生命周期的级别，和类隶属同意级别
 //这里是定义指针方法的写法，即返回一个指向Controller的指针，需要显示声明
 extern CoordinateSystemCus* axisWidget = nullptr;//这种方式定义，避免多重引用错误
 Controller::Controller()
-    : position(0.0f, 30.0f, 100.0f),  // 位置初始化
+    : position(0.0f, 3.0f, 10.0f),  // 位置初始化
     front(0.0f, 0.0f, -1.0f),     // 前向向量初始化
     up(0.0f, 1.0f, 0.0f),        // 上向量初始化
     pitch(0.0f), yaw(-0.0f),    // 俯仰和偏航角初始化
@@ -247,5 +250,43 @@ void Controller::BuildWidgetShader(MeshDataManager* meshData, LifecycleManager<C
     axisWidget->SetVariant(ModelClass::AxisWidget);
     axisWidget->Initialize(glm::vec3(0.0f), glm::quat(glm::vec3(0.0f)), glm::vec3(1.0f));
     manager->RegisterObject(axisWidget);
+
+}
+
+void Game::Controller::UseDepthShaderProgram()
+{
+    glUseProgram(_depthShaderProgram);
+
+}
+
+GLint Game::Controller::GetDepthShaderProgram()
+{
+    return _depthShaderProgram;
+}
+
+void Game::Controller::BuildDepthShader()
+{
+
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &depthShaderVertexShaderSource, nullptr);
+    glCompileShader(vertexShader);
+
+
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &depthShaderFragmentShaderSource, nullptr);
+    glCompileShader(fragmentShader);
+
+
+    // 2) 创建着色器程序
+    _depthShaderProgram = glCreateProgram();
+    glAttachShader(_depthShaderProgram, vertexShader);
+    glAttachShader(_depthShaderProgram, fragmentShader);
+    glLinkProgram(_depthShaderProgram);
+
+
+    // 删除临时Shader
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
 
 }

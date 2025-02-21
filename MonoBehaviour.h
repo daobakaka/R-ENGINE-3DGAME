@@ -13,6 +13,7 @@ namespace Game {
         virtual void SetVariant(ModelClass par) = 0;
         virtual ModelClass GetVariant() = 0;
         virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) = 0;
+        virtual void UpdateDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)=0;
         virtual ~MonoBehaviour() = default;  // ÐéÎö¹¹º¯Êý
     };
 }

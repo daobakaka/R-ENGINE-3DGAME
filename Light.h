@@ -97,14 +97,23 @@ namespace Game {
         // controllerPtr 为控制器指针，spawnerPtr 为 LightSpawner 指针
         void RenderLights(GLuint shaderProgram, const Controller* controllerPtr, const Game::LightSpawner* spawnerPtr,glm::vec3 position);
         /// <summary>
-        /// 创建平行光阴影贴图
+        /// 创建平行光阴影贴图,编译阴影深度着色器
         /// </summary>
         /// <returns></returns>
         GLuint CreateShadowMapForParallelLight();
         /// <summary>
-        ///渲染平行光深度图
+        ///计算平行光视角矩阵
         /// </summary>
         void RenderDepthMapForParallelLight( glm::vec3 lightDirection);
+        glm::mat4 GetLightMatrix();
+        //获取深度着色器
+        GLuint GetDepthShaderProgram();
+        //使用深度着色器
+        void UseDepthShaderProgram();
+
+        void UnbindFramebuffer();
+
+        void BindFramebuffer();
     private:
         LightRender();
         ~LightRender();
@@ -113,9 +122,11 @@ namespace Game {
 
         static LightRender* instance;
 
-    protected:
+    public:
         GLuint _depthMapParallelFBO;
+    protected:
         GLuint _depthMapParallel;
+        GLuint _depthShaderProgram;
         glm::mat4 _lightSpaceMatrix;
         
     };

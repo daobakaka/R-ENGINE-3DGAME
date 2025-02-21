@@ -76,11 +76,20 @@ void LifecycleManager<T>::UpdateAllVariant(glm::mat4 view, glm::mat4 projection)
     }
 
 }
+template<typename T>
+void Game::LifecycleManager<T>::UpdateDepthPic(glm::mat4 projection, GLuint shader)
+{
+    for (T* object : variantObjects)
+    {
+        object->UpdateDepthPic(projection, shader);
+    }
 
-
-
-
-
+}
+/// <summary>
+/// 有过设置变体的对象，才会进行阴影渲染
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <param name="projection"></param>
 
 
 
