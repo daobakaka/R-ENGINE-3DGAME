@@ -23,6 +23,7 @@
 #include "ScriptModel.h"
 #include <chrono>
 #include <thread>
+#include "ShaderManager.h"
 //调试宏
 #define DEBUGLOG(msg) std::cout << "DEBUG: " << msg << std::endl;
 //末尾查看有无追踪提示
@@ -42,9 +43,15 @@ std::vector<GameObject*> nativeObjects;
 std::vector<GameObject*> variantObjects;
 
 
+
 //智能指针，可不用手动管理内存，里面储存的是对象
 //std::vector<std::shared_ptr<GameObject>> variantObjects;
+void  CallbackMouseScrollGlobal(GLFWwindow* window, double xoffset, double yoffset)
+{
 
+    
+    Controller::GetInstance()->ProcessMouseScrollGlobal(static_cast<float>(yoffset));
+}
 
 #pragma endregion
 
@@ -114,6 +121,8 @@ int GLins() {
         lightSpawner->modelIdentification = false;
         //获取灯光渲染器
         auto* lightRender = LightRender::GetInstance();
+        //获取着色器控制器,构造添加默认编译
+        auto* shaderManager = ShaderManager::GetInstance();
         
 
        
@@ -130,7 +139,7 @@ int GLins() {
         }
         //初始化
         glfwMakeContextCurrent(window);//设置当前绘制的上下文环境，即当前窗体
-
+        glfwSetScrollCallback(window, CallbackMouseScrollGlobal);//鼠标滚轮回调
         GLenum glewInitResult = glewInit();
 
     
@@ -170,37 +179,48 @@ int GLins() {
         //获取文字渲染器,制作字体
         DEBUGLOG("开始进入GL");
 
-        //特殊构建,这里构建坐标系
-       // controller->BuildWidgetShader(meshData, manager);
+        //特殊构建,综合类构建方法，这里构建坐标系，编译通用着色器
+       controller->BuildWidgetShader(meshData, manager);
+       shaderManager->IntergratedShaderCompile();
 
 
         // Main render loop
  // 批量创建 对象
         //批量创建对象可以并入这个协程类，只需传入注册控制器即可
-     // coroutine->StartSpawnButterfliesAsync(manager);
-     // std::thread spawnThread(coroutine->StartSpawnButterfliesAsync);
+       // coroutine->StartSpawnButterfliesAsync(manager);
+     //std::thread spawnThread(coroutine->StartSpawnButterfliesAsync);
      // 
         //天空盒的渲染是特殊的立方体贴图，并且去除摄像机平移，所以在这里单独声明
         auto* skybox = new Cube();
-
-        CustomModel* baseSphere = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseSphere"], false, true,true);
+           
+        auto* baseSphere = new CustomModelShader("commonLight", ModelDic["baseSphere"], false, true, true);
         baseSphere->SetVariant(ModelClass::CubeTestE);
         baseSphere->Initialize(glm::vec3(-3.0f, -2.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseSphere);
-        baseSphere->AttachTexture(TextureDic["default"][0], 0);
+        baseSphere->AttachTexture(TextureDic["butterfly"][0], 0);
 
 
-        CustomModel* baseCylinder = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["baseCylinder"], false, true,true);
+        auto* baseCylinder = new CustomModelShader("commonLight", ModelDic["baseCylinder"], false, true, true);
         baseCylinder->SetVariant(ModelClass::CubeTestE);
-        baseCylinder ->Initialize(glm::vec3(-0.0f, 1.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        baseCylinder->Initialize(glm::vec3(-0.0f, 1.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseCylinder);
         baseCylinder->AttachTexture(TextureDic["default"][0], 0);
 
-        CustomModel* basePlane = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["basePlane"], false, true, true);
+        auto* basePlane = new  CustomModelShader("commonLight",  ModelDic["basePlane"], false, true, false);
         basePlane->SetVariant(ModelClass::StaticPlane);
         basePlane->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(50.0f, 0.1f, 50.0f));
         manager->RegisterObject(basePlane);
         basePlane->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
+
+
+        auto* butterflyInstance = new  CustomModelInstance("noneLight", ModelDic["butterfly"], false, false, false);
+        butterflyInstance->SetVariant(ModelClass::CubeE);
+        butterflyInstance->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(50.0f, 0.1f, 50.0f));
+        manager->RegisterObject(butterflyInstance);
+        butterflyInstance->AttachTexture(TextureDic["butteerfly"][0], 0, glm::vec2(1, 1));
+
+
+
 
         //CustomModel* testMonkey = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["testMonkey"], false, true);
         //testMonkey->SetVariant(ModelClass::CubeTestE);
@@ -222,7 +242,7 @@ int GLins() {
         //    true,
         //    ModelDic["butterfly"],
         //    AnimationDic["butterfly"]["fly"],
-        //     TextureDic["default"][0],  
+        //    TextureDic["default"][0],  
         //    ModelClass::TsetButterfly,
         //    2, 15,
         //    step,
@@ -240,7 +260,7 @@ int GLins() {
 #pragma region 光照区域
         //预定义最大光源数量，这里可以做性能限定，目前光照的实现均为实时光照，目前没有提供注入模式，目前没有限制
         //但通过灯光渲染逻辑，现在实现了类似游戏引擎的光线渲染逻辑判断
-        //初始化用于渲染阴影的平行光深度图，可以在类中直接构造
+        //初始化用于渲染阴影的平行光深度图，可以在类中直接构造，编译阴影着色器
         lightRender->CreateShadowMapForParallelLight();
         //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
         auto pointLight2= lightSpawner->SpawPointLight(glm::vec3(2,2,2),glm::vec3(1,1,1),10);
@@ -256,8 +276,6 @@ int GLins() {
         manager->StartAll();
 
 
-        // 2. 这里需要实时进行 每一帧，因为画面会切换
-      //  cusText->RenderText("Hello World", 300.0f, 500.0f, 10.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 
     
 #pragma endregion
@@ -274,18 +292,27 @@ int GLins() {
         glm::mat4 view = controller->GetViewMatrix();//摄像机的朝向
         glm::mat4 projection = controller->GetProjectionMatrix();//摄像机的裁剪方向
 
+        //为通用shader 传入共用视图及透视矩阵
+        shaderManager->SetMat4("commonLight", "view", view);
+        shaderManager->SetMat4("commonLight", "projection", projection);
 
         //--全局执行区域阴影
        // glViewport(0, 0, 2400, 1600);  // 为深度图设置正确的视口大小
         //使用Controller内部全局着色器
-       // lightRender->UseDepthShaderProgram();
+        lightRender->UseDepthShaderProgram(ShaderClass::DepthCalculate);
         lightRender->RenderDepthMapForParallelLight(lightSpawner->GetParallelLight().direction);//渲染深度缓冲图，用于阴影，内含绑定_paralleLightDepthMapFBO
-       // lightRender->BindFramebuffer();
-        manager->UpdateDepthPic(lightRender->GetLightMatrix(),lightRender->GetDepthShaderProgram());//获取light的光源矩阵，并为场景中的每个对象绘制进入_paralleLightDepthMapFBO,独立对象的绘制采用模板方法
-        //lightRender->UnbindFramebuffer();//绘制完成之后，解除绑定阴影渲染的深度贴图
+        lightRender->BindFramebuffer();
+        manager->UpdateDepthPic(lightRender->GetLightMatrix(), lightRender->GetDepthShaderProgram(ShaderClass::DepthCalculate));//获取light的光源矩阵，并为场景中的每个对象绘制进入_paralleLightDepthMapFBO,独立对象的绘制采用模板方法
+        lightRender->UnbindFramebuffer();//绘制完成之后，解除绑定阴影渲染的深度贴图
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
+        lightRender->UseDepthShaderProgram(ShaderClass::DepthRender);
+        lightRender->RenderShadowTexture();
+       //--
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
        // baseSphere->Draw(view,projection);
         //--全局执行区域光照，光源旋转不写在GameObject的逻辑里面，在灯光生成器里单独控制
         lightSpawner->ParalletLightController(glm::vec3(0, 1, 0.0f));
+  
 #pragma endregion
 
 #pragma region  完成类似脚本功能的三种实现模式，根据需要选择   
@@ -294,7 +321,7 @@ int GLins() {
       //  newCube1->rotation *= glm::quat(glm::vec3(0.0f, 0.01f, 0.0f));  
        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (false)
+        if (true)
         {
            // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
 
@@ -307,6 +334,7 @@ int GLins() {
                //--是否光照模型判断
                 if (item->ifLight)
                 {
+                    //这里既可以使用独有shader 也可以使用共有shader，看使用什么类去构造
                     lightRender->RenderLights(item->shaderProgram, controller, lightSpawner, item->position);//更改渲染逻辑，减少访问次数
 
                 }

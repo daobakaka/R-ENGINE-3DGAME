@@ -605,7 +605,55 @@ const char* skyboxFragmentShaderSource = R"(
     }
 )";
 /// <summary>
-/// 深度图着色器
+/// 深度图测试着色器
+/// </summary>
+const char* depthTestShaderVertexShaderSource = R"(
+#version 450 core
+layout(location = 0) in vec3 aPos;   // 顶点位置
+
+uniform mat4 model;                  // 物体模型矩阵
+uniform mat4 lightSpaceMatrix;       // 从光源视角计算的矩阵
+
+void main() {
+    // 将顶点从世界空间转换到光源视角空间
+    gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);  // model 矩阵用于世界空间转换
+}
+)";
+/// <summary>
+/// 可以不渲染，因为深度值将会储存在深度缓冲区中，OPENGL 储存深度值是非线性的，这里需要进行线性转换才能看见
+/// </summary>
+const char* depthTestShaderFragmentShaderSource = R"(
+#version 450 core
+
+out vec4 FragColor;
+
+// 直接在着色器中定义近裁剪面和远裁剪面
+const float near = 0.1f;  // 近裁剪面
+const float far = 100.0f;   // 远裁剪面
+
+// 线性化深度函数
+float LinearizeDepth(float depth) {
+    float z = depth * 2.0 - 1.0;  // 将深度值从 [0, 1] 转换到 NDC (-1, 1) 区间
+    return (2.0 * near * far) / (far + near - z * (far - near));  // 计算线性深度
+}
+
+void main() {
+    // 获取当前片段的深度值
+    float depth = gl_FragCoord.z;
+
+    // 线性化深度值
+    float linearDepth = LinearizeDepth(depth) / far; // 除以 far，得到深度值在 [0, 1] 范围内
+
+    // 渲染深度，显示线性化的深度值（灰度）
+    FragColor = vec4(vec3(linearDepth), 1.0);  // 使用线性深度作为颜色值
+
+
+
+}
+)";
+
+/// <summary>
+/// 深度图使用着色器
 /// </summary>
 const char* depthShaderVertexShaderSource = R"(
 #version 450 core
@@ -620,7 +668,7 @@ void main() {
 }
 )";
 /// <summary>
-/// 可以不渲染，因为深度值将会储存在深度缓冲区中，这里可以进行格式化
+/// 可以不渲染
 /// </summary>
 const char* depthShaderFragmentShaderSource = R"(
 #version 450 core
@@ -628,11 +676,64 @@ const char* depthShaderFragmentShaderSource = R"(
 out vec4 FragColor;
 
 void main() {
-    // 输出深度值：将深度值映射到[0, 1]范围，并用深度值控制颜色
-    float depth = gl_FragCoord.z;  // 获取当前片段的深度值
-    FragColor = vec4(depth, depth, depth, 1.0);  // 灰度颜色，显示深度
+
 }
 )";
 
+/// <summary>
+/// 深度图可视化着色器
+/// </summary>
+const char* depthVisualShaderVertexShaderSource = R"(
+#version 450 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoords;
+
+out vec2 TexCoords;
+
+void main()
+{
+    TexCoords = aTexCoords;
+    gl_Position = vec4(aPos, 1.0);
+}
+)";
+
+const char* depthVisualShaderFragmentShaderSource = R"(
+#version 450 core
+
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D depthMap;   // 深度贴图
+const float near_plane=0.1f;      // 近裁剪面
+const float far_plane=100.0f;       // 远裁剪面
+
+// 线性化深度值
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0; // 转换到NDC空间
+    return (2.0 * near_plane * far_plane) / (far_plane + near_plane - z * (far_plane - near_plane));
+}
+
+void main()
+{             
+    //// 获取当前纹理中的深度值
+    //float depthValue = texture(depthMap, TexCoords).r;
+
+    //// 线性化深度值
+    //float linearDepth = LinearizeDepth(depthValue);
+
+    //// 将线性化深度值映射到[0,1]范围进行可视化
+    //FragColor = vec4(vec3(linearDepth / far_plane), 1.0);  // 使用线性深度值来显示深度
+
+    float depthValue = texture(depthMap, TexCoords).r;
+    // FragColor = vec4(vec3(LinearizeDepth(depthValue) / far_plane), 1.0); // perspective
+    FragColor = vec4(vec3(depthValue), 1.0); // orthographic
+
+
+
+
+}
+)";
 
 #endif

@@ -1,4 +1,5 @@
 #include "ScriptModel.h"
+#include "ShaderManager.h"
 using namespace Game;
 #pragma region 测试蝴蝶
 void ButterflyScript::UpdateVariant(glm::mat4 view, glm::mat4 projection)
@@ -10,7 +11,6 @@ void ButterflyScript::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 
 }
 #pragma endregion
-
 #pragma region 参考坐标
 void CoordinateSystemCus::Update(glm::mat4 view, glm::mat4 projection)
 {
@@ -18,7 +18,6 @@ void CoordinateSystemCus::Update(glm::mat4 view, glm::mat4 projection)
     DrawLineFixedWidget(view, projection);
 }
 #pragma endregion
-
 #pragma region 光源模型
 
 void LightModel::SteLightParameters(glm::vec3 color, float intensity, glm::vec3 dirction)
@@ -58,7 +57,6 @@ void LightModel::RenderingTexture()
 
 }
 #pragma endregion
-
 #pragma region 自定义射线
 
 void CustomizeRay::Update(glm::mat4 view, glm::mat4 projection)
@@ -105,6 +103,360 @@ void CustomizeRay::SetRayPar(glm::vec3 color,float intensity)
 {
     myColor = color;
     myIntensity = intensity;
+}
+
+#pragma endregion
+#pragma region  场景阴影贴图
+void Game::ShadowTexture::DrawDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader)
+{
+  
+    //传入模型世界坐标，视图和透视矩阵，在lightRender中生成
+    GLuint modelLoc = glGetUniformLocation(shader, "model");
+    glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
+
+
+    glBindVertexArray(VAO);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+
+
+}
+void Game::ShadowTexture::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shader)
+{
+
+
+
+    //传入模型世界坐标，视图和透视矩阵，在lightRender中生成
+    GLuint modelLoc = glGetUniformLocation(shader, "model");
+    glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glBufferData(GL_ARRAY_BUFFER,
+        verticesTras.size() * sizeof(Vertex),
+        verticesTras.data(),
+        GL_DYNAMIC_DRAW);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+
+
+}
+#pragma endregion
+#pragma region 通用shader模型 
+
+Game::CustomModelShader::CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow)
+{
+    vertexCount = modelData.verticesStruct.size();
+    index = modelData.indices.size();
+    verticesTras = modelData.verticesStruct;
+    IsSkinnedMesh = isSkinnedMesh;
+    ifLight = ifLightIn;
+    _ifShadow = ifShadow;
+
+    // 获取着色器程序
+    shaderProgram = ShaderManager::GetInstance()->GetShader(name);
+
+    // 生成 VAO, VBO, EBO
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    // 绑定VAO
+    glBindVertexArray(VAO);
+
+    // 根据是否为动态网格（例如骨骼动画网格）决定使用动态或静态缓冲区
+    GLuint bufferUsage = isSkinnedMesh ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
+
+    // VBO: 传入所有顶点
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER,
+        modelData.verticesStruct.size() * sizeof(Vertex),
+        modelData.verticesStruct.data(),
+        bufferUsage);  // 根据是否为动态网格选择缓冲区类型
+
+    // EBO: 传入索引
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+        modelData.indices.size() * sizeof(unsigned int),
+        modelData.indices.data(),
+        bufferUsage);  // 同样根据是否为动态网格选择缓冲区类型
+
+    // 设置顶点属性指针
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+        sizeof(Vertex),
+        (void*)offsetof(Vertex, Position));
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
+        sizeof(Vertex),
+        (void*)offsetof(Vertex, TexCoords));
+
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
+        sizeof(Vertex),
+        (void*)offsetof(Vertex, Normal));
+
+    // 解绑VAO
+    glBindVertexArray(0);
+}
+
+
+
+Game::CustomModelShader::CustomModelShader()
+{
+}
+
+bool Game::CustomModelShader::Draw(glm::mat4 view, glm::mat4 projection)
+{
+    //集成纹理渲染方法,要在draw之前调用，才能生效
+    RenderingTexture();
+
+    GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+    glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
+    glBindVertexArray(VAO);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+
+    //集成纹理渲染方法
+  // RenderingTexture();
+    return true;
+}
+
+bool Game::CustomModelShader::DrawDynamical(glm::mat4 view, glm::mat4 projection)
+{
+
+    //集成纹理渲染方法,要在draw之前调用，才能生效
+    RenderingTexture();
+
+    // glUseProgram(shaderProgram);
+
+    GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+
+    glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER,
+        verticesTras.size() * sizeof(Vertex),
+        verticesTras.data(),
+        GL_DYNAMIC_DRAW);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+
+    return true;
+}
+
+void Game::CustomModelShader::RenderingTexture()
+{
+    //这里调用引用的shader避免重复计算
+    glUseProgram(shaderProgram);
+    if (_drawTexture)
+    {
+
+        // 传入纹理缩放因子
+        GLuint textureScaleLoc = glGetUniformLocation(shaderProgram, "textureScale");
+        glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y); // 设置纹理缩放因子
+
+        GLuint picData = glGetUniformLocation(shaderProgram, "baseTexture");//预写入图像的shader定义内容
+        glActiveTexture(GL_TEXTURE0 + textureOrder);          // 激活纹理单元 0+order
+        glBindTexture(GL_TEXTURE_2D, texture);  // 绑定纹理对象到纹理单元 0+order,这里添加DicTexture集合的纹理对象
+        // 绑定纹理到纹理单元 0+order，这个顺序的所有纹理单元都遍历绑定一次
+        glUniform1i(picData, textureOrder);
+    }
+
+}
+#pragma endregion
+#pragma region 实例化模型
+Game::CustomModelInstance::CustomModelInstance()
+{
+}
+
+Game::CustomModelInstance::CustomModelInstance(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow, int instanceCount, glm::vec3 positionOffset, glm::vec3 rotationAxis)
+{
+
+
+    _instanceCount = instanceCount;
+    _positionOffset = positionOffset;
+    _rotationAxis = rotationAxis;
+
+    vertexCount = modelData.verticesStruct.size();
+    index = modelData.indices.size();
+    verticesTras = modelData.verticesStruct;
+    IsSkinnedMesh = isSkinnedMesh;
+    ifLight = ifLightIn;
+    _ifShadow = ifShadow;
+    shaderProgram = ShaderManager::GetInstance()->GetShader(name);
+
+    GLuint useageBuffer = isSkinnedMesh ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
+
+    // 调用生成实例化矩阵的方法
+    GenerateInstanceMatrices();
+    // 创建 VAO, VBO, EBO
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+    glGenBuffers(1, &_instanceBuffer);  // 实例化缓冲区，用来存储每个实例的变换数据
+
+    // 绑定 VAO
+    glBindVertexArray(VAO);
+
+    // VBO: 传入所有顶点
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, modelData.verticesStruct.size() * sizeof(Vertex), modelData.verticesStruct.data(), useageBuffer);
+
+    // EBO: 传入索引
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, modelData.indices.size() * sizeof(unsigned int), modelData.indices.data(), useageBuffer);
+
+    // 设置顶点属性指针
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Position));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+
+    
+
+    // 将实例数据传递给 GPU
+    glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * _modelMatrices.size(), _modelMatrices.data(), useageBuffer);
+
+    // 为每个实例化数据设置属性指针（每一列矩阵数据传入）
+    for (GLuint i = 0; i < 4; i++) {
+        glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4) * i));
+        glEnableVertexAttribArray(3 + i);
+        glVertexAttribDivisor(3 + i, 1);  // 告诉 OpenGL 每个实例的数据是独立的
+    }
+
+    // 解绑 VAO
+    glBindVertexArray(0);
+}
+
+void Game::CustomModelInstance::GenerateInstanceMatrices()
+
+{
+    _modelMatrices.resize(_instanceCount);  // 根据实例数量调整 vector 大小
+
+    for (GLuint i = 0; i < _modelMatrices.size(); i++) {
+        glm::mat4 model = glm::mat4(1.0f);
+
+        // 计算平移：形成一个规则的立方体（例如在 x、y、z 轴方向上等距分布）
+        float xOffset = (i % 10) * 2.0f;  // 每行10个实例，沿X轴平移
+        float yOffset = (i / 10) % 10 * 2.0f;  // 每10个实例一行，沿Y轴平移
+        float zOffset = (i / 100) * 2.0f;  // 每100个实例一层，沿Z轴平移
+
+        // 使用计算出的平移量进行平移
+        model = glm::translate(model, glm::vec3(xOffset, yOffset, zOffset));  // 形成规则立方体
+
+        // 旋转：绕指定的轴旋转，旋转增量由 rotationAxis 控制
+        model = glm::rotate(model, glm::radians(i * _rotationAxis.x), glm::vec3(1.0f, 0.0f, 0.0f));  // 绕 X 轴旋转
+        model = glm::rotate(model, glm::radians(i * _rotationAxis.y), glm::vec3(0.0f, 1.0f, 0.0f));  // 绕 Y 轴旋转
+        model = glm::rotate(model, glm::radians(i * _rotationAxis.z), glm::vec3(0.0f, 0.0f, 1.0f));  // 绕 Z 轴旋转
+
+        _modelMatrices[i] = model;
+
+
+    }
+}
+
+
+// 需要保留原有的方法签名
+bool Game::CustomModelInstance::Draw(glm::mat4 view, glm::mat4 projection)
+{
+    // 直接调用渲染纹理方法，渲染纹理数据
+    RenderingTexture();
+
+    // 获取模型矩阵的uniform位置
+    GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+
+    // 设置模型矩阵
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(transform));
+
+    // 绑定VAO
+    glBindVertexArray(VAO);
+
+    // 绑定实例化数据的VBO（如果有）
+    glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer); // _instanceBuffer 是实例化数据的缓冲区
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * _modelMatrices.size(), _modelMatrices.data(), GL_DYNAMIC_DRAW);
+
+    // 为每个实例化数据设置属性指针（每一列矩阵数据传入）
+    for (GLuint i = 0; i < 4; i++) {
+        glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4) * i));
+        glEnableVertexAttribArray(3 + i);
+        glVertexAttribDivisor(3 + i, 1);  // 每个实例的数据是独立的
+    }
+
+    // 使用实例化绘制
+    justDrawVerteies == true
+        ? glDrawArraysInstanced(GL_TRIANGLES, 0, index, _modelMatrices.size())  // 使用 glDrawArraysInstanced
+        : glDrawElementsInstanced(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0, _modelMatrices.size());  // 使用 glDrawElementsInstanced
+
+    // 解绑VAO
+    glBindVertexArray(0);
+
+    return true;
+}
+
+// DrawDynamical 方法
+bool Game::CustomModelInstance::DrawDynamical(glm::mat4 view, glm::mat4 projection)
+{
+    // 直接调用渲染纹理方法，渲染纹理数据
+    RenderingTexture();
+
+    // 获取模型矩阵的uniform位置
+    GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+
+    // 设置模型矩阵
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(transform));
+
+    // 绑定VAO
+    glBindVertexArray(VAO);
+
+    // 更新顶点数据（如果有动态数据）
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, verticesTras.size() * sizeof(Vertex), verticesTras.data(), GL_DYNAMIC_DRAW);
+
+    // 绑定实例化数据的VBO（如果有）
+    glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer); // _instanceBuffer 是实例化数据的缓冲区
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * _modelMatrices.size(), _modelMatrices.data(), GL_DYNAMIC_DRAW);
+
+    // 为每个实例化数据设置属性指针（每一列矩阵数据传入）
+    for (GLuint i = 0; i < 4; i++) {
+        glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4) * i));
+        glEnableVertexAttribArray(3 + i);
+        glVertexAttribDivisor(3 + i, 1);  // 每个实例的数据是独立的
+    }
+
+    // 使用实例化绘制
+    justDrawVerteies == true
+        ? glDrawArraysInstanced(GL_TRIANGLES, 0, index, _modelMatrices.size())  // 使用 glDrawArraysInstanced
+        : glDrawElementsInstanced(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0, _modelMatrices.size());  // 使用 glDrawElementsInstanced
+
+    // 解绑VAO
+    glBindVertexArray(0);
+
+    return true;
+}
+
+// RenderingTexture方法
+void Game::CustomModelInstance::RenderingTexture()
+{
+    // 这里调用引用的shader避免重复计算
+    glUseProgram(shaderProgram);
+
+    if (_drawTexture)
+    {
+        // 传入纹理缩放因子
+        GLuint textureScaleLoc = glGetUniformLocation(shaderProgram, "textureScale");
+        glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y); // 设置纹理缩放因子
+
+        GLuint picData = glGetUniformLocation(shaderProgram, "baseTexture");
+        glActiveTexture(GL_TEXTURE0 + textureOrder); // 激活纹理单元 0+order
+        glBindTexture(GL_TEXTURE_2D, texture);      // 绑定纹理对象到纹理单元 0+order
+        glUniform1i(picData, textureOrder);         // 将纹理单元绑定到着色器的“baseTexture” uniform
+    }
 }
 
 #pragma endregion

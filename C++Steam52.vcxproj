@@ -156,6 +156,7 @@
     <ClCompile Include="MeshDataManager.cpp" />
     <ClCompile Include="Monster.cpp" />
     <ClCompile Include="ObsoleteCode.cpp" />
+    <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="Test.cpp" />
     <ClCompile Include="TextRender.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="PhysicalEngine.h" />
     <ClInclude Include="ScriptModel.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Test.h" />
     <ClInclude Include="EnumTotal.h" />

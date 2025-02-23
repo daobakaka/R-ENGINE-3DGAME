@@ -7,6 +7,9 @@
 
 namespace Game {
 
+
+    enum ShaderClass;
+    
     // 定义点光源结构体
     struct CustomPointLight {
         glm::vec3 position;
@@ -106,14 +109,22 @@ namespace Game {
         /// </summary>
         void RenderDepthMapForParallelLight( glm::vec3 lightDirection);
         glm::mat4 GetLightMatrix();
+
+        GLuint CompileShader(const char* ver, const char* fra);
         //获取深度着色器
-        GLuint GetDepthShaderProgram();
+        GLuint GetDepthShaderProgram(ShaderClass shader);
         //使用深度着色器
-        void UseDepthShaderProgram();
-
+        void UseDepthShaderProgram(ShaderClass shader);
+        //解绑深度缓冲区
         void UnbindFramebuffer();
-
+        //绑定深度缓冲区
         void BindFramebuffer();
+        //渲染阴影图
+        void RenderShadowTexture(CustomModel* obj,glm::mat4 crossView);
+        //渲染阴影图，重载,这里需要使用NDC（标准设备坐标空间，来进行正交投影）
+        void RenderShadowTexture();
+
+        
     private:
         LightRender();
         ~LightRender();
@@ -127,8 +138,14 @@ namespace Game {
     protected:
         GLuint _depthMapParallel;
         GLuint _depthShaderProgram;
+        GLuint _depthTestShader;
+        GLuint _depthVisualShader;
         glm::mat4 _lightSpaceMatrix;
         
+
+    private:
+        GLuint quadVAO = 0;
+        GLuint quadVBO;
     };
 
 

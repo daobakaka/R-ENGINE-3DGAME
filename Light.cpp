@@ -7,6 +7,7 @@
 #include "MeshDataManager.h"
 #include <algorithm>  // 包含 std::sort
 #include <iostream>
+#include "EnumTotal.h"
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace Game;
@@ -18,9 +19,15 @@ extern const char* noneLightLightVertexShaderSource;
 extern const char* noneLightLightFragmentShaderSource;
 extern const char* rayVertexShaderSource;
 extern const char* rayFragmentShaderSource;
-//深度着色器，利用opengl面向过程机制，定义一个，全局渲染
+//深度图生成着色器，利用opengl面向过程机制，定义一个，全局渲染
 extern const char* depthShaderVertexShaderSource;
 extern const char* depthShaderFragmentShaderSource;
+//深度图可视化着色器
+extern const char* depthVisualShaderVertexShaderSource;
+extern const char* depthVisualShaderFragmentShaderSource;
+//深度图测试着色器
+extern const char* depthTestShaderVertexShaderSource;
+extern const char* depthTestShaderFragmentShaderSource;
 //C++的源文件中可以直接定义相关变量，而不必要在类中进行声明，更灵活
 LifecycleManager<CustomModel>* manager = nullptr;
 MeshDataManager* meshData = nullptr;
@@ -217,10 +224,10 @@ GLuint Game::LightRender::CreateShadowMapForParallelLight()
     glGenFramebuffers(1, &_depthMapParallelFBO);//基于深度贴图的帧缓冲贴图对象GLuint
     glGenTextures(1, &_depthMapParallel);//深度贴图
     glBindTexture(GL_TEXTURE_2D, _depthMapParallel);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 2400, 1600, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 2400, 1200, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     //这里同样设置几种纹理参数 近线性
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindFramebuffer(GL_FRAMEBUFFER, _depthMapParallelFBO);
@@ -229,32 +236,13 @@ GLuint Game::LightRender::CreateShadowMapForParallelLight()
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-
+//---3个shader一起编译
     //创建阴影贴图，然后编译深度着色器
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &depthShaderVertexShaderSource, nullptr);
-    glCompileShader(vertexShader);
-
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &depthShaderFragmentShaderSource, nullptr);
-    glCompileShader(fragmentShader);
-
-
-    // 2) 创建着色器程序
-    _depthShaderProgram = glCreateProgram();
-    glAttachShader(_depthShaderProgram, vertexShader);
-    glAttachShader(_depthShaderProgram, fragmentShader);
-    glLinkProgram(_depthShaderProgram);
-
-
-    // 删除临时Shader
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-
-
-
+    _depthShaderProgram = CompileShader(depthShaderVertexShaderSource, depthShaderFragmentShaderSource);
+    _depthVisualShader = CompileShader(depthVisualShaderVertexShaderSource, depthVisualShaderFragmentShaderSource);
+    _depthTestShader = CompileShader(depthTestShaderVertexShaderSource, depthTestShaderFragmentShaderSource);
+    //-------------------------------------------------------
+   
     return _depthMapParallelFBO;  // 返回生成的深度贴图FBO
 }
 /// <summary>
@@ -264,20 +252,20 @@ GLuint Game::LightRender::CreateShadowMapForParallelLight()
 void Game::LightRender::RenderDepthMapForParallelLight(glm::vec3 lightDirection)
 {
     // 设置平行光的视角矩阵（正交投影）
-   glm::mat4 lightProjection = glm::perspective(glm::radians(45.0f), 1.5f, 0.1f, 1000.0f);
-   //  glm::mat4 lightProjection = glm::ortho(-3.0f, 3.0f, -2.0f, 2.0f, 0.10f, 1000.0f);
-    // glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.5f, 7.5f);
+  // glm::mat4 lightProjection = glm::perspective(glm::radians(45.0f), 1.5f, 0.1f, 100.0f);
+   glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.10f, 100.0f);
+   //  glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.5f, 7.5f);
 
 
       // 平行光的视角矩阵，注意：平行光没有位置，只有方向
-    glm::vec3 lightPos = -lightDirection * 10.0f;  // 通过光线方向向远处拉伸来设定虚拟光源位置
+    glm::vec3 lightPos = -lightDirection * 30.0f;  // 通过光线方向向远处拉伸来设定虚拟光源位置
 
 
-    // glm::mat4 lightView = glm::lookAt(lightPos, lightPos + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f)); // 视角矩阵
+     glm::mat4 lightView = glm::lookAt(lightPos, lightPos + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f)); // 视角矩阵
      //std::cout << "lightDirection: (" << lightDirection.x << ", " << lightDirection.y << ", " << lightDirection.z << ")" << std::endl;
-    glm::mat4 lightView = glm::lookAt(glm::vec3(0.0f, 3.0f, 10.0f),
-        glm::vec3(0, 3, 10) + glm::vec3(0.0f, 0.0f, -1.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f));
+   /* glm::mat4 lightView = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f),
+        glm::vec3(0, 0, 0),
+        glm::vec3(0.0f, 1.0f, 0.0f));*/
     //glm::vec3 lightPos = glm::vec3(-0,50,0);  // 通过光线方向向远处拉伸来设定虚拟光源位置
 
 
@@ -291,14 +279,69 @@ glm::mat4 Game::LightRender::GetLightMatrix()
 {
     return _lightSpaceMatrix;
 }
-GLuint Game::LightRender::GetDepthShaderProgram()
+GLuint Game::LightRender::CompileShader(const char* ver, const char* fra)
 {
-    return _depthShaderProgram;
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &ver, nullptr);
+    glCompileShader(vertexShader);
+
+
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fra, nullptr);
+    glCompileShader(fragmentShader);
+
+    GLuint shader;
+    // 2) 创建着色器程序
+    shader = glCreateProgram();
+    glAttachShader(shader, vertexShader);
+    glAttachShader(shader, fragmentShader);
+    glLinkProgram(shader);
+
+
+    // 删除临时Shader
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    
+    
+    
+    
+    return shader;
 }
-void Game::LightRender::UseDepthShaderProgram()
+GLuint Game::LightRender::GetDepthShaderProgram(ShaderClass shader)
 {
-    glUseProgram(_depthShaderProgram);
+    switch (shader)
+    {
+    case ShaderClass::DepthCalculate:
+        return _depthShaderProgram;
+    case ShaderClass::DepthRender:
+        return _depthVisualShader;
+    case ShaderClass::DpethTest:
+        return _depthTestShader;
+    default:
+        // 如果 num 的值不在 1, 2, 3 之内，返回一个默认值或处理错误
+        return 0;  // 假设返回 0 或者其他默认值作为错误处理
+    }
 }
+
+void Game::LightRender::UseDepthShaderProgram(ShaderClass shader)
+{
+    switch (shader)
+    {
+    case ShaderClass::DepthCalculate:
+        glUseProgram(_depthShaderProgram);
+        break;
+    case ShaderClass::DepthRender:
+        glUseProgram(_depthVisualShader);
+        break;
+    case ShaderClass::DpethTest:
+        glUseProgram(_depthTestShader);
+        break;
+    default:
+        // 如果 num 的值不在 1, 2, 3 之内，可以选择不执行任何操作，或者返回错误处理
+        break;
+    }
+}
+
 /// <summary>
 /// 清空帧缓冲深度绑定
 /// </summary>
@@ -306,13 +349,66 @@ void Game::LightRender::UnbindFramebuffer()
 {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);//解除绑定
+
+
 }
 
 void Game::LightRender::BindFramebuffer()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, _depthMapParallelFBO);
     glClear(GL_DEPTH_BUFFER_BIT);  // 清空深度缓冲
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);//解除绑定
+   // glBindFramebuffer(GL_FRAMEBUFFER, 0);//解除绑定
+
+//    glViewport(0, 0, 2400, 1600);
+}
+
+void Game::LightRender::RenderShadowTexture(CustomModel* obj,glm::mat4 crossView)
+{
+    
+  
+    
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, TextureDic["butterfly"][0]);
+
+    GLuint depthMapLoc = glGetUniformLocation(_depthVisualShader, "depthMap");
+    glUniform1i(depthMapLoc, 0);  // 将纹理单元0传递给着色器
+
+    obj->DrawDepthPic(crossView, _depthVisualShader);
+
+}
+
+void Game::LightRender::RenderShadowTexture()
+{
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _depthMapParallel);
+
+    GLuint depthMapLoc = glGetUniformLocation(_depthVisualShader, "depthMap");
+    glUniform1i(depthMapLoc, 0);  // 将纹理单元0传递给着色器
+
+
+    if (quadVAO == 0)
+    {
+        float quadVertices[] = {
+            // positions        // texture Coords
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
 }
 
 

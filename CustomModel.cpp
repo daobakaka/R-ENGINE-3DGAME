@@ -2,6 +2,9 @@
 using namespace Game;
 extern const char* depthShaderVertexShaderSource;
 extern const char* depthShaderFragmentShaderSource;
+Game::CustomModel::CustomModel()
+{
+}
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat *vertices, GLuint *indices, size_t vertexCount, size_t indexCount,bool ifLightIn)
 {
     
@@ -342,41 +345,15 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 
 }
 
-CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData &modelData,bool isSkinnedMesh, bool ifLightIn,bool ifShadow)
+CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow)
 {
-    //verticesTras = new std::vector<Vertex>(vertices);  // 这种才是指针的有效初始化，析构中才能使用delete
     vertexCount = modelData.verticesStruct.size();
     index = modelData.indices.size();
     verticesTras = modelData.verticesStruct;
-    IsSkinnedMesh =isSkinnedMesh;
+    IsSkinnedMesh = isSkinnedMesh;
     ifLight = ifLightIn;
     _ifShadow = ifShadow;
-    //--阴影着色器模块
-    if (_ifShadow)
-    {
-        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &depthShaderVertexShaderSource, nullptr);
-        glCompileShader(vertexShader);
-        CheckShaderCompilation(vertexShader);
 
-        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &depthShaderFragmentShaderSource, nullptr);
-        glCompileShader(fragmentShader);
-        CheckShaderCompilation(fragmentShader);
-
-        // 2) 创建着色器程序
-        _depthShaderProgram = glCreateProgram();
-        glAttachShader(_depthShaderProgram, vertexShader);
-        glAttachShader(_depthShaderProgram, fragmentShader);
-        glLinkProgram(_depthShaderProgram);
-        CheckShaderProgramLinking(_depthShaderProgram);
-
-        // 删除临时Shader
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-
-    }
-    //通用着色器模块 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSourceIn, nullptr);
     glCompileShader(vertexShader);
@@ -387,7 +364,7 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
     glCompileShader(fragmentShader);
     CheckShaderCompilation(fragmentShader);
 
-    // 2) 创建着色器程序
+    // 创建着色器程序
     shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
@@ -398,43 +375,42 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    // 3) 生成 VAO, VBO, EBO
+    // 生成 VAO, VBO, EBO
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
 
-
-    // 4) 绑定VAO
+    // 绑定VAO
     glBindVertexArray(VAO);
 
-    // 5) VBO: 传入所有顶点
+    // 根据是否为动态网格（如骨骼动画网格）决定是否使用动态或静态缓冲区
+    GLuint bufferUsage = isSkinnedMesh ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
+
+    // VBO: 传入所有顶点
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER,
         modelData.verticesStruct.size() * sizeof(Vertex),
         modelData.verticesStruct.data(),
-        GL_DYNAMIC_DRAW);
+        bufferUsage);  // 根据是否为动态网格选择缓冲区类型
 
-    // 6) EBO: 传入索引
+    // EBO: 传入索引
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
         modelData.indices.size() * sizeof(unsigned int),
         modelData.indices.data(),
-        GL_DYNAMIC_DRAW);
+        bufferUsage);  // 同样根据是否为动态网格选择缓冲区类型
 
-    // 7) 设置顶点属性指针
-    // layout(location=0): position
+    // 设置顶点属性指针
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
         sizeof(Vertex),
         (void*)offsetof(Vertex, Position));
 
-    // layout(location=1): texcoords
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
         sizeof(Vertex),
         (void*)offsetof(Vertex, TexCoords));
 
-    // layout(location=2): normal
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
         sizeof(Vertex),
@@ -442,8 +418,8 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 
     // 解绑VAO
     glBindVertexArray(0);
-
 }
+
 
 bool CustomModel::DrawDynamical(glm::mat4 view, glm::mat4 projection)
 {
@@ -493,23 +469,29 @@ bool CustomModel::AttachTexture(GLuint textureName, int order, glm::vec2 texture
     textureOrder = order;
     _textureScale = textureScale;
    // RenderingTexture();
-    return true;
+    return _drawTexture = true;
 }
 void CustomModel::RenderingTexture()
 {
-
-    //这里传入的order 应该是从前面每一个纹理单元都进行更改，也就是大的order 可以覆盖小的order
+   
     glUseProgram(shaderProgram);
+    if (_drawTexture)
+    {
 
-    // 传入纹理缩放因子
-    GLuint textureScaleLoc = glGetUniformLocation(shaderProgram, "textureScale");
-    glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y); // 设置纹理缩放因子
+        // 传入纹理缩放因子
+        GLuint textureScaleLoc = glGetUniformLocation(shaderProgram, "textureScale");
+        glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y); // 设置纹理缩放因子
 
-    GLuint picData = glGetUniformLocation(shaderProgram, "baseTexture");//预写入图像的shader定义内容
-    glActiveTexture(GL_TEXTURE0 + textureOrder);          // 激活纹理单元 0+order
-    glBindTexture(GL_TEXTURE_2D,texture );  // 绑定纹理对象到纹理单元 0+order,这里添加DicTexture集合的纹理对象
-    // 绑定纹理到纹理单元 0+order，这个顺序的所有纹理单元都遍历绑定一次
-    glUniform1i(picData, textureOrder);
+        GLuint picData = glGetUniformLocation(shaderProgram, "baseTexture");//预写入图像的shader定义内容
+        glActiveTexture(GL_TEXTURE0 + textureOrder);          // 激活纹理单元 0+order
+        glBindTexture(GL_TEXTURE_2D, texture);  // 绑定纹理对象到纹理单元 0+order,这里添加DicTexture集合的纹理对象
+        // 绑定纹理到纹理单元 0+order，这个顺序的所有纹理单元都遍历绑定一次
+        glUniform1i(picData, textureOrder);
+    }
+
+
+
+
 }
 void CustomModel::AttachAnimationController(AnimationData animationData)
 {
@@ -536,14 +518,14 @@ void CustomModel::StopPlayAnimation()
 }
 void CustomModel::DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
 {
-    glUseProgram(_depthShaderProgram);
+   //glUseProgram(_depthShaderProgram);
     // 将光源视角矩阵传递给着色器
-    GLuint lightSpaceMatrixLoc = glGetUniformLocation(_depthShaderProgram, "lightSpaceMatrix");
+    GLuint lightSpaceMatrixLoc = glGetUniformLocation(shader, "lightSpaceMatrix");
     glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
     
     
     //传入模型世界坐标，视图和透视矩阵，在lightRender中生成
-    GLuint modelLoc = glGetUniformLocation(_depthShaderProgram, "model");
+    GLuint modelLoc = glGetUniformLocation(shader, "model");
     glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
 
 
@@ -572,13 +554,13 @@ void CustomModel::DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
 }
 void CustomModel::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shader)
 {
-    glUseProgram(_depthShaderProgram);
+   // glUseProgram(_depthShaderProgram);
     // 将光源视角矩阵传递给着色器
-    GLuint lightSpaceMatrixLoc = glGetUniformLocation(_depthShaderProgram, "lightSpaceMatrix");
+    GLuint lightSpaceMatrixLoc = glGetUniformLocation(shader, "lightSpaceMatrix");
     glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
     //传入模型世界坐标，视图和透视矩阵，在lightRender中生成
-    GLuint modelLoc = glGetUniformLocation(_depthShaderProgram, "model");
+    GLuint modelLoc = glGetUniformLocation(shader, "model");
     glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
 
     glBindVertexArray(VAO);
@@ -599,7 +581,7 @@ void Game::CustomModel::UpdateDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader
     //因为通用的update方法已经传入了 UpdateTransform(),所以这里就没有必要再次传入了
     if (_ifShadow)
     {
-        UpdateTransform();
+        
         IsSkinnedMesh == true ? DrawDepthPicDynamical(lightSpaceMatrix,shader) : DrawDepthPic(lightSpaceMatrix,shader);
 
 

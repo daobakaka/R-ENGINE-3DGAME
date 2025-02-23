@@ -90,3 +90,12 @@
 
 ！渲染逻辑 
 增加阴影支持：LightRender --为每个光源添加阴影贴图的生成，Controller --构建，使用深度贴图着色器
+
+！渲染逻辑
+增加共享shader：ShaderManager --构建专门的shader编译，调用，传参逻辑，更加符合OPENGL状态机原理，新建CustomModelShder类用于构建，同时保留类的独立shader，以后可采取独立绘制
+
+！基础逻辑
+添加zoom缩放逻辑：Controller --改善摄像机旋转，增加ZOOM 滚轮缩放
+
+！渲染逻辑
+添加GPU实例化逻辑：CustomModelInstance --构建用于GPU实例化的高性能渲染类 

@@ -29,6 +29,9 @@ namespace Game {
 		glm::vec3 front;     // 摄像机前向向量
 		glm::vec3 up;        // 摄像机上向量
 		float pitch, yaw;    // 俯仰与偏航
+		glm::vec3 right;//右向量
+		float zoom;//滚轮放大缩小
+
 
 		// 透视投影矩阵的参数
 		float fov;//视宽
@@ -57,9 +60,14 @@ namespace Game {
 		//鼠标输入旋转逻辑
 		void ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw, bool& rightMousePressed);
 
+		//处理滚轮缩放逻辑
+		
 		//综合方法，帧率控制
 		void FrameControlMethod(GLFWwindow* window);
 
+		void ProcessMouseScrollGlobal(float yoffset);
+	
+		void SetScrollCallback(GLFWwindow* window);
 
 		//坐标选旋转角度参考
 		void RenderWidget(const char* widgetVertexShaderSource, const char* widgetFragmentShaderSource,

@@ -17,17 +17,19 @@ Controller::Controller()
     : position(0.0f, 3.0f, 10.0f),  // 位置初始化
     front(0.0f, 0.0f, -1.0f),     // 前向向量初始化
     up(0.0f, 1.0f, 0.0f),        // 上向量初始化
-    pitch(0.0f), yaw(-0.0f),    // 俯仰和偏航角初始化
+    pitch(0.0f), yaw(-90.0f),    // 俯仰和偏航角初始化
     rightMousePressed(false),    // 鼠标右键初始化为未按下
     lastX(0.0), lastY(0.0),     // 鼠标初始位置
     tempX(0.0), tempY(0.0),     // 临时偏移位置
     mouseMovesContinuously(false), // 鼠标按下时的移动标志
     windowWidth(2400), windowHeight(1200),  // 屏幕尺寸初始化
-    fov(45), aspect(windowWidth/windowHeight), nearPlane(0.1f), farPlane(1000.0f)
+    fov(45), aspect(windowWidth/windowHeight), nearPlane(0.1f), farPlane(1000.0f),zoom(45.0f)
 {
     view = glm::lookAt(position, position + front, up);
     projection = glm::perspective(glm::radians(fov), aspect, nearPlane, farPlane);//初始化
     instance = this;  // 单例的初始化
+    
+
 }
 
 Controller::~Controller()
@@ -43,30 +45,44 @@ Controller* Controller::GetInstance() {
 void Controller::ProcessInput(GLFWwindow* window, glm::vec3& objectPosition)
 {
     // 检查按键输入
-    float moveSpeed = 0.1f;  // 控制移动的速度
+    float moveSpeed = 0.5f;  // 控制移动的速度
 
-    // 计算摄像机的右向向量
-    glm::vec3 right = glm::normalize(glm::cross(front, up));  // 右向向量
+    // 计算摄像机的右向向量（水平）和上向向量
+    //glm::vec3 right = glm::normalize(glm::cross(front, up));  // 右向向量
+    //glm::vec3 up = glm::normalize(glm::cross(right, front));       // 上向向量
 
+    // 前进和后退，保持水平分量
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        objectPosition += front * moveSpeed;  // W键：沿着前向向量前移
-    }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        objectPosition -= front * moveSpeed;  // S键：沿着前向向量后移
-    }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        objectPosition -= right * moveSpeed;  // A键：沿着右向向量左移
-    }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        objectPosition += right * moveSpeed;  // D键：沿着右向向量右移
+        // 前进：在水平面内移动（仅改变X和Z坐标）
+        objectPosition += glm::vec3(front.x, 0.0f, front.z) * moveSpeed;
     }
 
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        // 后退：在水平面内移动（仅改变X和Z坐标）
+        objectPosition -= glm::vec3(front.x, 0.0f, front.z) * moveSpeed;
+    }
+
+    // 左右移动，始终保持在水平面内
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        // 左移：沿右向向量的方向移动（仅改变X和Z坐标）
+        objectPosition -= glm::vec3(right.x, 0.0f, right.z) * moveSpeed;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        // 右移：沿右向向量的方向移动（仅改变X和Z坐标）
+        objectPosition += glm::vec3(right.x, 0.0f, right.z) * moveSpeed;
+    }
+
+    // 空格键：竖直方向的移动
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        objectPosition += up * moveSpeed;  // SPACE键：沿着上向向量向上移动
+        objectPosition += up * moveSpeed;  // 上移
     }
+
     if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-        objectPosition -= up * moveSpeed;  // X键：沿着上向向量向下移动
+        objectPosition -= up * moveSpeed;  // 下移
     }
+
+
 
     // 小键盘 1 => 前视图：摄像机位于 (0,0,10)，面向 -Z 轴，up=(0,1,0)
     if (glfwGetKey(window, GLFW_KEY_KP_1) == GLFW_PRESS) {
@@ -162,21 +178,26 @@ void Controller::MouseButtonFun(GLFWwindow* window)//手动测试方法，取消GLAPI监听
 
 void Controller::ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw, bool& rightMousePressed)
 {
-
+    
+    
     if (rightMousePressed) {  // 只有按住右键时才进行旋转
 
-        yaw = 0;//要先归零，因为现有的视图矩阵，已经被储存更新
-        pitch = 0;
+        //yaw = 0;//要先归零，因为现有的视图矩阵，已经被储存更新
+        //pitch = 0;
 
         // std::cout << width<< "and" << height << std::endl;
 
          // 获取当前鼠标的位置
         double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos);//获取基准参数
+        double xOffset, yOffset;
+        glfwGetCursorPos(window, &xpos, &ypos);//获取基准参
+
+
+      //  glfwSetCursorPos(window, windowWidth / 2.0, windowHeight / 2.0); // 每次移动后将鼠标位置重置为屏幕中心
 
         if ((xpos - tempX) * (xpos - tempX) + (ypos - tempY) * (ypos - tempY) > 1.0f)//一次点击判断只有不相等时，才移动，也就时移动鼠标时才移动
         {
-
+         
             // 计算鼠标相对屏幕中心的偏移量,必须手写，OPENGL里没有直接的API
             float offsetX = static_cast<float>(xpos - windowWidth / 2.0);  // 以屏幕中心为原点
             float offsetY = static_cast<float>(windowHeight / 2.0 - ypos); // Y轴反向，屏幕上方是负方向
@@ -196,8 +217,9 @@ void Controller::ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw,
             // 更新鼠标位置
             lastX = offsetX;
             lastY = offsetY;
+          //  glfwSetCursorPos(window, windowWidth / 2.0, windowHeight / 2.0); // 每次移动后将鼠标位置重置为屏幕中心
         }
-        // glfwSetCursorPos(window, width / 2.0, height / 2.0); // 每次移动后将鼠标位置重置为屏幕中心
+      //  glfwSetCursorPos(window, windowWidth / 2.0, windowHeight / 2.0); // 每次移动后将鼠标位置重置为屏幕中心
     }
 }
 
@@ -208,15 +230,39 @@ void Controller::FrameControlMethod(GLFWwindow* window)
     ProcessMouseInput(window, pitch, yaw, rightMousePressed);
 }
 
-glm::mat4 Controller::GetViewMatrix()
-{    
+void Game::Controller::ProcessMouseScrollGlobal(float yoffset)
+{
+
     
-    glm::mat4 cameraRotation = glm::rotate(glm::mat4(1.0f), glm::radians(3*pitch), glm::vec3(1.0f, 0.0f, 0.0f)); //俯仰：绕X轴旋转 
-    cameraRotation = glm::rotate(cameraRotation, glm::radians(3*yaw), glm::vec3(0.0f, 1.0f, 0.0f)); // 偏航：绕Y轴旋转
-  
+        zoom -= (float)yoffset;
+        if (zoom < 10.0f)
+            zoom = 10.0f;
+        if (zoom > 60.0f)
+            zoom = 60.0f;
+    
+    
+}
+
+glm::mat4 Controller::GetViewMatrix()
+{
     if (rightMousePressed)
-        front = glm::normalize( glm::vec3(cameraRotation * glm::vec4(front, 0.0f)));//每次完整后归一化
-    return  glm::lookAt(position, position + front, up);
+    {
+        // 计算前向向量，绕 X 轴 (pitch) 和 Y 轴 (yaw) 旋转
+        glm::vec3 _front;
+        _front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));  // 水平和垂直方向旋转影响 X
+        _front.y = sin(glm::radians(pitch));  // 仅 pitch 影响 Y（俯仰）
+        _front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));  // 水平旋转影响 Z
+
+        // 归一化前向向量
+        front = glm::normalize(_front);
+
+        // 重新计算右向量和上向量
+        right = glm::normalize(glm::cross(front, up));  // 右向量是前向向量和上向量的叉积
+        up = glm::normalize(glm::cross(right, front));   // 上向量是右向量和前向向量的叉积
+    }
+  
+    // 通过 position, front 和 up 向量计算视图矩阵
+    return glm::lookAt(position, position + front, up);
 }
 
 glm::mat4 Game::Controller::GetFixedViewMatrix()
@@ -226,12 +272,15 @@ glm::mat4 Game::Controller::GetFixedViewMatrix()
 
     if (rightMousePressed)
         front = glm::normalize(glm::vec3(cameraRotation * glm::vec4(front, 0.0f)));//每次完整后归一化
-    return  glm::lookAt(glm::vec3(0,0,-3),glm::vec3(0,0,-3)+ front, up);
+    return  glm::lookAt(position, position + front, up);
+
 }
 
 glm::mat4 Controller::GetProjectionMatrix()
 {
-    return projection = glm::perspective(glm::radians(fov), windowWidth / float(windowHeight), nearPlane, farPlane);//重新计算投影矩阵
+    return projection = glm::perspective(glm::radians(zoom), 2.0F, nearPlane, farPlane);//初始化
+
+
 }
 
 

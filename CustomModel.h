@@ -8,6 +8,7 @@ namespace Game {
     class CustomModel : public GameObject
     {
     public:
+        CustomModel();
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat* vertices, GLuint* indices, size_t vertexCount, size_t indexCount, bool ifLight = false);
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat* vertices, GLuint* indices, size_t vertexCount, size_t indexCount, int ifVaraint, bool ifLight = false);
         //--更新方法
@@ -52,7 +53,7 @@ namespace Game {
         virtual bool AttachCollider();//附件碰撞体可重写
 
 
-    private:
+    protected:
 #pragma region   数组初始化原则：{}只能在声明时进行初始化
 
         std::vector<Vertex> verticesTras = {};
@@ -66,6 +67,7 @@ namespace Game {
         //贴图组件,存在继承关系，这里子类需要访问
         GLuint texture;
         int textureOrder;
+        bool _drawTexture;
         glm::vec2 _textureScale;
         size_t index;
         size_t vertexCount;

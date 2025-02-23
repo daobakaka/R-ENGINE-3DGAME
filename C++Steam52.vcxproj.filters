@@ -111,6 +111,9 @@
     <ClCompile Include="Light.cpp">
       <Filter>源文件\Render</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderManager.cpp">
+      <Filter>源文件\Render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Monster.h">
@@ -181,6 +184,9 @@
     </ClInclude>
     <ClInclude Include="ScriptModel.h">
       <Filter>头文件\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderManager.h">
+      <Filter>头文件\Render</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

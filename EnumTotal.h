@@ -21,7 +21,13 @@ namespace Game {
 		StaticPlane,//静态地板
 		
 	};
-
+	enum ShaderClass
+	{
+		OriginalS,
+		DepthCalculate,
+		DepthRender,
+		DpethTest,
+	};
 	//步长结构体
 	struct StepVector3
 	{
