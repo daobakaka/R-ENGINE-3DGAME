@@ -1,21 +1,20 @@
 #include "ShaderManager.h"
 #include <iostream>
-
+#include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
 using namespace Game;
 
     
-    
-    //引用shader这个类只编译通用型着色器，不编译特殊着色器
-    extern const char* noneLightLightVertexShaderSource;
-    extern const char* noneLightLightFragmentShaderSource;
-
-
-    extern const char* colorlightsArrayVertexShaderSource;
-    extern const char* colorlightsArraySourceFragmentShaderSource;
     //
+    ////引用shader这个类只编译通用型着色器，不编译特殊着色器
+    //extern const char* noneLightLightVertexShaderSource;
+    //extern const char* noneLightLightFragmentShaderSource;
 
-    
-    
+
+    //extern const char* colorlightsArrayVertexShaderSource;
+    //extern const char* colorlightsArraySourceFragmentShaderSource;
+    ////
+
+   
     
     ShaderManager* ShaderManager::instance = nullptr;
 
@@ -85,6 +84,7 @@ using namespace Game;
 
         ShaderCompile(noneLightLightVertexShaderSource, noneLightLightFragmentShaderSource, "noneLight");
         ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "commonLight");
+        ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "noneLightInstancer");
 
     }
 

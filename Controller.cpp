@@ -49,7 +49,7 @@ void Controller::ProcessInput(GLFWwindow* window, glm::vec3& objectPosition)
 
     // 计算摄像机的右向向量（水平）和上向向量
     //glm::vec3 right = glm::normalize(glm::cross(front, up));  // 右向向量
-    //glm::vec3 up = glm::normalize(glm::cross(right, front));       // 上向向量
+  //  glm::vec3 up = glm::normalize(glm::cross(right, front));       // 上向向量
 
     // 前进和后退，保持水平分量
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
@@ -89,6 +89,7 @@ void Controller::ProcessInput(GLFWwindow* window, glm::vec3& objectPosition)
         objectPosition = glm::vec3(0.0f, 0.0f, 10.0f);
         front = glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f));
         up = glm::vec3(0.0f, 1.0f, 0.0f); // 与 front 不平行
+
     }
 
     // 小键盘 2 => 后视图：摄像机位于 (0,0,-10)，面向 +Z 轴
@@ -96,6 +97,7 @@ void Controller::ProcessInput(GLFWwindow* window, glm::vec3& objectPosition)
         objectPosition = glm::vec3(0.0f, 0.0f, -10.0f);
         front = glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f));
         up = glm::vec3(0.0f, 1.0f, 0.0f); // 同样保持 Y 轴向上
+        //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // 恢复鼠标光标
     }
 
     // 小键盘 3 => 上视图：摄像机位于 (0,10,0)，面向 -Y 轴
@@ -179,6 +181,9 @@ void Controller::MouseButtonFun(GLFWwindow* window)//手动测试方法，取消GLAPI监听
 void Controller::ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw, bool& rightMousePressed)
 {
     
+    double xpos, ypos;
+    double xOffset, yOffset;
+    glfwGetCursorPos(window, &xpos, &ypos);//获取基准参
     
     if (rightMousePressed) {  // 只有按住右键时才进行旋转
 
@@ -186,12 +191,6 @@ void Controller::ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw,
         //pitch = 0;
 
         // std::cout << width<< "and" << height << std::endl;
-
-         // 获取当前鼠标的位置
-        double xpos, ypos;
-        double xOffset, yOffset;
-        glfwGetCursorPos(window, &xpos, &ypos);//获取基准参
-
 
       //  glfwSetCursorPos(window, windowWidth / 2.0, windowHeight / 2.0); // 每次移动后将鼠标位置重置为屏幕中心
 
@@ -256,10 +255,13 @@ glm::mat4 Controller::GetViewMatrix()
         // 归一化前向向量
         front = glm::normalize(_front);
 
-        // 重新计算右向量和上向量
-        right = glm::normalize(glm::cross(front, up));  // 右向量是前向向量和上向量的叉积
-        up = glm::normalize(glm::cross(right, front));   // 上向量是右向量和前向向量的叉积
+        //// 重新计算右向量和上向量
+        //right = glm::normalize(glm::cross(front, up));  // 右向量是前向向量和上向量的叉积
+        //up = glm::normalize(glm::cross(right, front));   // 上向量是右向量和前向向量的叉积
     }
+    // 重新计算右向量和上向量
+    right = glm::normalize(glm::cross(front, up));  // 右向量是前向向量和上向量的叉积
+    up = glm::normalize(glm::cross(right, front));   // 上向量是右向量和前向向量的叉积
   
     // 通过 position, front 和 up 向量计算视图矩阵
     return glm::lookAt(position, position + front, up);

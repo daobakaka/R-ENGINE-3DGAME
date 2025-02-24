@@ -339,13 +339,14 @@ void Game::CustomModelInstance::GenerateInstanceMatrices()
 {
     _modelMatrices.resize(_instanceCount);  // 根据实例数量调整 vector 大小
 
+   int gridSize = std::cbrt(_instanceCount); // 计算立方体的边长
     for (GLuint i = 0; i < _modelMatrices.size(); i++) {
         glm::mat4 model = glm::mat4(1.0f);
 
-        // 计算平移：形成一个规则的立方体（例如在 x、y、z 轴方向上等距分布）
-        float xOffset = (i % 10) * 2.0f;  // 每行10个实例，沿X轴平移
-        float yOffset = (i / 10) % 10 * 2.0f;  // 每10个实例一行，沿Y轴平移
-        float zOffset = (i / 100) * 2.0f;  // 每100个实例一层，沿Z轴平移
+        // 计算平移：将实例沿 X, Y, Z 轴等间距分布
+        float xOffset = (i % gridSize) * _positionOffset.x;  // 沿X轴平移
+        float yOffset = ((i / gridSize) % gridSize) * _positionOffset.y;  // 沿Y轴平移
+        float zOffset = (i / (gridSize * gridSize)) * _positionOffset.z;  // 沿Z轴平移
 
         // 使用计算出的平移量进行平移
         model = glm::translate(model, glm::vec3(xOffset, yOffset, zOffset));  // 形成规则立方体
@@ -368,25 +369,13 @@ bool Game::CustomModelInstance::Draw(glm::mat4 view, glm::mat4 projection)
     // 直接调用渲染纹理方法，渲染纹理数据
     RenderingTexture();
 
-    // 获取模型矩阵的uniform位置
-    GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
-
-    // 设置模型矩阵
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(transform));
-
     // 绑定VAO
     glBindVertexArray(VAO);
 
-    // 绑定实例化数据的VBO（如果有）
-    glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer); // _instanceBuffer 是实例化数据的缓冲区
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * _modelMatrices.size(), _modelMatrices.data(), GL_DYNAMIC_DRAW);
+    GLuint modelLoc = glGetUniformLocation(shaderProgram, "transform");
 
-    // 为每个实例化数据设置属性指针（每一列矩阵数据传入）
-    for (GLuint i = 0; i < 4; i++) {
-        glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4) * i));
-        glEnableVertexAttribArray(3 + i);
-        glVertexAttribDivisor(3 + i, 1);  // 每个实例的数据是独立的
-    }
+    // 这里可以传入变换 控制实例
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(transform));
 
     // 使用实例化绘制
     justDrawVerteies == true

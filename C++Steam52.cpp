@@ -7,7 +7,7 @@
 #include <GL/glew.h>//加载Opengl扩展，
 #include <GLFW/glfw3.h>//创建Opengl扩展，以及管理Opengl上下文
 #include "Cube.h"
-#include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
+//#include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
 #include "Test.h"
 #include "MicroCpp.h"
 #include "Controller.h"
@@ -213,11 +213,11 @@ int GLins() {
         basePlane->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
 
 
-        auto* butterflyInstance = new  CustomModelInstance("noneLight", ModelDic["butterfly"], false, false, false);
+        auto* butterflyInstance = new  CustomModelInstance("noneLightInstancer", ModelDic["butterfly"], false, false, false,100000,glm::vec3(100,100,-100));
         butterflyInstance->SetVariant(ModelClass::CubeE);
-        butterflyInstance->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(50.0f, 0.1f, 50.0f));
+        butterflyInstance->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(0.3f, 0.3f, 0.30f));
         manager->RegisterObject(butterflyInstance);
-        butterflyInstance->AttachTexture(TextureDic["butteerfly"][0], 0, glm::vec2(1, 1));
+        butterflyInstance->AttachTexture(TextureDic["butterfly"][0], 0, glm::vec2(1, 1));
 
 
 
@@ -292,9 +292,12 @@ int GLins() {
         glm::mat4 view = controller->GetViewMatrix();//摄像机的朝向
         glm::mat4 projection = controller->GetProjectionMatrix();//摄像机的裁剪方向
 
-        //为通用shader 传入共用视图及透视矩阵
+        //为通用shader 传入共用视图及透视矩阵,这里改善了方法，设置时直接传入名字调用相关shader，
         shaderManager->SetMat4("commonLight", "view", view);
         shaderManager->SetMat4("commonLight", "projection", projection);
+        //传入实例化shader的渲染
+        shaderManager->SetMat4("noneLightInstancer", "view", view);
+        shaderManager->SetMat4("noneLightInstancer", "projection", projection);
 
         //--全局执行区域阴影
        // glViewport(0, 0, 2400, 1600);  // 为深度图设置正确的视口大小
