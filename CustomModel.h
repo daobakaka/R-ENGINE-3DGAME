@@ -50,7 +50,7 @@ namespace Game {
         virtual void RenderingTexture();//渲染纹理方法可重写
         //
         virtual bool AttachPhysicalEngine();//附加物理引擎可重写
-        virtual bool AttachCollider();//附件碰撞体可重写
+        virtual bool AttachCollider(CollisionType type=CollisionType::Box,float radius=1,glm::vec3 ratio=glm::vec3(1));//附件碰撞体可重写
 
 
     protected:
@@ -72,6 +72,12 @@ namespace Game {
         size_t index;
         size_t vertexCount;
 #pragma endregion
+
+        //碰撞体及物理模块参数
+    protected:
+        bool _ifCollision;
+        glm::vec3 _collisionMin;
+        glm::vec3 _collisionMax;
 
 
 

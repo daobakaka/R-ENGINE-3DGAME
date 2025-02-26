@@ -29,9 +29,9 @@ extern const char* depthVisualShaderFragmentShaderSource;
 extern const char* depthTestShaderVertexShaderSource;
 extern const char* depthTestShaderFragmentShaderSource;
 //C++的源文件中可以直接定义相关变量，而不必要在类中进行声明，更灵活
-LifecycleManager<CustomModel>* manager = nullptr;
-MeshDataManager* meshData = nullptr;
-Controller* controller = nullptr;
+extern LifecycleManager<CustomModel>* manager; 
+extern MeshDataManager* meshData ;
+extern Controller* controller ;
 LightSpawner* LightSpawner::GetInstance() {
     if (instance == nullptr) {
         instance = new LightSpawner();
@@ -315,7 +315,7 @@ GLuint Game::LightRender::GetDepthShaderProgram(ShaderClass shader)
         return _depthShaderProgram;
     case ShaderClass::DepthRender:
         return _depthVisualShader;
-    case ShaderClass::DpethTest:
+    case ShaderClass::DepthTest:
         return _depthTestShader;
     default:
         // 如果 num 的值不在 1, 2, 3 之内，返回一个默认值或处理错误
@@ -333,7 +333,7 @@ void Game::LightRender::UseDepthShaderProgram(ShaderClass shader)
     case ShaderClass::DepthRender:
         glUseProgram(_depthVisualShader);
         break;
-    case ShaderClass::DpethTest:
+    case ShaderClass::DepthTest:
         glUseProgram(_depthTestShader);
         break;
     default:
@@ -377,12 +377,12 @@ void Game::LightRender::RenderShadowTexture(CustomModel* obj,glm::mat4 crossView
 
 }
 
-void Game::LightRender::RenderShadowTexture()
+void Game::LightRender::RenderShadowTexture(GLuint shader)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _depthMapParallel);
 
-    GLuint depthMapLoc = glGetUniformLocation(_depthVisualShader, "depthMap");
+    GLuint depthMapLoc = glGetUniformLocation(shader, "depthMap");
     glUniform1i(depthMapLoc, 0);  // 将纹理单元0传递给着色器
 
 

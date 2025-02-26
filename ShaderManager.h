@@ -34,14 +34,15 @@ namespace Game
         void SetMat2(const std::string& shaderName, const std::string& uniformName, const glm::mat2& mat) ;
         void SetMat3(const std::string& shaderName, const std::string& uniformName, const glm::mat3& mat) ;
         void SetMat4(const std::string& shaderName, const std::string& uniformName, const glm::mat4& mat) ;
-
+        std::string _shaderMame;
+        int num;
     private:
         ShaderManager();
         ~ShaderManager();
         static ShaderManager* instance;
 
         std::unordered_map<std::string, GLuint> _shaderMap;
-
+       
         // Utility function for checking shader compilation/linking errors.
         void CheckCompileErrors(GLuint shader, std::string type) const;
     };

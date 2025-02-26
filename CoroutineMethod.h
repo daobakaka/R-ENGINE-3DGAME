@@ -59,13 +59,14 @@ namespace Game {
         template<typename T>
         void StartSpawnByTimerAnimation(
             LifecycleManager<CustomModel>* manager,
-            const char* vertexShader,
-            const char* fragmentShader,
+            const char *name,
             bool ifLight,
+            bool ifShadow,
             const ModelData& modelData,
             const AnimationData& animationData,
             GLuint textureName = TextureDic["default"][0],
             int order = 0,
+            glm::vec2 section=glm::vec2(1,1),
             ModelClass modelEnum = ModelClass::OriginalE,
             float interval = 1.0f,
             int count = 1,
@@ -85,19 +86,19 @@ namespace Game {
                                                         //其可以在回调的时候，通过lamda的捕获，记住初始化的引用，不会因函数重新回调而结束            
 
             AddTimerTask(interval, count,
-                [manager, vertexShader, fragmentShader, modelData, animationData,
+                [manager, name, modelData, animationData,
                 modelEnum,  ifPhysical, ifCollider, stepVector3,
-                position, rotation, scale, counterPtr,ifLight,textureName,order]()
+                position, rotation, scale, counterPtr,ifLight,textureName,order, ifShadow,section]()
                 {
                     // 自增计数
                     (*counterPtr)++;
 
                     T* model = new T(
-                        vertexShader,
-                        fragmentShader,
+                        name,
                         modelData,
                         true,
-                        ifLight
+                        ifLight,
+                        ifShadow
                     );
                     manager->RegisterObject(model);
 
@@ -115,7 +116,7 @@ namespace Game {
                     );
 
                    
-                    model->AttachTexture(textureName,order);
+                    model->AttachTexture(textureName,order,section);
                     model->AttachAnimationController(animationData);
 
                     if (ifPhysical) {
@@ -135,12 +136,13 @@ namespace Game {
         template<typename T>
         void StartSpawnByTimerNoneAnimation(
             LifecycleManager<CustomModel>* manager,
-            const char* vertexShader,
-            const char* fragmentShader,
+            const char* name,
             bool ifLight,
+            bool ifShadow,
             const ModelData& modelData,
             GLuint textureName = TextureDic["default"][0],
             int order=0,
+            glm::vec2 section = glm::vec2(1, 1),
             ModelClass modelEnum = ModelClass::OriginalE,
             float interval = 1.0f,
             int count = 1,
@@ -157,19 +159,19 @@ namespace Game {
             auto counterPtr = std::make_shared<int>(0);
 
             AddTimerTask(interval, count,
-                [manager, vertexShader, fragmentShader, modelData, modelEnum,
+                [manager, modelData, modelEnum,
                  ifPhysical, ifCollider, stepVector3,
-                position, rotation, scale, counterPtr, ifLight, textureName,order]()
+                position, rotation, scale, counterPtr, ifLight, textureName,order,name,ifShadow, section]()
                 {
                     // 自增计数
                     (*counterPtr)++;
 
                     T* model = new T(
-                        vertexShader,
-                        fragmentShader,
+                        name,
                         modelData,
                         false,
-                        ifLight
+                        ifLight,
+                        ifShadow
                     );
                     manager->RegisterObject(model);
 
@@ -184,7 +186,7 @@ namespace Game {
                     );
 
      
-                    model->AttachTexture(textureName,order);
+                    model->AttachTexture(textureName,order,section);
                 
                     if (ifPhysical) {
                         model->AttachPhysicalEngine();

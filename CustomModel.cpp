@@ -518,10 +518,6 @@ void CustomModel::StopPlayAnimation()
 }
 void CustomModel::DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
 {
-   //glUseProgram(_depthShaderProgram);
-    // 将光源视角矩阵传递给着色器
-    GLuint lightSpaceMatrixLoc = glGetUniformLocation(shader, "lightSpaceMatrix");
-    glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
     
     
     //传入模型世界坐标，视图和透视矩阵，在lightRender中生成
@@ -554,10 +550,6 @@ void CustomModel::DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
 }
 void CustomModel::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shader)
 {
-   // glUseProgram(_depthShaderProgram);
-    // 将光源视角矩阵传递给着色器
-    GLuint lightSpaceMatrixLoc = glGetUniformLocation(shader, "lightSpaceMatrix");
-    glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
     //传入模型世界坐标，视图和透视矩阵，在lightRender中生成
     GLuint modelLoc = glGetUniformLocation(shader, "model");
@@ -591,9 +583,34 @@ bool CustomModel::AttachPhysicalEngine()
 {
     return false;
 }
-bool CustomModel::AttachCollider()
+/// <summary>
+/// 设置基本碰撞体的范围
+/// </summary>
+/// <param name="type"></param>
+/// <param name="radians"></param>
+/// <param name="ratio"></param>
+/// <returns></returns>
+bool CustomModel::AttachCollider(CollisionType type , float radius,glm::vec3 ratio )
 {
-    return false;
+    switch (type)
+    {
+    case Game::Box:
+            _collisionMin.x = position.x - radius * ratio.x;
+            _collisionMin.y = position.y - radius * ratio.y;
+            _collisionMin.z = position.z - radius * ratio.z;
+            _collisionMax.x = position.x + radius * ratio.x;
+            _collisionMax.y = position.y + radius * ratio.y;
+            _collisionMax.z = position.z + radius * ratio.z;
+
+        break;
+    case Game::Sphere:
+
+        break;
+    default:
+        break;
+    }
+   
+    return _ifCollision=true;
 }
 bool CustomModel::Draw (glm::mat4 view, glm::mat4 projection)
 {

@@ -107,7 +107,7 @@ void CustomizeRay::SetRayPar(glm::vec3 color,float intensity)
 
 #pragma endregion
 #pragma region  场景阴影贴图
-void Game::ShadowTexture::DrawDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader)
+void ShadowTexture::DrawDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader)
 {
   
     //传入模型世界坐标，视图和透视矩阵，在lightRender中生成
@@ -121,7 +121,7 @@ void Game::ShadowTexture::DrawDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader
 
 
 }
-void Game::ShadowTexture::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shader)
+void ShadowTexture::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shader)
 {
 
 
@@ -145,7 +145,7 @@ void Game::ShadowTexture::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLui
 #pragma endregion
 #pragma region 通用shader模型 
 
-Game::CustomModelShader::CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow)
+CustomModelShader::CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow)
 {
     vertexCount = modelData.verticesStruct.size();
     index = modelData.indices.size();
@@ -153,7 +153,7 @@ Game::CustomModelShader::CustomModelShader(const std::string& name, const ModelD
     IsSkinnedMesh = isSkinnedMesh;
     ifLight = ifLightIn;
     _ifShadow = ifShadow;
-
+    std::cout << _ifShadow << std::endl;
     // 获取着色器程序
     shaderProgram = ShaderManager::GetInstance()->GetShader(name);
 
@@ -204,11 +204,11 @@ Game::CustomModelShader::CustomModelShader(const std::string& name, const ModelD
 
 
 
-Game::CustomModelShader::CustomModelShader()
+CustomModelShader::CustomModelShader()
 {
 }
 
-bool Game::CustomModelShader::Draw(glm::mat4 view, glm::mat4 projection)
+bool CustomModelShader::Draw(glm::mat4 view, glm::mat4 projection)
 {
     //集成纹理渲染方法,要在draw之前调用，才能生效
     RenderingTexture();
@@ -268,11 +268,11 @@ void Game::CustomModelShader::RenderingTexture()
 }
 #pragma endregion
 #pragma region 实例化模型
-Game::CustomModelInstance::CustomModelInstance()
+CustomModelInstance::CustomModelInstance()
 {
 }
 
-Game::CustomModelInstance::CustomModelInstance(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow, int instanceCount, glm::vec3 positionOffset, glm::vec3 rotationAxis)
+CustomModelInstance::CustomModelInstance(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow, int instanceCount, glm::vec3 positionOffset, glm::vec3 rotationAxis)
 {
 
 
@@ -446,6 +446,14 @@ void Game::CustomModelInstance::RenderingTexture()
         glBindTexture(GL_TEXTURE_2D, texture);      // 绑定纹理对象到纹理单元 0+order
         glUniform1i(picData, textureOrder);         // 将纹理单元绑定到着色器的“baseTexture” uniform
     }
+}
+
+#pragma endregion
+#pragma region 蝴蝶测试新动画模型
+
+void ButterflyScriptShader::UpdateVariant(glm::mat4 view, glm::mat4 projection)
+{
+    position += glm::vec3(0.0f, 0.01f, 0.00f);
 }
 
 #pragma endregion

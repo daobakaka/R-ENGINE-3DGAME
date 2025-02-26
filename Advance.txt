@@ -99,3 +99,15 @@
 
 ！渲染逻辑
 添加GPU实例化逻辑：CustomModelInstance --构建用于GPU实例化的高性能渲染类 
+
+！协程逻辑
+添加协程参数：CoroutineMethod  --  StartSpawnByTimerAnimation，存在由该方法渲染的对象，无法捕捉自身阴影的问题，但其他物体的阴影却可以投射过来
+
+！渲染逻辑
+修复字体渲染不清晰的问题： --glPixelStorei(GL_UNPACK_ALIGNMENT, 1)，字体的像素对齐方式需要调整到1
+
+！基础逻辑
+添加综合控制方法：ZGameLogic--添加SceneStart 和 SceneUpdate文件，将程序初始化,GL窗口初始化，游戏初始化，对象创建，阴影渲染，进行时主逻辑解耦 
+
+！碰撞组件
+添加基础碰撞组件：CollisionBody --设计盒型碰撞

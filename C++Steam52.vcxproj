@@ -141,7 +141,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AnimationIntergrated.cpp" />
+    <ClCompile Include="CollisionBody.cpp" />
     <ClCompile Include="Light.cpp" />
+    <ClCompile Include="ObsoleteTest.cpp" />
+    <ClCompile Include="PhysicalEngine.cpp" />
+    <ClCompile Include="SceneStart.cpp" />
+    <ClCompile Include="SceneUpdate.cpp" />
     <ClCompile Include="ScriptModel.cpp" />
     <ClCompile Include="C++Steam52.cpp" />
     <ClCompile Include="Controller.cpp" />

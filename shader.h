@@ -545,34 +545,28 @@ void main()
 /// </summary>
 const char* textRenderVertex = R"(
 #version 450 core
-layout (location = 0) in vec2 aPos;
-layout (location = 1) in vec2 aTexCoord;
-out vec2 TexCoordText;
-uniform mat4 projection;  // 正交矩阵
+layout (location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>
+out vec2 TexCoords;
+uniform mat4 projection;
 void main()
 {
-    gl_Position = projection * vec4(aPos, 1.0, 1.0);  // 应用正交投影，设置Z值为1 最靠前，opengl 中Z值范围为[-1,1],由远到近
-    TexCoordText = aTexCoord;
+    gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);
+    TexCoords = vertex.zw;
 }
 )";
 
 const char* textRenderFragment = R"(
-
 #version 450 core
-in vec2 TexCoordText;  // 从顶点着色器传来的纹理坐标
-out vec4 FragColor; // 最终颜色输出
-uniform sampler2D text; // 字体纹理
-uniform vec3 textColor; // 文本颜色
+in vec2 TexCoords;
+out vec4 color;
+
+uniform sampler2D text;
+uniform vec3 textColor;
+
 void main()
-{
-    vec4 sampled = texture(text, TexCoordText);  // 获取纹理颜色
-    if (sampled.r == 0)  // 如红色等于0，则不渲染
-        discard;
-   /* else
-        sampled.r=1;*/
-    FragColor = vec4(textColor,1)*sampled.r;
-       // FragColor = vec4(textColor * sampled.r, 1);  // 乘以红色通道的灰度值
-       // FragColor = vec4(textColor,1.0f)*sampled;
+{    
+    vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
+    color = vec4(textColor, 1.0) * sampled;
 }
 )";
 /// <summary>

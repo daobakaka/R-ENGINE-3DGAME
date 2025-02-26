@@ -3,19 +3,7 @@
 #include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
 using namespace Game;
 
-    
-    //
-    ////引用shader这个类只编译通用型着色器，不编译特殊着色器
-    //extern const char* noneLightLightVertexShaderSource;
-    //extern const char* noneLightLightFragmentShaderSource;
-
-
-    //extern const char* colorlightsArrayVertexShaderSource;
-    //extern const char* colorlightsArraySourceFragmentShaderSource;
-    ////
-
-   
-    
+        
     ShaderManager* ShaderManager::instance = nullptr;
 
     // 获取单例实例
@@ -30,9 +18,9 @@ using namespace Game;
     // 构造函数
     ShaderManager::ShaderManager()
     {
-    
-     
-      
+
+        _shaderMame = "-shader";
+
     }
 
     // 析构函数
@@ -41,6 +29,9 @@ using namespace Game;
     // 编译 shader，返回编译后的 shader ID
     GLuint ShaderManager::ShaderCompile(const char* ver, const char* fra, const std::string& name)
     {
+        
+        
+        std::cout << "开始编译"<<_shaderMame << std::endl;
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, 1, &ver, nullptr);
         glCompileShader(vertexShader);
@@ -59,6 +50,9 @@ using namespace Game;
 
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
+        
+        GLuint keke = 3;
+        _shaderMap["keke"] = keke;
 
         _shaderMap[name] = shader;
 
@@ -85,6 +79,11 @@ using namespace Game;
         ShaderCompile(noneLightLightVertexShaderSource, noneLightLightFragmentShaderSource, "noneLight");
         ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "commonLight");
         ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "noneLightInstancer");
+
+        //深度图着色器模块儿
+        ShaderCompile(depthShaderVertexShaderSource, depthShaderFragmentShaderSource,"depthCal");
+        ShaderCompile(depthVisualShaderVertexShaderSource, depthVisualShaderFragmentShaderSource,"depthVisual");
+        ShaderCompile(depthTestShaderVertexShaderSource, depthTestShaderFragmentShaderSource,"depthTest");
 
     }
 

@@ -26,7 +26,12 @@ namespace Game {
 		OriginalS,
 		DepthCalculate,
 		DepthRender,
-		DpethTest,
+		DepthTest,
+	};
+	enum CollisionType
+	{
+		Box,
+		Sphere,
 	};
 	//步长结构体
 	struct StepVector3
@@ -34,7 +39,16 @@ namespace Game {
 		glm::vec3 position = glm::vec3(0, 0, 0);
 		glm::vec3 rotation = glm::vec3(0, 0, 0);
 		glm::vec3 scale = glm::vec3(1);
+	};
+	//碰撞体结构体
+	struct CollisionProperties {
+		glm::vec3 position;    // 物体位置
+		glm::vec3 velocity;    // 物体速度
+		glm::vec3 acceleration;  // 物体加速度
+		float mass;            // 物体质量
 
+		CollisionProperties()
+			: position(0.0f), velocity(0.0f), acceleration(0.0f), mass(1.0f) {}
 	};
 }
 #endif

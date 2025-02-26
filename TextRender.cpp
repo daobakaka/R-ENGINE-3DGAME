@@ -5,9 +5,9 @@
 using namespace Game;
 TextRender* TextRender::instance = nullptr;
 // 单例实例的获取方法
-TextRender*TextRender::GetInstance() {
-    
-    if (instance==nullptr)
+TextRender* TextRender::GetInstance() {
+
+    if (instance == nullptr)
     {
         instance = new TextRender();
     }
@@ -42,8 +42,8 @@ void TextRender::PrintBitmap(const FT_Bitmap& bitmap) {
     else {
         std::cout << "Unknown pixel mode." << std::endl;
     }
- 
-   
+
+
     // 遍历并打印位图数据
     for (unsigned int i = 0; i < bitmap.rows; ++i) {
         for (unsigned int j = 0; j < bitmap.width; ++j) {
@@ -56,7 +56,7 @@ void TextRender::PrintBitmap(const FT_Bitmap& bitmap) {
 
 // 初始化字体
 void TextRender::MakeFronts() {
-    
+
     const char* fontPath = "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fronts\\2.ttf";
     FT_Library ft;
     if (FT_Init_FreeType(&ft)) {
@@ -69,12 +69,12 @@ void TextRender::MakeFronts() {
         std::cerr << "Could not load font" << std::endl;
         return;
     }
-  
-    FT_Set_Pixel_Sizes(face, 0, 48);  // 设置字体大小
 
+    FT_Set_Pixel_Sizes(face, 0, 48);  // 设置字体大小
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);//！！！！！设置字节像素对齐格式，因为是字体，所以需要特殊的对准方式！！！！
     // 加载所有字符
     for (GLubyte c = 0; c < 128; c++) {
-        if (FT_Load_Char(face, c, FT_LOAD_RENDER |  FT_LOAD_DEFAULT)) {
+        if (FT_Load_Char(face, c, FT_LOAD_RENDER | FT_LOAD_DEFAULT)) {
             std::cerr << "Could not load character " << c << std::endl;
             continue;
         }
@@ -93,9 +93,9 @@ void TextRender::MakeFronts() {
 
         // 插入字符到unordered_map
         TextMapDic[c] = character;
-    
-    }
 
+    }
+   // glPixelStorei(GL_UNPACK_ALIGNMENT, 4);//恢复默认状态
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
 
@@ -123,7 +123,7 @@ GLuint TextRender::LoadTextureFromBitmap(FT_Bitmap& bitmap) {
 }
 
 // 初始化VBO和VAO
-void TextRender::InitializeTextRender(const char* textRenderVertex, const char* textRenderFragment) 
+void TextRender::InitializeTextRender(const char* textRenderVertex, const char* textRenderFragment)
 {
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &textRenderVertex, nullptr); // 直接传递着色器代码字符串
@@ -146,57 +146,31 @@ void TextRender::InitializeTextRender(const char* textRenderVertex, const char* 
     // 删除着色器对象
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-   
-    GLfloat vertices[6][4] = {
-        { 310.0f, 480.0f + 40.0f,   0.0f, 0.0f },   // 第一个三角形，左下角
-        { 310.0f, 480.0f,            0.0f, 1.0f },   // 第一个三角形，左上角
-        { 310.0f + 30.0f, 480.0f,    1.0f, 1.0f },   // 第一个三角形，右上角
 
-        { 310.0f, 480.0f + 40.0f,   0.0f, 0.0f },   // 第二个三角形，左下角
-        { 310.0f + 30.0f, 480.0f,    1.0f, 1.0f },   // 第二个三角形，右上角
-        { 310.0f + 30.0f, 480.0f + 40.0f, 1.0f, 0.0f } // 第二个三角形，右下角
-    };
-
-
-    // 创建并绑定 VAO 和 VBO
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    // 设置顶点数据
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-
-    // 设置顶点属性指针
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-
-    // 解绑 VAO
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+
 }
 
 // 渲染文本
 void TextRender::RenderText(const std::string& text, float x, float y, float scale, glm::vec3 color) {
-   
-  //面向过程编程，采用详细的过程一步一步处理
-    
-    GLint previousShader;
-    glGetIntegerv(GL_CURRENT_PROGRAM, &previousShader);  // 获取当前程序
 
-    GLint previousTexture;
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &previousTexture);  // 获取当前绑定的纹理
 
-  //--关于UI 的渲染  
+    //--关于UI 的渲染  
 #pragma region 状态处理区域，处理完成之后需要归还状态
 
     glUseProgram(shaderProgram);
 
     // 创建正交投影矩阵
-    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(2400), 0.0f, static_cast<float>(1600));
+    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(2400), 0.0f, static_cast<float>(1200));
 
     // 传递正交矩阵到着色器
     GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
@@ -238,19 +212,16 @@ void TextRender::RenderText(const std::string& text, float x, float y, float sca
 
         // 更新VBO数据
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // 缓冲区分支更新，处理字体时的优化方式
 
         // 绘制字符
         glDrawArrays(GL_TRIANGLES, 0, 6);
-        
+
         // 更新字符位置,水平偏移位置
         x += (ch.Advance >> 6) * scale;  // 以像素为单位的宽度
     }
     glBindVertexArray(0);
 #pragma endregion
-    // 3. 恢复之前的 OpenGL 状态
-    glUseProgram(previousShader);  // 恢复之前的着色器
-    glBindTexture(GL_TEXTURE_2D, previousTexture);  // 恢复之前的纹理绑定
 
 }
 
@@ -278,4 +249,3 @@ void TextRender::CheckShaderCompilation(GLuint shader, const std::string& type)
         }
     }
 }
-

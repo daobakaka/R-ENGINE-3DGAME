@@ -122,7 +122,7 @@ namespace Game {
         //渲染阴影图
         void RenderShadowTexture(CustomModel* obj,glm::mat4 crossView);
         //渲染阴影图，重载,这里需要使用NDC（标准设备坐标空间，来进行正交投影）
-        void RenderShadowTexture();
+        void RenderShadowTexture(GLuint shader);
 
         
     private:

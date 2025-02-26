@@ -8,7 +8,6 @@ namespace Game
 #pragma region 特殊模型
 
 
-
 	class CustomModel;
 	/// <summary>
 	/// 初始蝴蝶模型
@@ -95,7 +94,7 @@ namespace Game
 	/// </summary>
 	class CustomModelShader :public CustomModel
 	{
-		
+
 	public:
 		/// <summary>
 		/// 采用值传递shader，外部不需要显示调用，减少独立shader的重复计算
@@ -105,11 +104,11 @@ namespace Game
 		/// <param name="isSkinnedMesh"></param>
 		/// <param name="ifLight"></param>
 		/// <param name="ifShadow"></param>
-		CustomModelShader(const std::string &name, const ModelData& modelData, bool isSkinnedMesh, bool ifLight = false, bool ifShadow = false);
+		CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLight = false, bool ifShadow = false);
 
 		CustomModelShader();
 
-		 virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
+		virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
 
 		//virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;//变体移动可重写
 
@@ -118,12 +117,6 @@ namespace Game
 		virtual void RenderingTexture()override;
 
 	protected:
-		
-
-
-
-
-
 
 	};
 
@@ -139,7 +132,7 @@ namespace Game
 	public:
 		CustomModelInstance();
 
-		CustomModelInstance(const std::string &name,
+		CustomModelInstance(const std::string& name,
 			const ModelData& modelData,
 			bool isSkinnedMesh,
 			bool ifLightIn,
@@ -154,7 +147,7 @@ namespace Game
 		//virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;//变体移动可重写
 
 		virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;//动态绘制可重写，与IntergtatedAnimatior联动
-		
+
 
 		virtual void RenderingTexture()override;
 		virtual void GenerateInstanceMatrices();
@@ -165,6 +158,22 @@ namespace Game
 		glm::vec3 _rotationAxis;  // 存储旋转增量（每个轴的旋转增量）
 		GLuint _instanceBuffer;
 		std::vector<glm::mat4> _modelMatrices;  // 使用 std::vector 存储动态数量的实例矩阵
+
+	};
+
+#pragma endregion
+
+#pragma region  测试蝴蝶模型
+
+	class ButterflyScriptShader :public CustomModelShader
+	{
+	public:
+		//这里直接继承基类的构造函数
+		using CustomModelShader::CustomModelShader;
+		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
+
+	private:
+
 
 	};
 

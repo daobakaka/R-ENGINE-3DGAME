@@ -1,0 +1,126 @@
+#include <iostream>
+#include "Monster.h"
+#include <vector>
+#include <GL/glew.h>//加载Opengl扩展，
+#include <GLFW/glfw3.h>//创建Opengl扩展，以及管理Opengl上下文
+#include "Cube.h"
+//#include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
+#include "Test.h"
+#include "MicroCpp.h"
+#include "Controller.h"
+#include "LifecycleManager.h"
+#include "IntergratedScripts.h"
+#include <list>  // 包含 list 容器
+#include "MeshDataManager.h"
+#include "CustomModel.h"
+#include "Light.h"
+#include "FileLoadIO.h"
+#include "TextRender.h"
+#include "CoroutineMethod.h"
+#include "ScriptModel.h"
+#include <chrono>
+#include <thread>
+#include "ShaderManager.h"
+using namespace Game;
+
+//控制组件标识
+extern Controller* controller;
+extern LifecycleManager<CustomModel>* manager;
+extern IntergratedScripts* scripts;
+extern MeshDataManager* meshData;
+extern TextRender* cusText;
+extern CoroutineMethod* coroutine;
+extern LightSpawner* lightSpawner;
+extern LightRender* lightRender;
+extern ShaderManager* shaderManager;
+
+
+void GameUpdateShadowRenderT()
+{
+
+
+    //--全局执行区域阴影
+//使用Controller内部全局着色器
+    lightRender->RenderDepthMapForParallelLight(lightSpawner->GetParallelLight().direction);//渲染深度缓冲图，用于阴影，内含绑定_paralleLightDepthMapFBO
+    lightRender->BindFramebuffer();
+    shaderManager->SetMat4("depthCal", "lightSpaceMatrix", lightRender->GetLightMatrix());
+    manager->UpdateDepthPic(lightRender->GetLightMatrix(), shaderManager->GetShader("depthCal"));//获取light的光源矩阵，并为场景中的每个对象绘制进入_paralleLightDepthMapFBO,独立对象的绘制采用模板方法
+    lightRender->UnbindFramebuffer();//绘制完成之后，解除绑定阴影渲染的深度贴图
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
+    shaderManager->UseShader("depthVisual");
+    lightRender->RenderShadowTexture(shaderManager->GetShader("depthVisual"));
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+     //--控制平行光的旋转
+    lightSpawner->ParalletLightController(glm::vec3(0, 1, 0.0f));
+
+
+}
+
+
+
+void GameUpdateMainLogicT(glm::mat4 view,glm::mat4 projection)
+{
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
+
+
+    //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
+    //遍历执行区域
+    for (CustomModel* item : manager->GetNativeObjects()) {
+        //将多光源照射效果封装在 灯光渲染器中.如果是光照shader，则需要加入这一段代码，引入光照渲染，如果不是则不需要
+        //现在更改为使用构造化方式，统一使用
+       //--是否光照模型判断
+        if (item->ifLight)
+        {
+            //这里既可以使用独有shader 也可以使用共有shader，看使用什么类去构造
+            lightRender->RenderLights(item->shaderProgram, controller, lightSpawner, item->position);//更改渲染逻辑，减少访问次数
+        }
+
+        if (item->GetVariant() == 0)
+        {
+
+            scripts->TChangeRandom(-0.01f, 0.01f);//改变构造随机种子
+            // scripts->CubeUpdateFun(item); // 使用迭代器遍历链表并调用每个,暂时理解为一个遍历语法糖
+        }
+        else if (item->GetVariant() == ModelClass::CubeTestE)
+        {
+            scripts->TestUpdateFun(item);
+            //  baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);        
+        }
+        else if (item->GetVariant() == ModelClass::ParallelLight)//平行光旋转，后面增加其他逻辑
+        {
+
+            scripts->TParallelLightRotation(item);
+
+        }
+        else if (item->GetVariant() == ModelClass::ActorButterfly)
+        {
+            //目前这种统一脚本的方式，并不能完全独立于对象脚本，只能在一定程度上进行独立
+            scripts->ActorButtfly(item);
+            item->PlayAnimation(0, 0.1f);
+
+
+        }
+        else if (item->GetVariant() == ModelClass::TsetButterfly)
+        {
+
+            //这样也可以执行变体方法，待后期验证
+            item->UpdateVariant(view, projection);
+            item->PlayAnimation(0, 0.1f);
+
+        }
+        else if (item->GetVariant() == ModelClass::LightColorTestCube)
+        {
+
+
+        }
+    }
+    //3.变体方法，类似于手动撰写脚本来实现，须在初始化时，注册脚本变体,通用脚本方法有一定局限性，变体方法后续还会使用
+    //变体即其模型类型注册不为0，主要用于场景中的需要批量设置相关变换的对象
+    for (auto* item : manager->GetVariantObjects()) {
+        // item->UpdateVariant(view, projection);
+    }
+
+}
+
+

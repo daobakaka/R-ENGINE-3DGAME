@@ -52,6 +52,9 @@
     <Filter Include="源文件\Render">
       <UniqueIdentifier>{1ba43af8-b30c-4234-a257-79e2fe0b1a2b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\ZGameLogic">
+      <UniqueIdentifier>{78d769b0-e026-460d-89d5-9875fbbdfa17}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="C++Steam52.cpp">
@@ -113,6 +116,21 @@
     </ClCompile>
     <ClCompile Include="ShaderManager.cpp">
       <Filter>源文件\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneStart.cpp">
+      <Filter>源文件\ZGameLogic</Filter>
+    </ClCompile>
+    <ClCompile Include="ObsoleteTest.cpp">
+      <Filter>源文件\ZGameLogic</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneUpdate.cpp">
+      <Filter>源文件\ZGameLogic</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionBody.cpp">
+      <Filter>源文件\ComponentController</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicalEngine.cpp">
+      <Filter>源文件\ComponentController</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
