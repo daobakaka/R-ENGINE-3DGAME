@@ -82,6 +82,11 @@ void Game::GameObject::UpdateDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
 {
 }
 
+bool Game::GameObject::GetIfCollision()
+{
+    return false;
+}
+
 #pragma endregion
 #pragma region 渲染模块
 //传入默认空指针的定义，通常在头文件中进行，不然会报错

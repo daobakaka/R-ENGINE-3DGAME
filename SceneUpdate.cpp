@@ -5,8 +5,6 @@
 #include <GLFW/glfw3.h>//创建Opengl扩展，以及管理Opengl上下文
 #include "Cube.h"
 //#include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
-#include "Test.h"
-#include "MicroCpp.h"
 #include "Controller.h"
 #include "LifecycleManager.h"
 #include "IntergratedScripts.h"
@@ -84,7 +82,7 @@ void GameUpdateMainLogicT(glm::mat4 view,glm::mat4 projection)
         }
         else if (item->GetVariant() == ModelClass::CubeTestE)
         {
-            scripts->TestUpdateFun(item);
+          scripts->TestUpdateFun(item);
             //  baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);        
         }
         else if (item->GetVariant() == ModelClass::ParallelLight)//平行光旋转，后面增加其他逻辑
@@ -105,13 +103,13 @@ void GameUpdateMainLogicT(glm::mat4 view,glm::mat4 projection)
         {
 
             //这样也可以执行变体方法，待后期验证
-            item->UpdateVariant(view, projection);
+         //   item->UpdateVariant(view, projection);
             item->PlayAnimation(0, 0.1f);
 
         }
-        else if (item->GetVariant() == ModelClass::LightColorTestCube)
+        else if (item->GetVariant() == ModelClass::TestPhysics)
         {
-
+           // scripts->TPosition(item);
 
         }
     }

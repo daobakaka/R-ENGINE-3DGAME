@@ -30,6 +30,8 @@ namespace Game {
 		void TControlFrameRate(float targetFrameRate);
 		//平行光旋转
 		void TParallelLightRotation(GameObject *object);
+		//测试加速度作用信息
+		void TPosition(GameObject* object);
 
 	private:
 

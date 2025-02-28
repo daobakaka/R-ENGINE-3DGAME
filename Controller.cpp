@@ -14,7 +14,7 @@ Controller* Controller::instance = nullptr;  // £¡ÔÚÔ´ÎÄ¼şÖĞ³õÊ¼»¯¾²Ì¬³ÉÔ±±äÁ¿,¶
 //ÕâÀïÊÇ¶¨ÒåÖ¸Õë·½·¨µÄĞ´·¨£¬¼´·µ»ØÒ»¸öÖ¸ÏòControllerµÄÖ¸Õë£¬ĞèÒªÏÔÊ¾ÉùÃ÷
 extern CoordinateSystemCus* axisWidget = nullptr;//ÕâÖÖ·½Ê½¶¨Òå£¬±ÜÃâ¶àÖØÒıÓÃ´íÎó
 Controller::Controller()
-    : position(0.0f, 3.0f, 10.0f),  // Î»ÖÃ³õÊ¼»¯
+    : position(0.0f, 30.0f, 100.0f),  // Î»ÖÃ³õÊ¼»¯
     front(0.0f, 0.0f, -1.0f),     // Ç°ÏòÏòÁ¿³õÊ¼»¯
     up(0.0f, 1.0f, 0.0f),        // ÉÏÏòÁ¿³õÊ¼»¯
     pitch(0.0f), yaw(-90.0f),    // ¸©ÑöºÍÆ«º½½Ç³õÊ¼»¯

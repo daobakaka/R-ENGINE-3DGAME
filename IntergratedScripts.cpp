@@ -153,6 +153,21 @@ void Game::IntergratedScripts::TParallelLightRotation(GameObject *object)
    
 }
 
+void Game::IntergratedScripts::TPosition(GameObject* object)
+{
+
+
+    //std::cout << "OutPosition: ("
+    //    <<object->position.x << ", "
+    //    <<object-> position.y << ", "
+    //    <<object-> position.z << ")"
+    //    << std::endl;
+
+}
+
+
+
+
 
 
 

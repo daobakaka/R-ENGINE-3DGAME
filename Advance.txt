@@ -44,7 +44,6 @@
 添加测试脚本：MicroCpp Monter Test lnlT.inl 
 添加废弃代码：ObsoleteCode
 
-
 ！渲染逻辑
 添加灯光模块：Light  --在Light头中添加灯光控制器LightSpawner，外部可以直接生成点光源并添加控制方法
 
@@ -56,7 +55,6 @@
 
 ！渲染逻辑
 添加灯光渲染器：LightRender --将GL渲染代码封装在LightRender中，外部调用只需传入基础控制器、模型shadergram、灯光生成器 LightSpawner
-
 
 ！基础逻辑
 添加场景旋转标识：Controller  -- 创建标识坐标 BuildWidgetShader， 待完善
@@ -110,4 +108,4 @@
 添加综合控制方法：ZGameLogic--添加SceneStart 和 SceneUpdate文件，将程序初始化,GL窗口初始化，游戏初始化，对象创建，阴影渲染，进行时主逻辑解耦 
 
 ！碰撞组件
-添加基础碰撞组件：CollisionBody --设计盒型碰撞
+添加基础碰撞组件：CollisionBody --设计盒型碰撞,采用八叉树进行复杂度为NlogN的计算

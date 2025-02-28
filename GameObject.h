@@ -30,6 +30,8 @@ namespace Game {
         // 变换矩阵
         glm::mat4 transform;
 
+        int testNum;
+
         //默认构造函数
         GameObject();
         ~GameObject();
@@ -82,6 +84,9 @@ namespace Game {
         virtual void DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader);
         virtual void DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix,GLuint shader);
         virtual void UpdateDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader) override;
+
+        //--获取碰撞判断
+        virtual bool GetIfCollision() override;
 
     private:
         //初始化变体

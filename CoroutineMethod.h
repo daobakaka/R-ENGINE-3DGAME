@@ -74,8 +74,8 @@ namespace Game {
             glm::vec3 position = glm::vec3(0, 0, 0),
             glm::vec3 rotation = glm::vec3(0, 0, 0),
             glm::vec3 scale = glm::vec3(1, 1, 1),
-            bool ifPhysical = true,
-            bool ifCollider = true
+            bool ifPhysical = false,
+            bool ifCollider = false
         )
         {// 编译断言，类似于泛型约束
             static_assert(std::is_base_of_v<CustomModel, T>, "T must inherit from CustomModel!");

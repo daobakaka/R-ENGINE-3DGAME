@@ -38,7 +38,10 @@ namespace Game {
         virtual void DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader) override; //静态绘制深度图，可重写
         virtual void DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix,GLuint shader) override;//动态绘制深度图，可重写
         virtual void UpdateDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader) override;//深度图更新方法，可重写
-
+        //物理引擎模块
+        virtual void UpdatePhysics();
+        //检查碰撞
+        virtual void CheckCollision();
         /// <summary>
         /// 附加纹理方法，添加了压缩因子
         /// </summary>
@@ -48,10 +51,19 @@ namespace Game {
         /// <returns></returns>
         virtual bool AttachTexture(GLuint textureName, int order=0,glm::vec2 textureScale=glm::vec2(1.0f,1.0f)) ;//附加纹理处理可重写
         virtual void RenderingTexture();//渲染纹理方法可重写
-        //
-        virtual bool AttachPhysicalEngine();//附加物理引擎可重写
-        virtual bool AttachCollider(CollisionType type=CollisionType::Box,float radius=1,glm::vec3 ratio=glm::vec3(1));//附件碰撞体可重写
-
+        /// <summary>
+        /// 添加物理组件，初始化基本参数
+        /// </summary>
+        /// <param name="mass"></param>
+        /// <param name="friction"></param>
+        /// <param name="velocity"></param>
+        /// <param name="acceleration"></param>
+        /// <returns></returns>
+        virtual bool AttachPhysicalEngine(bool ifStatic=false,float mass=1, float friction = 0.05f, glm::vec3 velocity = glm::vec3(0), glm::vec3 acceleration = glm::vec3(0,-9.8f,0));           
+        virtual bool AttachCollider(CollisionType type=CollisionType::Sphere,float radius=1,int layer=1,bool trigger=false);//附件碰撞体可重写
+        //判断是否需要碰撞，碰撞的对象，封装在泛型基类中的vector容器里
+        virtual bool GetIfCollision() override;
+        
 
     protected:
 #pragma region   数组初始化原则：{}只能在声明时进行初始化
@@ -59,9 +71,9 @@ namespace Game {
         std::vector<Vertex> verticesTras = {};
         //  GLfloat verticesIns[];
           //动画控制组件
-        AnimationController* animator = nullptr;
-        PhysicalEngine* physicsBody = nullptr;
-        CollisionBody* collider = nullptr;
+        AnimationController* _animator = nullptr;
+        PhysicalEngine* _physicsBody = nullptr;
+        CollisionBody* _collider = nullptr;
 
     protected:
         //贴图组件,存在继承关系，这里子类需要访问
@@ -78,6 +90,8 @@ namespace Game {
         bool _ifCollision;
         glm::vec3 _collisionMin;
         glm::vec3 _collisionMax;
+        bool _ifPhysics;
+   
 
 
 
@@ -86,13 +100,13 @@ namespace Game {
         template <typename T>
         T* GetComponent() {
             if constexpr (std::is_same<T, AnimationController>::value) {
-                return animator;
+                return _animator;
             }
             else if constexpr (std::is_same<T, PhysicalEngine>::value) {
-                return physicsBody;
+                return _physicsBody;
             }
             else if constexpr (std::is_same<T, CollisionBody>::value) {
-                return collider;
+                return _collider;
             }
             else {
                 static_assert(false, "Unsupported component type");

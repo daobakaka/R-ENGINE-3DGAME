@@ -20,6 +20,7 @@ namespace Game {
         void RegisterObject(T* object);
         std::vector<T*> GetNativeObjects();
         std::vector<T*> GetVariantObjects();
+        std::vector<T*> GetColloderObjects();
         static LifecycleManager<T>* GetInstance();
         // 在主循环中调用每个对象的生命周期方法
         void StartAll();
@@ -31,9 +32,13 @@ namespace Game {
         //光源深度模型绘制
         void UpdateDepthPic(glm::mat4 projection, GLuint shader);
 
+        //物体引擎更新
+        void PhysicalUpdateAll();
+
     private:
         std::vector<T*> nativeObjects;   // 存储注册的对象
         std::vector<T*> variantObjects;  // 存储变体对象
+        std::vector<T*> colliderObjects; //储存碰撞对象
         LifecycleManager() {};
         static LifecycleManager<T>* instance ;
 
@@ -41,12 +46,15 @@ namespace Game {
         //动画控制
     };
 
-    // 在头文件中实现模板方法
+    // 在头文件中实现模板方法,这里都是最基类的重写，避免报错
+    //原始对象封装，无条件执行所有更新逻辑，变体对象封装，执行变体逻辑，待优化，碰撞对象封装，专门执行碰撞逻辑
     template <typename T>
     void LifecycleManager<T>::RegisterObject(T* object) {
         nativeObjects.push_back(object);
         if (object->GetVariant() != 0)
             variantObjects.push_back(object);
+        if (object->GetIfCollision() == true)
+            colliderObjects.push_back(object);
     }
 
     template <typename T>
@@ -57,6 +65,12 @@ namespace Game {
     template <typename T>
     std::vector<T*> LifecycleManager<T>::GetVariantObjects() {
         return variantObjects;
+    }
+
+    template<typename T>
+    inline std::vector<T*> LifecycleManager<T>::GetColloderObjects()
+    {
+        return colliderObjects;
     }
 
     template <typename T>

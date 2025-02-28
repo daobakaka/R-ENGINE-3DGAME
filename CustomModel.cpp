@@ -2,6 +2,7 @@
 using namespace Game;
 extern const char* depthShaderVertexShaderSource;
 extern const char* depthShaderFragmentShaderSource;
+
 Game::CustomModel::CustomModel()
 {
 }
@@ -495,11 +496,11 @@ void CustomModel::RenderingTexture()
 }
 void CustomModel::AttachAnimationController(AnimationData animationData)
 {
-    if (animator == nullptr)
-        animator = new AnimationController();
+    if (_animator == nullptr)
+        _animator = new AnimationController();
 
     Animation* anim = new Animation(animationData);
-    animator->AddAnimation(anim);
+    _animator->AddAnimation(anim);
     
 }
 void CustomModel::AttachAnimationController()
@@ -508,13 +509,13 @@ void CustomModel::AttachAnimationController()
 void CustomModel::PlayAnimation(int index, float frame)
 {
 
-    animator->PlayAnimation(index, frame, this);
+    _animator->PlayAnimation(index, frame, this);
 
 }
 void CustomModel::StopPlayAnimation()
 {
 
-    animator->StopAnimation();
+    _animator->StopAnimation();
 }
 void CustomModel::DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
 {
@@ -572,16 +573,48 @@ void Game::CustomModel::UpdateDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader
 {
     //因为通用的update方法已经传入了 UpdateTransform(),所以这里就没有必要再次传入了
     if (_ifShadow)
-    {
-        
+    {        
         IsSkinnedMesh == true ? DrawDepthPicDynamical(lightSpaceMatrix,shader) : DrawDepthPic(lightSpaceMatrix,shader);
-
 
     }
 }
-bool CustomModel::AttachPhysicalEngine()
+void Game::CustomModel::UpdatePhysics()
 {
-    return false;
+    if (_ifPhysics)
+    {
+
+        _physicsBody->UpdatePhysics();
+
+
+    }
+
+
+}
+void Game::CustomModel::CheckCollision()
+{
+
+
+    if (_ifCollision)
+    {
+  
+
+
+        _collider->UpdateCollisionState();
+
+        
+    }
+
+}
+bool CustomModel::AttachPhysicalEngine(bool ifStatic ,float mass, float friction , glm::vec3 velocity , glm::vec3 acceleration )
+{
+    if (_physicsBody == nullptr)
+        //这里直接将位置的引用传入，方便在物理引擎的内部对position的值进行直接修改
+        _physicsBody = new PhysicalEngine(position,ifStatic);
+    
+    _physicsBody->SetParameters( mass, friction, velocity, acceleration);
+
+
+    return _ifPhysics = true;
 }
 /// <summary>
 /// 设置基本碰撞体的范围
@@ -590,27 +623,27 @@ bool CustomModel::AttachPhysicalEngine()
 /// <param name="radians"></param>
 /// <param name="ratio"></param>
 /// <returns></returns>
-bool CustomModel::AttachCollider(CollisionType type , float radius,glm::vec3 ratio )
+bool CustomModel::AttachCollider(CollisionType type , float radius,int layer,bool trigger)
 {
-    switch (type)
-    {
-    case Game::Box:
-            _collisionMin.x = position.x - radius * ratio.x;
-            _collisionMin.y = position.y - radius * ratio.y;
-            _collisionMin.z = position.z - radius * ratio.z;
-            _collisionMax.x = position.x + radius * ratio.x;
-            _collisionMax.y = position.y + radius * ratio.y;
-            _collisionMax.z = position.z + radius * ratio.z;
-
-        break;
-    case Game::Sphere:
-
-        break;
-    default:
-        break;
-    }
    
+    if (_physicsBody==nullptr)
+    {
+        return false;
+    }
+    
+    if (_collider == nullptr)
+        _collider = new CollisionBody(position, _physicsBody->GetVelocity(),
+                                      _physicsBody->GetAcceleration(),_physicsBody->GetMass(),_physicsBody->GetFriction(),_physicsBody->GetStatic());
+   
+    
+    _collider->SetCollisionParameters(type, radius, scale,layer,trigger);
+    
+  
     return _ifCollision=true;
+}
+bool Game::CustomModel::GetIfCollision()
+{
+    return _ifCollision;
 }
 bool CustomModel::Draw (glm::mat4 view, glm::mat4 projection)
 {
@@ -737,22 +770,26 @@ CustomModel::~CustomModel()
    // verticesTras = nullptr;//避免内存污染，解决潜在问题
 
 
-    if (animator == nullptr)
-        delete animator;
+    if (_animator == nullptr)
+        delete _animator;
 }
 void CustomModel::Update(glm::mat4 view, glm::mat4 projection)
 {
-
+    //先进行物理计算
+    UpdatePhysics();
+    //再进行碰撞计算
+    CheckCollision();
+    //再进行变体方法计算
+    UpdateVariant(view,projection);
+    //再进行坐标更新
     //这种写法就，直接封装了更新变化和通知CPU渲染的两个方法，如果具体定义方法，只需要在其他脚本里面单独定义某个方法，更改transform即可，由管理池泛型调用
     UpdateTransform();
-
+    //确认动态绘制或者静态绘制
    IsSkinnedMesh==true? DrawDynamical(view, projection): Draw(view, projection);
 }
 //变体方法，可以增加变体的运行行为
 void  CustomModel::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
-   // scale = glm::vec3(0.3f, 0.3f, 0.3f);
-    position += glm::vec3(0, 0.002f,   0.0f);
 
 }
 // 根据动画帧更新顶点数据
@@ -763,7 +800,7 @@ void CustomModel::UpdateVerticesForAnimation(size_t animationFrame) {
         // 根据 animationFrame 更新顶点位置
         // 比如通过插值来更新顶点的 Position、TexCoords 等
         Vertex& vertex = (verticesTras)[i];
-        // 这里假设你有某种规律来改变顶点属性
+        // 这里假设有某种规律来改变顶点属性
         vertex.Position.x += 0.001f * animationFrame;
         vertex.Position.y += 0.001f * animationFrame;
         vertex.Position.z += 0.001f * animationFrame;
