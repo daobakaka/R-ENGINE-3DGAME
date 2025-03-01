@@ -147,15 +147,18 @@ void GameStartT()
 
 
     auto* baseSphere = new CustomModelShader("commonLight", ModelDic["baseSphere"], false, true, true);
-    baseSphere->SetVariant(ModelClass::CubeTestE);
-    baseSphere->Initialize(glm::vec3(-3.0f, -2.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+    baseSphere->SetVariant(ModelClass::TestPhysics);
+    baseSphere->Initialize(glm::vec3(3.0f, 10.0f, -50.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
     manager->RegisterObject(baseSphere);
     baseSphere->AttachTexture(TextureDic["butterfly"][0], 0);
+    baseSphere->AttachPhysicalEngine(false,5);
+    baseSphere->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0,10 ));
+    baseSphere->AttachCollider();
 
     //测试圆柱
     auto* baseCylinder = new CustomModelShader("commonLight", ModelDic["baseCylinder"], false, true, true);
     baseCylinder->SetVariant(ModelClass::TestPhysics);
-    baseCylinder->Initialize(glm::vec3(-0.0f, 1.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+    baseCylinder->Initialize(glm::vec3(3.0f, 5.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
     manager->RegisterObject(baseCylinder);
     baseCylinder->AttachTexture(TextureDic["default"][0], 0);
     baseCylinder->AttachPhysicalEngine();
@@ -163,15 +166,15 @@ void GameStartT()
 
     auto* basePlane = new  CustomModelShader("commonLight", ModelDic["basePlane"], false, false, false);
     basePlane->SetVariant(ModelClass::StaticPlane);
-    basePlane->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(50.0f, 0.1f, 50.0f));
+    basePlane->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(50.0f, 0.1f, 50.0f));
     manager->RegisterObject(basePlane);
     basePlane->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
     basePlane->AttachPhysicalEngine(true);//声明为静态类型，目前注册为1
-    basePlane->AttachCollider(CollisionType::Box,10);
+    basePlane->AttachCollider(CollisionType::Box,1);
 
     auto* butterflyInstance = new  CustomModelInstance("noneLightInstancer", ModelDic["butterfly"], false, false, false, 10000, glm::vec3(100, 100, -100));
     butterflyInstance->SetVariant(ModelClass::CubeE);
-    butterflyInstance->Initialize(glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(0.3f, 0.3f, 0.30f));
+    butterflyInstance->Initialize(glm::vec3(0.0f, 5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(0.3f, 0.3f, 0.30f));
     manager->RegisterObject(butterflyInstance);
     butterflyInstance->AttachTexture(TextureDic["butterfly"][0], 0, glm::vec2(1, 1));
 

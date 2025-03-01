@@ -5,6 +5,8 @@
 #include "AnimationIntergrated.h"
 
 namespace Game {
+
+    extern std::unordered_map<int, CollisionProperties*> CollisionProps;//就在碰撞体内部这个大类内部进行检查
     class CustomModel : public GameObject
     {
     public:
@@ -41,7 +43,7 @@ namespace Game {
         //物理引擎模块
         virtual void UpdatePhysics();
         //检查碰撞
-        virtual void CheckCollision();
+        virtual void UpdateCollisionAndPhysics(std::unordered_map<int, CollisionProperties*>& cop);
         /// <summary>
         /// 附加纹理方法，添加了压缩因子
         /// </summary>
@@ -59,8 +61,8 @@ namespace Game {
         /// <param name="velocity"></param>
         /// <param name="acceleration"></param>
         /// <returns></returns>
-        virtual bool AttachPhysicalEngine(bool ifStatic=false,float mass=1, float friction = 0.05f, glm::vec3 velocity = glm::vec3(0), glm::vec3 acceleration = glm::vec3(0,-9.8f,0));           
-        virtual bool AttachCollider(CollisionType type=CollisionType::Sphere,float radius=1,int layer=1,bool trigger=false);//附件碰撞体可重写
+        virtual bool AttachPhysicalEngine(bool ifStatic=false,float mass=1, float friction = 0.05f,float elasticity=0.5f, glm::vec3 acceleration = glm::vec3(0, -9.8f, 0),glm::vec3 velocity = glm::vec3(0));
+        virtual bool AttachCollider(CollisionType type=CollisionType::Box,float radius=1,int layer=1,bool trigger=false);//附件碰撞体可重写
         //判断是否需要碰撞，碰撞的对象，封装在泛型基类中的vector容器里
         virtual bool GetIfCollision() override;
         

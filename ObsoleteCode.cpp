@@ -506,11 +506,5 @@ Game::Cube::CubeObstcle(GLuint textureName)
 
 }
 
-
-
-
-
-
-
-
-#endif // !OBSOLETE_CODE_KAKA
+/
+#endif

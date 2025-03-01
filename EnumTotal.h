@@ -2,6 +2,7 @@
 #define ENUM_TOTAL_H
 #include <glm/glm.hpp>
 #include <unordered_map>
+#include <unordered_set>
 namespace Game {
 
 
@@ -58,8 +59,15 @@ namespace Game {
 		glm::vec3 _collisionMin;
 		glm::vec3 _collisionMax;
 		//定向参数
+		//自身摩擦系数
 		float friction;
+		//解除对象摩擦系数
+		float otherFriction;
 		float mass;
+		glm::vec3 gravity;
+		float elasticity;//弹性系数
+		// 碰撞容器，记录当前与哪些物体发生碰撞
+		std::unordered_set<int> collidingBodies;
 
 		//碰撞盒类型
 		CollisionType type;
@@ -71,9 +79,17 @@ namespace Game {
 		bool isCollision;
 		//触发器
 		bool trigger;
+		//静态物体
+		bool staticObj;
+		//开启重力加速度
+		bool gravityEnabled;
+
+		//增加碰撞旋转逻辑
+		glm::vec3 angularVelocity;
+		glm::quat &rotation;        // 旋转角度（四元数）
 		//以上三个量可以完全控制碰撞盒大小
-		CollisionProperties(glm::vec3 &pos,glm::vec3 &vel,glm::vec3 &acc)
-			: position(pos), velocity(vel), acceleration(acc), mass(1),friction(0.05f),_collisionMin(0),_collisionMax(0),isCollision(false),trigger(false) {}
+		CollisionProperties(glm::vec3 &pos,glm::vec3 &vel,glm::vec3 &acc,glm::quat rot)
+			: position(pos), velocity(vel), acceleration(acc), mass(1),friction(0.05f),_collisionMin(0),_collisionMax(0),isCollision(false),trigger(false),rotation(rot) {}
 	};
 
 	

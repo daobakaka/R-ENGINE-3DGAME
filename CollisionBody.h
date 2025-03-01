@@ -16,13 +16,13 @@ namespace Game {
     class CollisionBody : public IComponent<CollisionBody> {
     public:
         // 构造函数和析构函数
-        CollisionBody(glm::vec3 &pos,glm::vec3 &vel,glm::vec3&acc,float mass ,float friction,bool ifStatic);
+        CollisionBody(glm::vec3 &pos,glm::vec3 &vel,glm::vec3&acc, glm::quat& rot, float mass ,float friction, float elasticity,bool ifStatic);
         ~CollisionBody();
         //实现IComponenet接口
         bool Interface() override;
 
         // 更新物体状态，检测碰撞等逻辑（碰撞后可能的位移或速度变化）
-        void UpdateCollisionState(float deltaTime=0.0167F);
+        void UpdateCollisionState(std::unordered_map<int, CollisionProperties*>& cop,float deltaTime=0.0167F);
 
         // 设置物体的物理属性，这一系列方法通过引用逻辑优化
         void SetPosition( glm::vec3 pos) { _collisionProperties.position = pos; }
@@ -38,6 +38,12 @@ namespace Game {
         void UpdateCollisionParameters();
         //分析物理碰撞状态
         void ResolveCollision(CollisionProperties* other);
+        //计算碰撞法向量
+        glm::vec3 CalculateCollisionNormal(CollisionProperties* other);
+        // 更新物体的对象的重力状态
+        void UpdateGravityState(float normalY);
+        //更新碰撞体方法，无碰撞体才运行物理基本运算
+        void UpdatePhysicsCollision(float deltaTime = 0.0167f);
 
         // 获取对方碰撞体的物理属性
         CollisionProperties& GetCollisionProperties() { return _collisionProperties; }
@@ -49,7 +55,6 @@ namespace Game {
 
     private:
         CollisionProperties _collisionProperties;  // 封装的物理属性,碰撞属性全部封装在碰撞结构体中
-        bool _ifStatic;
         static int NEXTINT;
    
 

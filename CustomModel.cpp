@@ -580,7 +580,8 @@ void Game::CustomModel::UpdateDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader
 }
 void Game::CustomModel::UpdatePhysics()
 {
-    if (_ifPhysics)
+    //开启物理模式，却未开启碰撞，才进行简单加速度物理计算
+    if (_ifPhysics&&!_ifCollision)
     {
 
         _physicsBody->UpdatePhysics();
@@ -590,7 +591,7 @@ void Game::CustomModel::UpdatePhysics()
 
 
 }
-void Game::CustomModel::CheckCollision()
+void Game::CustomModel::UpdateCollisionAndPhysics(std::unordered_map<int, CollisionProperties*>& cop)
 {
 
 
@@ -599,19 +600,19 @@ void Game::CustomModel::CheckCollision()
   
 
 
-        _collider->UpdateCollisionState();
+        _collider->UpdateCollisionState(cop);
 
         
     }
 
 }
-bool CustomModel::AttachPhysicalEngine(bool ifStatic ,float mass, float friction , glm::vec3 velocity , glm::vec3 acceleration )
+bool CustomModel::AttachPhysicalEngine(bool ifStatic ,float mass, float friction , float elasticity ,  glm::vec3 acceleration,glm::vec3 velocity  )
 {
     if (_physicsBody == nullptr)
         //这里直接将位置的引用传入，方便在物理引擎的内部对position的值进行直接修改
-        _physicsBody = new PhysicalEngine(position,ifStatic);
+        _physicsBody = new PhysicalEngine(position,rotation,ifStatic);
     
-    _physicsBody->SetParameters( mass, friction, velocity, acceleration);
+    _physicsBody->SetParameters( mass, friction, velocity, acceleration,elasticity);
 
 
     return _ifPhysics = true;
@@ -633,7 +634,8 @@ bool CustomModel::AttachCollider(CollisionType type , float radius,int layer,boo
     
     if (_collider == nullptr)
         _collider = new CollisionBody(position, _physicsBody->GetVelocity(),
-                                      _physicsBody->GetAcceleration(),_physicsBody->GetMass(),_physicsBody->GetFriction(),_physicsBody->GetStatic());
+                                      _physicsBody->GetAcceleration(),rotation,_physicsBody->GetMass(),_physicsBody->GetFriction(),
+                                    _physicsBody->GetElasticity(), _physicsBody->GetStatic());
    
     
     _collider->SetCollisionParameters(type, radius, scale,layer,trigger);
@@ -775,12 +777,12 @@ CustomModel::~CustomModel()
 }
 void CustomModel::Update(glm::mat4 view, glm::mat4 projection)
 {
-    //先进行物理计算
-    UpdatePhysics();
-    //再进行碰撞计算
-    CheckCollision();
-    //再进行变体方法计算
-    UpdateVariant(view,projection);
+    //先进行简单物理计算，无碰撞体   
+      UpdatePhysics();  
+    //有碰撞体，再进行碰撞计算,并内置独立物理计算
+      UpdateCollisionAndPhysics(CollisionProps);
+     //再进行变体方法计算
+     UpdateVariant(view,projection);
     //再进行坐标更新
     //这种写法就，直接封装了更新变化和通知CPU渲染的两个方法，如果具体定义方法，只需要在其他脚本里面单独定义某个方法，更改transform即可，由管理池泛型调用
     UpdateTransform();

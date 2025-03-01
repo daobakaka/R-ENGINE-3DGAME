@@ -55,18 +55,15 @@
     <Filter Include="源文件\ZGameLogic">
       <UniqueIdentifier>{78d769b0-e026-460d-89d5-9875fbbdfa17}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Test">
+      <UniqueIdentifier>{6ffe0c8a-f38c-4330-8d18-7470a061fa5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Test">
+      <UniqueIdentifier>{94201278-b5de-4ac4-b177-19032304465b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="C++Steam52.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Monster.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Test.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CppOnly.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Controller.cpp">
@@ -132,17 +129,17 @@
     <ClCompile Include="PhysicalEngine.cpp">
       <Filter>源文件\ComponentController</Filter>
     </ClCompile>
+    <ClCompile Include="Monster.cpp">
+      <Filter>源文件\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="Test.cpp">
+      <Filter>源文件\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="CppOnly.cpp">
+      <Filter>源文件\Test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Monster.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Test.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MicroCpp.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Controller.h">
       <Filter>头文件\GLBaseController</Filter>
     </ClInclude>
@@ -206,14 +203,26 @@
     <ClInclude Include="ShaderManager.h">
       <Filter>头文件\Render</Filter>
     </ClInclude>
+    <ClInclude Include="MicroCpp.h">
+      <Filter>头文件\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Monster.h">
+      <Filter>头文件\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Test.h">
+      <Filter>头文件\Test</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="InlT.inl">
-      <Filter>源文件</Filter>
+      <Filter>源文件\Test</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Advance.txt" />
+    <Text Include="DElETE.txt">
+      <Filter>源文件\Test</Filter>
+    </Text>
   </ItemGroup>
 </Project>

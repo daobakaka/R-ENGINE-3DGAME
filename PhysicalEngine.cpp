@@ -3,8 +3,8 @@
 namespace Game {
 
     // 构造函数，初始化物理引擎的基本参数
-    PhysicalEngine::PhysicalEngine(glm::vec3 &positon,bool staticObj)
-        : _mass(1.0f), _friction(0.1f), _velocity(0.0f), _acceleration(0.0f), _gravity(0, -9.8f, 0) ,_position(positon){
+    PhysicalEngine::PhysicalEngine(glm::vec3 &positon,glm::quat &rotation,bool staticObj)
+        : _mass(1.0f), _friction(0.1f), _velocity(0.0f), _acceleration(0.0f), _gravity(0, -9.8f, 0) ,_position(positon),_rotation(rotation){
         _ifStatic = staticObj;
     }
 
@@ -35,29 +35,22 @@ namespace Game {
     /// <param name="friction"></param>
     /// <param name="velocity"></param>
     /// <param name="acceleration"></param>
-    void PhysicalEngine::SetParameters( float mass, float friction,  glm::vec3 velocity,  glm::vec3 acceleration)
+    void PhysicalEngine::SetParameters( float mass, float friction,  glm::vec3 velocity,  glm::vec3 acceleration, float elasticity )
     {
     
         _mass = mass;
         _friction = friction;
         _velocity = velocity;
-        //设置初始加速度
+        //设置初始加速度，这里可以设置重力加速度
         _acceleration = acceleration;
+        _elasticity = elasticity;
+
     }
 
-    // 更新物理状态，计算位置、速度、加速度（考虑外力和摩擦力）
-    void PhysicalEngine::UpdatePhysics(float deltaTime) {
-          
+    void PhysicalEngine::UpdatePhysics(float deltaTime)
+    {
         if (!_ifStatic)
         {
-            // 计算摩擦加速度（假设摩擦加速度与速度平方成反比）,这里应该在产生碰撞的情况下计算静摩擦力
-            //if (glm::dot(_velocity, _velocity) > 0.001f) {  // 如果速度的平方大于一个小阈值
-            //    glm::vec3 frictionAcceleration = -_friction * glm::normalize(_velocity);  // 速度平方反比
-            //    _acceleration += frictionAcceleration;
-            //}
-            //else {
-            //    _velocity = glm::vec3(0.0f);  // 停止物体
-            //}
 
             if (glm::dot(_velocity, _velocity) < 0.01f)
             {
@@ -70,7 +63,10 @@ namespace Game {
             // 更新位置：s = s0 + v * t
             _position += _velocity * deltaTime;
         }
+
+
     }
+
 
 
     // 获取物体位置
@@ -86,8 +82,12 @@ namespace Game {
     // 获取物体加速度
     glm::vec3 &PhysicalEngine::GetAcceleration() {
         
-        std::cout << "acc:" << _acceleration.y << std::endl;
         return _acceleration;
+    }
+
+    glm::quat& PhysicalEngine::GetRotation()
+    {
+        return _rotation;
     }
 
     float PhysicalEngine::GetMass() const
@@ -103,6 +103,11 @@ namespace Game {
     bool PhysicalEngine::GetStatic() const
     {
         return _ifStatic;
+    }
+
+    float PhysicalEngine::GetElasticity() const
+    {
+        return _elasticity;
     }
 
     bool PhysicalEngine::Interface() {
