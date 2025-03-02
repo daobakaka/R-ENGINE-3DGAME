@@ -87,8 +87,9 @@ namespace Game {
 		//增加碰撞旋转逻辑
 		glm::vec3 angularVelocity;
 		glm::quat &rotation;        // 旋转角度（四元数）
+		float rotationDamping; //旋转阻尼
 		//以上三个量可以完全控制碰撞盒大小
-		CollisionProperties(glm::vec3 &pos,glm::vec3 &vel,glm::vec3 &acc,glm::quat rot)
+		CollisionProperties(glm::vec3 &pos,glm::vec3 &vel,glm::vec3 &acc,glm::quat &rot)
 			: position(pos), velocity(vel), acceleration(acc), mass(1),friction(0.05f),_collisionMin(0),_collisionMax(0),isCollision(false),trigger(false),rotation(rot) {}
 	};
 

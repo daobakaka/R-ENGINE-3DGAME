@@ -145,24 +145,7 @@ void GameStartT()
 {
 
 
-
-    auto* baseSphere = new CustomModelShader("commonLight", ModelDic["baseSphere"], false, true, true);
-    baseSphere->SetVariant(ModelClass::TestPhysics);
-    baseSphere->Initialize(glm::vec3(3.0f, 10.0f, -50.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-    manager->RegisterObject(baseSphere);
-    baseSphere->AttachTexture(TextureDic["butterfly"][0], 0);
-    baseSphere->AttachPhysicalEngine(false,5);
-    baseSphere->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0,10 ));
-    baseSphere->AttachCollider();
-
-    //测试圆柱
-    auto* baseCylinder = new CustomModelShader("commonLight", ModelDic["baseCylinder"], false, true, true);
-    baseCylinder->SetVariant(ModelClass::TestPhysics);
-    baseCylinder->Initialize(glm::vec3(3.0f, 5.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-    manager->RegisterObject(baseCylinder);
-    baseCylinder->AttachTexture(TextureDic["default"][0], 0);
-    baseCylinder->AttachPhysicalEngine();
-    baseCylinder->AttachCollider();
+    //生成基础面 默认第一，ID 为0
 
     auto* basePlane = new  CustomModelShader("commonLight", ModelDic["basePlane"], false, false, false);
     basePlane->SetVariant(ModelClass::StaticPlane);
@@ -170,7 +153,48 @@ void GameStartT()
     manager->RegisterObject(basePlane);
     basePlane->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
     basePlane->AttachPhysicalEngine(true);//声明为静态类型，目前注册为1
-    basePlane->AttachCollider(CollisionType::Box,1);
+    basePlane->AttachCollider(CollisionType::Box, 1);
+
+    
+    //测试小球
+    for (int i = 0; i < 20; i++)
+    {
+        auto* baseSphere = new CustomModelShader("commonLight", ModelDic["baseSphere"], false, true, true);
+        baseSphere->SetVariant(ModelClass::TestPhysics);
+        baseSphere->Initialize(glm::vec3(-20+3.0f+2.5f*i, 10.0f+i, -50.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        manager->RegisterObject(baseSphere);
+        baseSphere->AttachTexture(TextureDic["butterfly"][0], 0);
+        baseSphere->AttachPhysicalEngine(false, 5);
+        baseSphere->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));
+        baseSphere->AttachCollider();
+    }
+    //测试圆柱
+    for (int i = 0; i < 40; i++)
+    {
+        auto* baseCylinder = new CustomModelShader("commonLight", ModelDic["baseSphere"], false, true, true);
+        baseCylinder->SetVariant(ModelClass::TestPhysics);
+        baseCylinder->Initialize(glm::vec3(-20+3.0f + 2.5f * i, 5.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        manager->RegisterObject(baseCylinder);
+        baseCylinder->AttachTexture(TextureDic["default"][0], 0);
+        baseCylinder->AttachPhysicalEngine();
+        baseCylinder->AttachCollider();
+        baseCylinder->GetComponent<CollisionBody>()->SetFixedAxisX(true);
+    }
+
+    
+
+    //测试盒子
+    for (int i = 0; i < 40; i++)
+    {
+        auto* baseCube = new CustomModelShader("commonLight", ModelDic["baseCube"], false, true, true);
+        baseCube->SetVariant(ModelClass::TestPhysics);
+        baseCube->Initialize(glm::vec3(-20+3.0f + 2.5f * i, 6.0f, 5.0f), glm::quat(glm::vec3(0.0f, 60.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        manager->RegisterObject(baseCube);
+        baseCube->AttachTexture(TextureDic["default"][0], 0);
+        baseCube->AttachPhysicalEngine();
+        baseCube->AttachCollider();
+    }
+
 
     auto* butterflyInstance = new  CustomModelInstance("noneLightInstancer", ModelDic["butterfly"], false, false, false, 10000, glm::vec3(100, 100, -100));
     butterflyInstance->SetVariant(ModelClass::CubeE);

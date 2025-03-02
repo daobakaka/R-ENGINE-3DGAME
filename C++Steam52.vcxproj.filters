@@ -138,6 +138,9 @@
     <ClCompile Include="CppOnly.cpp">
       <Filter>源文件\Test</Filter>
     </ClCompile>
+    <ClCompile Include="Octree.cpp">
+      <Filter>源文件\GLBaseController</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller.h">
@@ -211,6 +214,9 @@
     </ClInclude>
     <ClInclude Include="Test.h">
       <Filter>头文件\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Octree.h">
+      <Filter>头文件\ItergratedClass</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

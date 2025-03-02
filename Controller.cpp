@@ -28,7 +28,9 @@ Controller::Controller()
     view = glm::lookAt(position, position + front, up);
     projection = glm::perspective(glm::radians(fov), aspect, nearPlane, farPlane);//初始化
     instance = this;  // 单例的初始化
-    
+
+    ////八叉树在controller基本控制类中初始化
+    //OCTREET = new Octree(glm::vec3(0), glm::vec3(1000,1000,1000),5,1000);
 
 }
 

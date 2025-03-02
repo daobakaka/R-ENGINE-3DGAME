@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "Octree.h"//八叉树交由基本控制类控制
 namespace Game {
 
 //前向声明--
@@ -79,6 +81,9 @@ namespace Game {
 		glm::mat4 GetProjectionMatrix();
 		//构建坐标系，全局深度图shader
 		void BuildWidgetShader(MeshDataManager* meshData, LifecycleManager<CustomModel>* customModle);
+
+		//游戏数据结构管理
+		static Octree* OCTREET;
 	
 	private:
 		static Controller* instance;

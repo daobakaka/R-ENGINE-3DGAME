@@ -49,7 +49,7 @@ void GameUpdateShadowRenderT()
     lightRender->RenderShadowTexture(shaderManager->GetShader("depthVisual"));
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
      //--控制平行光的旋转
-    lightSpawner->ParalletLightController(glm::vec3(0, 1, 0.0f));
+  //  lightSpawner->ParalletLightController(glm::vec3(0, 1, 0.0f));
 
 
 }

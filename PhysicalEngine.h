@@ -6,10 +6,14 @@
 
 namespace Game {
 
+
+    class CollisionBody;
     class PhysicalEngine : public IComponent<PhysicalEngine> {
     public:
         PhysicalEngine(glm::vec3& positon,glm::quat &rotation,bool staticObj=false);  // 构造函数
 
+        // 更新物体的物理状态（例如位置、速度、加速度）
+        void UpdatePhysics(float deltaTime = 0.0167f);
         // 设置物理组件的基本参数
         void SetMass(float mass);
         void SetFriction(float friction);
@@ -17,9 +21,6 @@ namespace Game {
         void SetAcceleration( glm::vec3 acceleration);
 
         void SetParameters( float mass, float friction,  glm::vec3 velocity,  glm::vec3 acceleration, float elasticity);
-
-        // 更新物体的物理状态（例如位置、速度、加速度）
-        void UpdatePhysics(float deltaTime=0.0167f);
         
 
         // 获取当前物体的物理状态const拓宽范围常用于get方法标识
@@ -31,7 +32,18 @@ namespace Game {
         float GetFriction() const;
         bool GetStatic()const;
         float GetElasticity()const;
+
+            
+            
+    private:
         bool Interface() override;
+        //设置旋转阻尼，默认0.15f
+        void SetRotationDamping(float damp=0.15f);
+        //设置默认旋转锁定，默认设置锁定X和Z;
+        bool SetFixedAxisX(bool lock = true);
+
+        bool GetLockState() const;
+        float GetDampping() const;
 
     private:
         float _mass;                  // 质量
@@ -43,6 +55,10 @@ namespace Game {
         glm::vec3 _gravity;        //物体重力加速度
         bool _ifStatic;      //是否为静态物体
         float _elasticity;//物体弹性系数
+
+        bool _lockxz;
+        float _rotationDampping;
+
     };
 
 }  // namespace Game

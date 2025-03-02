@@ -144,6 +144,7 @@
     <ClCompile Include="CollisionBody.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="ObsoleteTest.cpp" />
+    <ClCompile Include="Octree.cpp" />
     <ClCompile Include="PhysicalEngine.cpp" />
     <ClCompile Include="SceneStart.cpp" />
     <ClCompile Include="SceneUpdate.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="MonoBehaviour.h" />
     <ClInclude Include="Monster.h" />
     <ClInclude Include="Light.h" />
+    <ClInclude Include="Octree.h" />
     <ClInclude Include="PhysicalEngine.h" />
     <ClInclude Include="ScriptModel.h" />
     <ClInclude Include="shader.h" />

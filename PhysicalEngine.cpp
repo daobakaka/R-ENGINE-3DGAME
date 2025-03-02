@@ -1,4 +1,5 @@
 #include "PhysicalEngine.h"
+#include "CollisionBody.h"
 
 namespace Game {
 
@@ -44,6 +45,7 @@ namespace Game {
         //设置初始加速度，这里可以设置重力加速度
         _acceleration = acceleration;
         _elasticity = elasticity;
+      
 
     }
 
@@ -110,9 +112,30 @@ namespace Game {
         return _elasticity;
     }
 
+    bool PhysicalEngine::GetLockState() const
+    {
+        return _lockxz;
+    }
+
+    float PhysicalEngine::GetDampping() const
+    {
+        return _rotationDampping;
+    }
+
     bool PhysicalEngine::Interface() {
         // 在此处实现接口方法，可以根据需求返回一些状态
         return true;
+    }
+
+    void PhysicalEngine::SetRotationDamping(float damp)
+    {
+
+        _rotationDampping = damp;
+    }
+
+    bool PhysicalEngine::SetFixedAxisX(bool lock)
+    {
+        return _lockxz=lock;
     }
 
 }  // namespace Game
