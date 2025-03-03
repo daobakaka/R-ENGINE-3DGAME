@@ -14,6 +14,7 @@ namespace Game {
         :_collisionProperties(pos, vel, acc,rot)//初始化结构体引用
     {       
         //这些参数在初始化时即确认，只能改变自身形状，不能在注册列表里面进行更改
+        _collisionProperties.layer = 1;//碰撞层默认为1
         _collisionProperties.mass = mass;
         _collisionProperties.friction = friction;
         _collisionProperties.ID = NEXTINT++;//现在使用碰撞结构体储存相关的参数包括ID，碰撞检测中也直接与结构体进行快速交互
@@ -23,9 +24,6 @@ namespace Game {
         _collisionProperties.rotationDamping = 0.15F;
         _lockXAxi = true;
         _rotationPar = 0.382f;//旋转控制参数，默认黄金分割点
-        //获取八叉树单例
-        _octree = Octree::GetInstance();
-        _octree->Insert(&_collisionProperties);
         if (elasticity>1)
         {
             elasticity = 1;
@@ -34,6 +32,10 @@ namespace Game {
         if (ifStatic)
             _collisionProperties.mass = 100000000;//设置静态物体的质量为亿        
 
+        //获取八叉树结构单例
+        _collisionProperties.currentNode = nullptr;//为碰撞体基于八叉树的指针赋空的初始值
+        _octree = Octree::GetInstance();
+        _octree->Insert(&_collisionProperties);
         
     }
     // 析构函数
@@ -47,6 +49,7 @@ namespace Game {
     // 更新物体的速度和位置
     void CollisionBody::UpdateCollisionState(std::unordered_map<int, CollisionProperties*>& cop,float deltaTime) {
         
+  
         //更细对象状态        
         UpdateCollisionParameters();
         //清空碰撞结构体内部数组
@@ -69,13 +72,24 @@ namespace Game {
         if (true)
         {
             _potentialCollisions.clear();
+            //遍历循环增加特殊构造体，如大物体，地板，或者主角，便于持续性检测
+            //后面可以封装成专门的方法或者特殊标识，以便单独处理碰撞逻辑
+            if(_collisionProperties.position.y>-10)
+            for (auto& pair : cop)
+            {
+                _potentialCollisions.push_back(pair.second);
+            }
 
             _octree->Query(&_collisionProperties, _potentialCollisions); // 八叉树查询
             
+            // 打印当前物体的 ID
+           // std::cout << "Current object ID: " << _collisionProperties.ID << "\n";
 
             for (auto other : _potentialCollisions) {
                 if (_collisionProperties.ID != other->ID) {
+                   
                     CheckCollisionWithAABB(other);
+                   // std::cout << "  Object ID: " << other->ID << "\n";
                 }
             }
         }
@@ -144,7 +158,8 @@ namespace Game {
 
     void CollisionBody::RegisterCollisionBody()
     {
-
+        //这里静态大物体暂时采用专门的逻辑，如地面等， 这样可以保持持续性检测
+        if(_collisionProperties.staticObj)
         CollisionProps[_collisionProperties.ID] = &_collisionProperties;
 
     }
@@ -161,10 +176,10 @@ namespace Game {
             _collisionProperties._collisionMax.y = _collisionProperties.position.y + _collisionProperties.radius * _collisionProperties.ratio.y;
             _collisionProperties._collisionMax.z = _collisionProperties.position.z + _collisionProperties.radius * _collisionProperties.ratio.z;
       
-            if (!_collisionProperties.staticObj)
-            {
-                _octree->Update(&_collisionProperties); // 更新八叉树中的位置,静态物体不用改变
-            }
+         
+            
+                _octree->Update(&_collisionProperties); // 更新八叉树中的位置
+            
             break;
         case CollisionType::Sphere:
             _collisionProperties._collisionMin.x = _collisionProperties.position.x - _collisionProperties.radius * _collisionProperties.ratio.x;
@@ -173,10 +188,10 @@ namespace Game {
             _collisionProperties._collisionMax.x = _collisionProperties.position.x + _collisionProperties.radius * _collisionProperties.ratio.x;
             _collisionProperties._collisionMax.y = _collisionProperties.position.y + _collisionProperties.radius * _collisionProperties.ratio.y;
             _collisionProperties._collisionMax.z = _collisionProperties.position.z + _collisionProperties.radius * _collisionProperties.ratio.z;
-            if (!_collisionProperties.staticObj)
-            {
+            
+            
                 _octree->Update(&_collisionProperties); // 更新八叉树中的位置
-            }
+            
             break;
         default:
             break;

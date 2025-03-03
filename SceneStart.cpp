@@ -149,7 +149,7 @@ void GameStartT()
 
     auto* basePlane = new  CustomModelShader("commonLight", ModelDic["basePlane"], false, false, false);
     basePlane->SetVariant(ModelClass::StaticPlane);
-    basePlane->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(50.0f, 0.1f, 50.0f));
+    basePlane->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(70.0f, 0.1f, 70.0f));
     manager->RegisterObject(basePlane);
     basePlane->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
     basePlane->AttachPhysicalEngine(true);//声明为静态类型，目前注册为1
@@ -157,7 +157,7 @@ void GameStartT()
 
     
     //测试小球
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < 50; i++)
     {
         auto* baseSphere = new CustomModelShader("commonLight", ModelDic["baseSphere"], false, true, true);
         baseSphere->SetVariant(ModelClass::TestPhysics);
@@ -169,7 +169,7 @@ void GameStartT()
         baseSphere->AttachCollider();
     }
     //测试圆柱
-    for (int i = 0; i < 40; i++)
+    for (int i = 0; i < 100; i++)
     {
         auto* baseCylinder = new CustomModelShader("commonLight", ModelDic["baseSphere"], false, true, true);
         baseCylinder->SetVariant(ModelClass::TestPhysics);
@@ -184,7 +184,7 @@ void GameStartT()
     
 
     //测试盒子
-    for (int i = 0; i < 40; i++)
+    for (int i = 0; i < 100; i++)
     {
         auto* baseCube = new CustomModelShader("commonLight", ModelDic["baseCube"], false, true, true);
         baseCube->SetVariant(ModelClass::TestPhysics);

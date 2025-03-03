@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include <unordered_set>
+#include "Octree.h";
 namespace Game {
 
 
@@ -51,6 +52,7 @@ namespace Game {
 	//碰撞体结构体
 	struct CollisionProperties {
 		int ID;//全局唯一身份标识
+		OctreeNode* currentNode;
 		int layer;
 		
 		glm::vec3 &position;    // 物体位置

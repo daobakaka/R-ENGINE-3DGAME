@@ -23,12 +23,14 @@ namespace Game {
         // 查询可能碰撞的物体列表
         void Query(const CollisionProperties* obj, std::vector<CollisionProperties*>& result);
 
+
         std::vector<CollisionProperties*> _objects;  // 当前节点存储的物体
 
     private:
         void Subdivide();  // 子节点分割
         int GetChildIndex(const CollisionProperties* obj) const;
-
+        bool IsFullyContained(const CollisionProperties* obj, OctreeNode* child) const;
+        bool CheckAABBOverlap(const glm::vec3& min1, const glm::vec3& max1, const glm::vec3& min2, const glm::vec3& max2);
         glm::vec3 _center;     // 节点中心
         glm::vec3 _halfSize;   // 节点半长
         int _depth;            // 当前深度
@@ -47,6 +49,7 @@ namespace Game {
         void Remove(CollisionProperties* obj);
         void Update(CollisionProperties* obj);
         void Query(const CollisionProperties* obj, std::vector<CollisionProperties*>& result);
+        void InsertToRoot(CollisionProperties* obj);
 
      
 
