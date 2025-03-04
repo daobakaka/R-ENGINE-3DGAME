@@ -10,7 +10,8 @@ namespace Game {
     class CollisionBody;
     class PhysicalEngine : public IComponent<PhysicalEngine> {
     public:
-        PhysicalEngine(glm::vec3& positon,glm::quat &rotation,bool staticObj=false);  // 构造函数
+        PhysicalEngine(glm::vec3& positon,glm::quat &rotation,int id,bool staticObj=false);  // 构造函数
+        ~PhysicalEngine();
 
         // 更新物体的物理状态（例如位置、速度、加速度）
         void UpdatePhysics(float deltaTime = 0.0167f);
@@ -55,7 +56,7 @@ namespace Game {
         glm::vec3 _gravity;        //物体重力加速度
         bool _ifStatic;      //是否为静态物体
         float _elasticity;//物体弹性系数
-
+        int ID;
         bool _lockxz;
         float _rotationDampping;
 

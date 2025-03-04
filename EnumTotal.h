@@ -6,7 +6,6 @@
 #include "Octree.h";
 namespace Game {
 
-
 	enum ModelClass
 	{
 		OriginalE,
@@ -29,6 +28,14 @@ namespace Game {
 		StaticPlane,//静态地板
 		//独立模块
 		
+	};
+
+	enum SpecailType
+	{
+		OriginalT,//原始类型
+		BasePlane,//基础地面
+		Player,//玩家
+
 	};
 	enum ShaderClass
 	{
@@ -54,7 +61,10 @@ namespace Game {
 		int ID;//全局唯一身份标识
 		OctreeNode* currentNode;
 		int layer;
-		
+		//特殊碰撞体
+		SpecailType sType;
+		// 碰撞盒类型
+		CollisionType collider;
 		glm::vec3 &position;    // 物体位置
 		glm::vec3 &velocity;    // 物体速度
 		glm::vec3 &acceleration;  // 物体加速度
@@ -71,8 +81,6 @@ namespace Game {
 		// 碰撞容器，记录当前与哪些物体发生碰撞
 		std::unordered_set<int> collidingBodies;
 
-		//碰撞盒类型
-		CollisionType type;
 		//碰撞盒半径
 		float radius;
 		//碰撞盒形状比率

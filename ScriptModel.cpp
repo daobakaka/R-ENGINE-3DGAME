@@ -275,7 +275,6 @@ CustomModelInstance::CustomModelInstance()
 CustomModelInstance::CustomModelInstance(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow, int instanceCount, glm::vec3 positionOffset, glm::vec3 rotationAxis)
 {
 
-
     _instanceCount = instanceCount;
     _positionOffset = positionOffset;
     _rotationAxis = rotationAxis;

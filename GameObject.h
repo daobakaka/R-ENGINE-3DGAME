@@ -34,7 +34,7 @@ namespace Game {
 
         //默认构造函数
         GameObject();
-        ~GameObject();
+       virtual ~GameObject();
         // 初始化函数，设置物体的基本变换
         void Initialize(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
             glm::quat rotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -87,6 +87,8 @@ namespace Game {
 
         //--获取碰撞判断
         virtual bool GetIfCollision() override;
+        
+        //获取自增ID
 
     private:
         //初始化变体

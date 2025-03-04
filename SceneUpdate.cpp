@@ -32,7 +32,7 @@ extern LightSpawner* lightSpawner;
 extern LightRender* lightRender;
 extern ShaderManager* shaderManager;
 
-
+std::vector<CustomModel*> toRemove;
 void GameUpdateShadowRenderT()
 {
 
@@ -60,62 +60,70 @@ void GameUpdateMainLogicT(glm::mat4 view,glm::mat4 projection)
 {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
-
-
+    //每帧清空可移除对象
+     toRemove.clear();
     //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
     //遍历执行区域
-    for (CustomModel* item : manager->GetNativeObjects()) {
+    for (auto &item : manager->GetNativeObjects()) {
         //将多光源照射效果封装在 灯光渲染器中.如果是光照shader，则需要加入这一段代码，引入光照渲染，如果不是则不需要
         //现在更改为使用构造化方式，统一使用
        //--是否光照模型判断
-        if (item->ifLight)
+        if (item.second->ifLight)
         {
             //这里既可以使用独有shader 也可以使用共有shader，看使用什么类去构造
-            lightRender->RenderLights(item->shaderProgram, controller, lightSpawner, item->position);//更改渲染逻辑，减少访问次数
+            lightRender->RenderLights(item.second->shaderProgram, controller, lightSpawner, item.second->position);//更改渲染逻辑，减少访问次数
         }
 
-        if (item->GetVariant() == 0)
+        if (item.second->GetVariant() == 0)
         {
 
             scripts->TChangeRandom(-0.01f, 0.01f);//改变构造随机种子
             // scripts->CubeUpdateFun(item); // 使用迭代器遍历链表并调用每个,暂时理解为一个遍历语法糖
         }
-        else if (item->GetVariant() == ModelClass::CubeTestE)
+        else if (item.second->GetVariant() == ModelClass::CubeTestE)
         {
-          scripts->TestUpdateFun(item);
+          scripts->TestUpdateFun(item.second);
             //  baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);        
         }
-        else if (item->GetVariant() == ModelClass::ParallelLight)//平行光旋转，后面增加其他逻辑
+        else if (item.second->GetVariant() == ModelClass::ParallelLight)//平行光旋转，后面增加其他逻辑
         {
 
-            scripts->TParallelLightRotation(item);
+            scripts->TParallelLightRotation(item.second);
 
         }
-        else if (item->GetVariant() == ModelClass::ActorButterfly)
+        else if (item.second->GetVariant() == ModelClass::ActorButterfly)
         {
             //目前这种统一脚本的方式，并不能完全独立于对象脚本，只能在一定程度上进行独立
-            scripts->ActorButtfly(item);
-            item->PlayAnimation(0, 0.1f);
+            scripts->ActorButtfly(item.second);
+            item.second->PlayAnimation(0, 0.1f);
 
 
         }
-        else if (item->GetVariant() == ModelClass::TsetButterfly)
+        else if (item.second->GetVariant() == ModelClass::TsetButterfly)
         {
 
             //这样也可以执行变体方法，待后期验证
          //   item->UpdateVariant(view, projection);
-            item->PlayAnimation(0, 0.1f);
+            item.second->PlayAnimation(0, 0.1f);
 
         }
-        else if (item->GetVariant() == ModelClass::TestPhysics)
+        else if (item.second->GetVariant() == ModelClass::TestPhysics)
         {
            // scripts->TPosition(item);
-
+          //  item.second->DestroySelf();
+            if(item.second->position.y<-10)
+            toRemove.push_back(item.second);
+            //调用管理器，先移除管理器列表指针，再清除对象
+           // manager->RemoveObject(item.second);
         }
+    }
+    // 遍历结束后再移除
+    for (auto* obj : toRemove) {
+        manager->SetActive(obj,false);
     }
     //3.变体方法，类似于手动撰写脚本来实现，须在初始化时，注册脚本变体,通用脚本方法有一定局限性，变体方法后续还会使用
     //变体即其模型类型注册不为0，主要用于场景中的需要批量设置相关变换的对象
-    for (auto* item : manager->GetVariantObjects()) {
+    for (auto& item : manager->GetVariantObjects()) {
         // item->UpdateVariant(view, projection);
     }
 

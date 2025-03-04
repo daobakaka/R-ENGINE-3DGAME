@@ -39,7 +39,7 @@ namespace Game {
 
         bool Draw(glm::mat4 view, glm::mat4 projection) override;//C++ 中对虚方法的重写，override 关键字加在方法后面，这一特征包括consnt等
         bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;
-        ~Cube();
+       virtual ~Cube();
         //--继承MonoBehaviour的声明
         void Update(glm::mat4 view, glm::mat4 projection) override;
         void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;

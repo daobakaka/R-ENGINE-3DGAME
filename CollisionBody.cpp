@@ -7,17 +7,16 @@ namespace Game {
 
     //外部声明标识
     std::unordered_map<int, CollisionProperties*> CollisionProps;
-    int CollisionBody::NEXTINT = 0;
 
 
-    CollisionBody::CollisionBody(glm::vec3& pos, glm::vec3& vel, glm::vec3& acc, glm::quat& rot, float mass, float friction, float elasticity,bool ifStatic=false)
+    CollisionBody::CollisionBody(glm::vec3& pos, glm::vec3& vel, glm::vec3& acc, glm::quat& rot, float mass, float friction, float elasticity,int id,bool ifStatic)
         :_collisionProperties(pos, vel, acc,rot)//初始化结构体引用
     {       
         //这些参数在初始化时即确认，只能改变自身形状，不能在注册列表里面进行更改
         _collisionProperties.layer = 1;//碰撞层默认为1
         _collisionProperties.mass = mass;
         _collisionProperties.friction = friction;
-        _collisionProperties.ID = NEXTINT++;//现在使用碰撞结构体储存相关的参数包括ID，碰撞检测中也直接与结构体进行快速交互
+        _collisionProperties.ID = id;//现在使用碰撞结构体储存相关的参数包括ID，碰撞检测中也直接与结构体进行快速交互
         _collisionProperties.staticObj = ifStatic;
         _collisionProperties.gravityEnabled = true;//默认均开启重力，重力可以参数初始加速度来影响重力，这里的开启关闭只是用于重力的储存计算
         _collisionProperties.angularVelocity = glm::vec3(0);//默认旋转速度
@@ -39,7 +38,18 @@ namespace Game {
         
     }
     // 析构函数
-    CollisionBody::~CollisionBody() { _octree->Remove(&_collisionProperties); }
+    CollisionBody::~CollisionBody()
+    {
+        //移除八叉树中的对应结构
+        _octree->Remove(&_collisionProperties);
+
+        if (_octree != nullptr)
+        {
+            delete _octree;
+        }
+        //移除容器中的对应ID的项
+        CollisionProps.erase(_collisionProperties.ID);
+    }
 
     bool CollisionBody::Interface()
     {
@@ -49,56 +59,45 @@ namespace Game {
     // 更新物体的速度和位置
     void CollisionBody::UpdateCollisionState(std::unordered_map<int, CollisionProperties*>& cop,float deltaTime) {
         
-  
-        //更细对象状态        
-        UpdateCollisionParameters();
-        //清空碰撞结构体内部数组
-        _collisionProperties.collidingBodies.clear();
-        
-        //先采用暴力碰撞进行测试
-        if (false)
+        //满足碰撞检测范围才开启碰撞逻辑，否则移除碰撞体在八叉树中的位置，且取消所有碰撞计算逻辑（合并物理计算）
+        if (CheckValidCollision())
         {
-            for (auto& pair : cop)
+            //更细对象状态        
+            UpdateCollisionParameters();
+            //清空碰撞结构体内部数组
+            _collisionProperties.collidingBodies.clear();
+            //八叉树逻辑检测
+            if (true)
             {
-                if (_collisionProperties.ID != pair.first)
-                {
-                    //这里可以根据碰撞层来进行碰撞分类
+                _potentialCollisions.clear();
+                //遍历循环增加特殊构造体，如大物体，地板，或者主角，便于持续性检测
+                //后面可以封装成专门的方法或者特殊标识，以便单独处理碰撞逻辑
+                UpdateSpecialCollider(cop);
+                _octree->Query(&_collisionProperties, _potentialCollisions); // 八叉树查询
 
-                    CheckCollisionWithAABB(pair.second);//传入引用，这里才需要使用*访问值，而传入指针就不需要
+                // 打印当前物体的 ID
+               // std::cout << "Current object ID: " << _collisionProperties.ID << "\n";
+
+                for (auto other : _potentialCollisions) {
+                    if (_collisionProperties.ID != other->ID) {
+
+                        CheckCollisionWithAABB(other);
+                        // std::cout << "  Object ID: " << other->ID << "\n";
+                    }
                 }
             }
+
+
+            //更新碰撞状态
+            _collisionProperties.isCollision = !_collisionProperties.collidingBodies.empty();
+            //碰撞体的后续物理计算，放到碰撞体类
+            UpdatePhysicsCollision();
         }
-       //八叉树逻辑
-        if (true)
+        else
         {
-            _potentialCollisions.clear();
-            //遍历循环增加特殊构造体，如大物体，地板，或者主角，便于持续性检测
-            //后面可以封装成专门的方法或者特殊标识，以便单独处理碰撞逻辑
-            if(_collisionProperties.position.y>-10)
-            for (auto& pair : cop)
-            {
-                _potentialCollisions.push_back(pair.second);
-            }
-
-            _octree->Query(&_collisionProperties, _potentialCollisions); // 八叉树查询
-            
-            // 打印当前物体的 ID
-           // std::cout << "Current object ID: " << _collisionProperties.ID << "\n";
-
-            for (auto other : _potentialCollisions) {
-                if (_collisionProperties.ID != other->ID) {
-                   
-                    CheckCollisionWithAABB(other);
-                   // std::cout << "  Object ID: " << other->ID << "\n";
-                }
-            }
+            _octree->Remove(&_collisionProperties);
         }
-        
-
-        //更新碰撞状态
-        _collisionProperties.isCollision = !_collisionProperties.collidingBodies.empty();
-        //碰撞体的后续物理计算，放到碰撞体类
-        UpdatePhysicsCollision();
+      
       
 
 
@@ -142,31 +141,47 @@ namespace Game {
     }
 
 
-    void CollisionBody::SetCollisionParameters(CollisionType type,float radius, glm::vec3 ratio,int layer, bool trigger)
+    void CollisionBody::SetCollisionParameters(CollisionType collider,float radius, glm::vec3 ratio,int layer, bool trigger, SpecailType type)
     {
 
-        _collisionProperties.type = type;
         _collisionProperties.radius = radius;
         _collisionProperties.ratio = ratio;
         _collisionProperties.layer = layer;
         _collisionProperties.trigger = trigger;
+        _collisionProperties.collider = collider;
+        _collisionProperties.sType = type;
+
         //初始化重力加速度，储存在碰撞结构体中，便于计算中引用
         _collisionProperties.gravity = _collisionProperties.acceleration;
-       //注入全局访问模块
+       //特殊碰撞类型注入全局访问模块
         RegisterCollisionBody();
+    }
+
+    bool CollisionBody::CheckValidCollision(glm::vec3 range)
+    {
+        
+        if (glm::abs(_collisionProperties.position.x)<=range.x&&
+            glm::abs(_collisionProperties.position.y)<=range.y&&
+            glm::abs(_collisionProperties.position.z)<=range.z)
+        {
+            return true;
+        }
+
+       
+        return false;
     }
 
     void CollisionBody::RegisterCollisionBody()
     {
-        //这里静态大物体暂时采用专门的逻辑，如地面等， 这样可以保持持续性检测
-        if(_collisionProperties.staticObj)
+        //这里静态大物体暂时采用专门的逻辑，如地面,玩儿家等， 这样可以保持持续性检测
+        if(_collisionProperties.sType!=SpecailType::OriginalT)
         CollisionProps[_collisionProperties.ID] = &_collisionProperties;
 
     }
 
     void CollisionBody::UpdateCollisionParameters()
     {
-        switch (_collisionProperties.type)
+        switch (_collisionProperties.collider)
         {
         case CollisionType:: Box:
             _collisionProperties._collisionMin.x = _collisionProperties.position.x - _collisionProperties.radius * _collisionProperties.ratio.x;
@@ -379,6 +394,28 @@ namespace Game {
                 }
             }
         }
+    }
+
+    void CollisionBody::UpdateSpecialCollider(std::unordered_map<int, CollisionProperties*>& cop, float deltaTime)
+    {
+
+        for (auto& pair : cop)
+        {
+            switch (pair.second->sType)
+            {
+            case SpecailType::BasePlane:
+                if (_collisionProperties.position.y > -10)
+                {
+                    _potentialCollisions.push_back(pair.second);
+
+                }
+                break;
+
+            default:
+                break;
+            }
+        }
+
     }
 
     bool CollisionBody::SetFixedAxisX(bool lock )

@@ -5,7 +5,6 @@
 #include "AnimationIntergrated.h"
 
 namespace Game {
-
     extern std::unordered_map<int, CollisionProperties*> CollisionProps;//就在碰撞体内部这个大类内部进行检查
     class CustomModel : public GameObject
     {
@@ -26,7 +25,7 @@ namespace Game {
         virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
         virtual bool DrawLine(glm::mat4 view, glm::mat4 projection);//绘制线条方法，在custom 类添加的新方法，针对线条绘制，可重写
         virtual bool DrawLineFixedWidget(glm::mat4 view, glm::mat4 projection);//绘制坐标系方法，固定在一个屏幕里面，可以重写
-        ~CustomModel();
+       virtual ~CustomModel();
         //--继承MonoBehaviour的声明
         virtual void Update(glm::mat4 view, glm::mat4 projection) override;//常规移动可重写
         virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;//变体移动可重写
@@ -62,9 +61,17 @@ namespace Game {
         /// <param name="acceleration"></param>
         /// <returns></returns>
         virtual bool AttachPhysicalEngine(bool ifStatic=false,float mass=1, float friction = 0.05f,float elasticity=0.5f, glm::vec3 acceleration = glm::vec3(0, -9.8f, 0),glm::vec3 velocity = glm::vec3(0));
-        virtual bool AttachCollider(CollisionType type=CollisionType::Box,float radius=1,int layer=1,bool trigger=false);//附件碰撞体可重写
+        virtual bool AttachCollider(CollisionType collider=CollisionType::Box,float radius=1,int layer=1,bool trigger=false,SpecailType type=SpecailType::OriginalT);//附件碰撞体可重写
         //判断是否需要碰撞，碰撞的对象，封装在泛型基类中的vector容器里
         virtual bool GetIfCollision() override;
+
+        //对象ID处理逻辑
+        int GetID();
+        void SetID(int id);
+        //销毁
+        virtual void DestroySelf();
+        //激活与失活
+        virtual bool SetActive(bool active);
         
 
     protected:
@@ -93,8 +100,10 @@ namespace Game {
         glm::vec3 _collisionMin;
         glm::vec3 _collisionMax;
         bool _ifPhysics;
-   
 
+        //游戏对象全局唯一标识符
+        int ID;
+   
 
 
         //采用 consterxpr  绕过无效编译检查， static_assert 断言 进行编译阶段检查

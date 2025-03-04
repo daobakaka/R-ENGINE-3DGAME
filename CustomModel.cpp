@@ -2,13 +2,14 @@
 using namespace Game;
 extern const char* depthShaderVertexShaderSource;
 extern const char* depthShaderFragmentShaderSource;
+//声明全局ID 变量的初始值
 
 Game::CustomModel::CustomModel()
 {
 }
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat *vertices, GLuint *indices, size_t vertexCount, size_t indexCount,bool ifLightIn)
 {
-    
+
     index = indexCount; 
     ifLight = ifLightIn;
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -69,6 +70,7 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat* vertices, GLuint* indices, size_t vertexCount, size_t indexCount,int ifVariant ,bool ifLightIn)
 {
+
     index = indexCount;
     ifLight = ifLightIn;
 
@@ -125,7 +127,7 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn,std::vector<glm::vec3>& vertices, std::vector<glm::vec2>& uvs, std::vector<glm::vec3>& normals,bool ifLightIn)
 {
-    
+
     justDrawVerteies = true;
     index = vertices.size();  // 获取索引的数量，即顶点索引的数量
     ifLight = ifLightIn;
@@ -194,6 +196,7 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndices,bool ifLightIn)
 {
+
     vertexCount = vertices.size();
     index = finalIndices.size();
     verticesTras = vertices;
@@ -271,6 +274,7 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndices,bool isSkinnedMesh, bool ifLightIn)
 {
+
     //verticesTras = new std::vector<Vertex>(vertices);  // 这种才是指针的有效初始化，析构中才能使用delete
     vertexCount = vertices.size();
     index = finalIndices.size();
@@ -348,6 +352,7 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow)
 {
+
     vertexCount = modelData.verticesStruct.size();
     index = modelData.indices.size();
     verticesTras = modelData.verticesStruct;
@@ -610,7 +615,7 @@ bool CustomModel::AttachPhysicalEngine(bool ifStatic ,float mass, float friction
 {
     if (_physicsBody == nullptr)
         //这里直接将位置的引用传入，方便在物理引擎的内部对position的值进行直接修改
-        _physicsBody = new PhysicalEngine(position,rotation,ifStatic);
+        _physicsBody = new PhysicalEngine(position,rotation,ID,ifStatic);
     
     _physicsBody->SetParameters( mass, friction, velocity, acceleration,elasticity);
 
@@ -624,7 +629,7 @@ bool CustomModel::AttachPhysicalEngine(bool ifStatic ,float mass, float friction
 /// <param name="radians"></param>
 /// <param name="ratio"></param>
 /// <returns></returns>
-bool CustomModel::AttachCollider(CollisionType type , float radius,int layer,bool trigger)
+bool CustomModel::AttachCollider(CollisionType collider , float radius,int layer,bool trigger, SpecailType type)
 {
    
     if (_physicsBody==nullptr)
@@ -635,10 +640,10 @@ bool CustomModel::AttachCollider(CollisionType type , float radius,int layer,boo
     if (_collider == nullptr)
         _collider = new CollisionBody(position, _physicsBody->GetVelocity(),
                                       _physicsBody->GetAcceleration(),rotation,_physicsBody->GetMass(),_physicsBody->GetFriction(),
-                                    _physicsBody->GetElasticity(), _physicsBody->GetStatic());
+                                    _physicsBody->GetElasticity(),ID, _physicsBody->GetStatic());
    
     
-    _collider->SetCollisionParameters(type, radius, scale,layer,trigger);
+    _collider->SetCollisionParameters(collider, radius, scale,layer,trigger,type);
     
   
     return _ifCollision=true;
@@ -646,6 +651,29 @@ bool CustomModel::AttachCollider(CollisionType type , float radius,int layer,boo
 bool Game::CustomModel::GetIfCollision()
 {
     return _ifCollision;
+}
+int Game::CustomModel::GetID()
+{
+    return ID;
+}
+void Game::CustomModel::SetID(int id)
+{
+    ID = id;
+}
+void Game::CustomModel::DestroySelf()
+{
+   
+        std::cout << "销毁:"<<ID << std::endl;
+    
+        delete this;
+
+}
+bool Game::CustomModel::SetActive(bool active)
+{
+   
+    std::cout<<ID << "激活:" << active << std::endl;
+    
+    return active;
 }
 bool CustomModel::Draw (glm::mat4 view, glm::mat4 projection)
 {
@@ -767,13 +795,19 @@ CustomModel::~CustomModel()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
+    glDeleteShader(shaderProgram);
     //主对象析构之后，指针貌似已经被释放了
    // delete verticesTras;//释放内存即释放栈上的引用，引用丢失，内存无意义，告诉编译器指向地址可以重新分配
    // verticesTras = nullptr;//避免内存污染，解决潜在问题
 
-
-    if (_animator == nullptr)
+    if (_animator != nullptr)
         delete _animator;
+    if (_physicsBody != nullptr)
+        delete _physicsBody;
+    if (_collider != nullptr)
+        delete _collider;
+
+
 }
 void CustomModel::Update(glm::mat4 view, glm::mat4 projection)
 {

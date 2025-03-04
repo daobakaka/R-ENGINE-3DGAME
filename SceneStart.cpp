@@ -153,7 +153,7 @@ void GameStartT()
     manager->RegisterObject(basePlane);
     basePlane->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
     basePlane->AttachPhysicalEngine(true);//声明为静态类型，目前注册为1
-    basePlane->AttachCollider(CollisionType::Box, 1);
+    basePlane->AttachCollider(CollisionType::Box, 1,1,false,SpecailType::BasePlane);//注册特殊碰撞体--地板
 
     
     //测试小球

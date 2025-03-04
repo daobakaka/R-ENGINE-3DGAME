@@ -506,5 +506,21 @@ Game::Cube::CubeObstcle(GLuint textureName)
 
 }
 
+
+
+//先前采用的暴力计算碰撞逻辑
+if (false)
+{
+    for (auto& pair : cop)
+    {
+        if (_collisionProperties.ID != pair.first)
+        {
+            //这里可以根据碰撞层来进行碰撞分类
+
+            CheckCollisionWithAABB(pair.second);//传入引用，这里才需要使用*访问值，而传入指针就不需要
+        }
+    }
+}
+
 /
 #endif

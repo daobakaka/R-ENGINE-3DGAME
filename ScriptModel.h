@@ -6,8 +6,8 @@
 namespace Game
 {
 #pragma region 特殊模型
-
-
+	//全局唯一标识
+	//extern int TGUID;
 	class CustomModel;
 	/// <summary>
 	/// 初始蝴蝶模型

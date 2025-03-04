@@ -4,9 +4,13 @@
 namespace Game {
 
     // 构造函数，初始化物理引擎的基本参数
-    PhysicalEngine::PhysicalEngine(glm::vec3 &positon,glm::quat &rotation,bool staticObj)
-        : _mass(1.0f), _friction(0.1f), _velocity(0.0f), _acceleration(0.0f), _gravity(0, -9.8f, 0) ,_position(positon),_rotation(rotation){
+    PhysicalEngine::PhysicalEngine(glm::vec3 &positon,glm::quat &rotation,int id,bool staticObj)
+        : _mass(1.0f), _friction(0.1f), _velocity(0.0f), _acceleration(0.0f), _gravity(0, -9.8f, 0) ,_position(positon),_rotation(rotation),ID(id){
         _ifStatic = staticObj;
+    }
+
+    PhysicalEngine::~PhysicalEngine()
+    {
     }
 
     // 设置质量

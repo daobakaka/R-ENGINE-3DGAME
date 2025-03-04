@@ -19,7 +19,8 @@ namespace Game {
 	template <typename T>
 	class LifecycleManager;
 	class CoordinateSystemCus;
-
+	//初始化静态变量的0值
+	
 //---
 	class  Controller
 	{
