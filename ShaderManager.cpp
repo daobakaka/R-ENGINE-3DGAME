@@ -19,7 +19,7 @@ using namespace Game;
     ShaderManager::ShaderManager()
     {
 
-        _shaderMame = "-shader";
+        _shaderName = "-shader";
 
     }
 
@@ -31,7 +31,7 @@ using namespace Game;
     {
         
         
-        std::cout << "开始编译"<<_shaderMame << std::endl;
+        std::cout << "开始编译"<<_shaderName << std::endl;
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, 1, &ver, nullptr);
         glCompileShader(vertexShader);
@@ -51,8 +51,8 @@ using namespace Game;
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
         
-        GLuint keke = 3;
-        _shaderMap["keke"] = keke;
+        //GLuint keke = 3;
+        //_shaderMap["keke"] = keke;
 
         _shaderMap[name] = shader;
 
@@ -73,7 +73,7 @@ using namespace Game;
     
     }
 
-    void Game::ShaderManager::IntergratedShaderCompile()
+    void Game::ShaderManager::IntegratedShaderCompile()
     {
 
         ShaderCompile(noneLightLightVertexShaderSource, noneLightLightFragmentShaderSource, "noneLight");

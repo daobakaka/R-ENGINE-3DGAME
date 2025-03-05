@@ -580,7 +580,7 @@ void Game::CustomModel::UpdateDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader
     if (_ifShadow)
     {        
         IsSkinnedMesh == true ? DrawDepthPicDynamical(lightSpaceMatrix,shader) : DrawDepthPic(lightSpaceMatrix,shader);
-
+       // std::cout << ID << "render shadow:" << _ifShadow << std::endl;
     }
 }
 void Game::CustomModel::UpdatePhysics()
@@ -611,16 +611,17 @@ void Game::CustomModel::UpdateCollisionAndPhysics(std::unordered_map<int, Collis
     }
 
 }
-bool CustomModel::AttachPhysicalEngine(bool ifStatic ,float mass, float friction , float elasticity ,  glm::vec3 acceleration,glm::vec3 velocity  )
+
+bool Game::CustomModel::AttachPhysicalEngine(bool staticObj,float mass, float friction, glm::vec3 velocity, glm::vec3 acceleration, float elasticity, bool lockXZAxi,
+    float rotationDampping,  bool trigger, int layer, float rotationAdjust)
 {
-    if (_physicsBody == nullptr)
-        //这里直接将位置的引用传入，方便在物理引擎的内部对position的值进行直接修改
-        _physicsBody = new PhysicalEngine(position,rotation,ID,ifStatic);
     
-    _physicsBody->SetParameters( mass, friction, velocity, acceleration,elasticity);
-
-
-    return _ifPhysics = true;
+    if (_physicsBody == nullptr)
+        //这里直接将位置的引用传入，方便在物理引擎的内部对position的值进行直接修改,激活状态作为引用传入，因为这里涉及到渲染逻辑，其他才是物理逻辑
+        _physicsBody = new PhysicalEngine(position, rotation,scale, _ifActive,ID,mass,friction,velocity,acceleration,
+            elasticity,lockXZAxi,rotationDampping,trigger,layer,rotationAdjust,staticObj);
+    
+    return _ifPhysics=true;
 }
 /// <summary>
 /// 设置基本碰撞体的范围
@@ -629,7 +630,7 @@ bool CustomModel::AttachPhysicalEngine(bool ifStatic ,float mass, float friction
 /// <param name="radians"></param>
 /// <param name="ratio"></param>
 /// <returns></returns>
-bool CustomModel::AttachCollider(CollisionType collider , float radius,int layer,bool trigger, SpecailType type)
+bool CustomModel::AttachCollider(CollisionType collider , SpecailType type,float radius)
 {
    
     if (_physicsBody==nullptr)
@@ -638,12 +639,13 @@ bool CustomModel::AttachCollider(CollisionType collider , float radius,int layer
     }
     
     if (_collider == nullptr)
-        _collider = new CollisionBody(position, _physicsBody->GetVelocity(),
-                                      _physicsBody->GetAcceleration(),rotation,_physicsBody->GetMass(),_physicsBody->GetFriction(),
-                                    _physicsBody->GetElasticity(),ID, _physicsBody->GetStatic());
+        _collider = new CollisionBody(position,_physicsBody->GetVelocity(),
+                                      _physicsBody->GetAcceleration(),rotation,scale,ID,_physicsBody->GetMass(),_physicsBody->GetFriction(),
+                                    _physicsBody->GetElasticity(),_physicsBody->GetLayer(),_physicsBody->GetTrigger(),_physicsBody->GetActive()
+                                    ,_physicsBody->GetDamping(),_physicsBody->GetLockState(),_physicsBody->GetRotationAdjust(), 
+            _physicsBody->GetStatic(),collider,radius,type
+            );
    
-    
-    _collider->SetCollisionParameters(collider, radius, scale,layer,trigger,type);
     
   
     return _ifCollision=true;
@@ -656,10 +658,15 @@ int Game::CustomModel::GetID()
 {
     return ID;
 }
-void Game::CustomModel::SetID(int id)
+int Game::CustomModel::SetID(int id)
 {
-    ID = id;
+  return ID = id;
 }
+bool Game::CustomModel::GetActiveState()const
+{
+    return _ifActive;
+}
+
 void Game::CustomModel::DestroySelf()
 {
    
@@ -671,9 +678,9 @@ void Game::CustomModel::DestroySelf()
 bool Game::CustomModel::SetActive(bool active)
 {
    
-    std::cout<<ID << "激活:" << active << std::endl;
+  //  std::cout<<ID << "激活:" << active << std::endl;
     
-    return active;
+    return _ifActive=active;
 }
 bool CustomModel::Draw (glm::mat4 view, glm::mat4 projection)
 {
@@ -826,6 +833,7 @@ void CustomModel::Update(glm::mat4 view, glm::mat4 projection)
 //变体方法，可以增加变体的运行行为
 void  CustomModel::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
+    //父类放置空方法
 
 }
 // 根据动画帧更新顶点数据
@@ -846,6 +854,12 @@ void CustomModel::UpdateVerticesForAnimation(size_t animationFrame) {
 void CustomModel::UpdateVerticesForAnimation(const std::vector<Vertex>& vertex)
 {
     verticesTras = vertex;
+}
+
+void Game::CustomModel::Start()
+{
+
+    std::cout << ID << ":" << _ifShadow << std::endl;
 }
 
 //// GetComponent 方法

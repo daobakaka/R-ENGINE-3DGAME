@@ -100,6 +100,7 @@ namespace Game {
                         ifLight,
                         ifShadow
                     );
+                    model->SetVariant(modelEnum);
                     manager->RegisterObject(model);
 
                     // Î»ÖÃ£ºposition + stepVector3.position * counter
@@ -173,6 +174,7 @@ namespace Game {
                         ifLight,
                         ifShadow
                     );
+                    model->SetVariant(modelEnum);
                     manager->RegisterObject(model);
 
                     model->Initialize(

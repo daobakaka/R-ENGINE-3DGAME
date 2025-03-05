@@ -4,7 +4,6 @@
 #include <GL/glew.h>//加载Opengl扩展，
 #include <GLFW/glfw3.h>//创建Opengl扩展，以及管理Opengl上下文
 #include "Cube.h"
-//#include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
 #include "Controller.h"
 #include "LifecycleManager.h"
 #include "IntergratedScripts.h"
@@ -32,7 +31,9 @@ extern LightSpawner* lightSpawner;
 extern LightRender* lightRender;
 extern ShaderManager* shaderManager;
 
-std::vector<CustomModel*> toRemove;
+std::vector<CustomModel*> toActiveFalse;
+std::vector<CustomModel*> toActiveTrue;
+std::vector<CustomModel*> toDestory;
 void GameUpdateShadowRenderT()
 {
 
@@ -49,7 +50,7 @@ void GameUpdateShadowRenderT()
     lightRender->RenderShadowTexture(shaderManager->GetShader("depthVisual"));
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
      //--控制平行光的旋转
-  //  lightSpawner->ParalletLightController(glm::vec3(0, 1, 0.0f));
+  //  lightSpawner->ParalletLightController(glm::vec3(0, 0.1F, 0.0f));
 
 
 }
@@ -61,9 +62,11 @@ void GameUpdateMainLogicT(glm::mat4 view,glm::mat4 projection)
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
     //每帧清空可移除对象
-     toRemove.clear();
+    toActiveFalse.clear();
+    toActiveTrue.clear();
+    toDestory.clear();
     //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
-    //遍历执行区域
+    //遍历执行池
     for (auto &item : manager->GetNativeObjects()) {
         //将多光源照射效果封装在 灯光渲染器中.如果是光照shader，则需要加入这一段代码，引入光照渲染，如果不是则不需要
         //现在更改为使用构造化方式，统一使用
@@ -82,6 +85,7 @@ void GameUpdateMainLogicT(glm::mat4 view,glm::mat4 projection)
         }
         else if (item.second->GetVariant() == ModelClass::CubeTestE)
         {
+            //脚本方法，执行综合方法
           scripts->TestUpdateFun(item.second);
             //  baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);        
         }
@@ -101,31 +105,43 @@ void GameUpdateMainLogicT(glm::mat4 view,glm::mat4 projection)
         }
         else if (item.second->GetVariant() == ModelClass::TsetButterfly)
         {
-
-            //这样也可以执行变体方法，待后期验证
-         //   item->UpdateVariant(view, projection);
             item.second->PlayAnimation(0, 0.1f);
-
+           // std::cout << item.second->GetID() << "ID" << item.second->_ifShadow << std::endl;
         }
         else if (item.second->GetVariant() == ModelClass::TestPhysics)
         {
-           // scripts->TPosition(item);
-          //  item.second->DestroySelf();
             if(item.second->position.y<-10)
-            toRemove.push_back(item.second);
-            //调用管理器，先移除管理器列表指针，再清除对象
-           // manager->RemoveObject(item.second);
+            toActiveFalse .push_back(item.second);
         }
     }
-    // 遍历结束后再移除
-    for (auto* obj : toRemove) {
+
+    //遍历缓存池
+    for (auto& item : manager->GetCacheObjects())
+    {
+
+        if (item.second->GetVariant() == ModelClass::TestPhysics)
+        {
+            toActiveTrue.push_back(item.second);
+        }
+
+    }
+    // 临时存取失活对象
+    for (auto* obj : toActiveFalse) {
         manager->SetActive(obj,false);
     }
-    //3.变体方法，类似于手动撰写脚本来实现，须在初始化时，注册脚本变体,通用脚本方法有一定局限性，变体方法后续还会使用
-    //变体即其模型类型注册不为0，主要用于场景中的需要批量设置相关变换的对象
-    for (auto& item : manager->GetVariantObjects()) {
-        // item->UpdateVariant(view, projection);
+    //临时存取激活对像
+    for (auto* obj : toActiveTrue) {
+        obj->position += glm::vec3(0, 50, 0);
+        obj->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0));
+        manager->SetActive(obj, true);
     }
+#pragma region 恢复逻辑
+
+
+#pragma endregion
+
+  
+   
 
 }
 

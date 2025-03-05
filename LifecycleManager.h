@@ -20,6 +20,8 @@ namespace Game {
 
         void RegisterObject(T* object);
         void RemoveObject(T* object);
+        void CacheObject(T* object);
+        void RemoveCacheObject(T* object);
         //激活逻辑
         void SetActive(T* object, bool active);
         //销毁逻辑
@@ -27,24 +29,26 @@ namespace Game {
 
         std::unordered_map<int, T*>& GetNativeObjects();
         std::unordered_map<int, T*>& GetVariantObjects();
+        //这里的对象采取遍历的方法进行处理，针对同种变体的对象，进行复原，必须要对setActiveFalse的结构才使用
+        std::unordered_map<int, T*>& GetCacheObjects();
 
         void StartAll();
         void UpdateAll(glm::mat4 view, glm::mat4 projection);
         void DestroyAll();
         void UpdateAllVariant(glm::mat4 view, glm::mat4 projection);
         void UpdateDepthPic(glm::mat4 projection, GLuint shader);
-        void PhysicalUpdateAll();
 
     private:
         LifecycleManager() : GUID(0) {} // 初始化GUID
 
-        // 如果想让GUID全局共享;
+        // 让GUID全局共享;
         int GUID;
 
         static LifecycleManager<T>* instance;
 
         std::unordered_map<int, T*> nativeObjects;
         std::unordered_map<int, T*> variantObjects;
+        std::unordered_map<int, T*> cacheObjects;
     };
 
     template <typename T>
@@ -69,21 +73,36 @@ namespace Game {
     template <typename T>
     void LifecycleManager<T>::RemoveObject(T* object) {
         // fix method name: GetVariant()
-        if (object->GetVariant() == 0) {
-            nativeObjects.erase(object->GetID());
-        }
-        else {
-            nativeObjects.erase(object->GetID());
+        if (object->GetVariant() != 0) {
             variantObjects.erase(object->GetID());
         }
-        // fix method name: DestroySelf()
-        // to free memory: delete object;
+            nativeObjects.erase(object->GetID());
+          
+    }
+
+
+
+    template<typename T>
+    void LifecycleManager<T>::CacheObject(T* object)
+    {
+        int newID = object->GetID();
+        cacheObjects[newID] = object;
+    }
+
+    template<typename T>
+    inline void LifecycleManager<T>::RemoveCacheObject(T* object)
+    {
+        int newID = object->GetID();
+        //从缓存对象中移除
+        cacheObjects.erase(newID);
+
     }
 
     template<typename T>
      void LifecycleManager<T>::SetActive(T* object, bool active)
     {
-         if (active)
+         //设置为true,激活状态为false的情况下
+         if (active&&!object->GetActiveState())
          {
              //这里原容器的ID并没有变化，可以放回原来的位置，相当于一个新的注册方法
              int newID = object->GetID();
@@ -91,15 +110,20 @@ namespace Game {
              if (object->GetVariant() != 0) {
                  variantObjects[newID] = object;
              }
-
+             //重新获取对象之后，将缓存对象移除缓存列表
+             RemoveCacheObject(object);
+             //调用内部激活方法
+             object->SetActive(active);
          }
-         else
+         if (!active)
          {
              RemoveObject(object);
-
+             //移除对象之后，要将对象缓存在缓存列表中，便于以后复用
+             CacheObject(object);
+             //调用内部激活方法
+             object->SetActive(active);
          }
-         //调用内部激活方法
-         object->SetActive(active);
+ 
     }
 
     template<typename T>
@@ -119,6 +143,12 @@ namespace Game {
     template <typename T>
     std::unordered_map<int, T*>& LifecycleManager<T>::GetVariantObjects() {
         return variantObjects;
+    }
+
+    template<typename T>
+     std::unordered_map<int, T*>& LifecycleManager<T>::GetCacheObjects()
+    {
+        return cacheObjects;
     }
 
     template <typename T>
@@ -164,10 +194,6 @@ namespace Game {
         }
     }
 
-    template <typename T>
-    void LifecycleManager<T>::PhysicalUpdateAll() {
-        // ...
-    }
 
 } // namespace Game
 

@@ -20,7 +20,7 @@ namespace Game {
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData& modelData, bool isSkinnedMesh, bool ifLight = false,bool ifShadow=false);
         void UpdateVerticesForAnimation(size_t animationFrame);
         void UpdateVerticesForAnimation(const std::vector<Vertex>& vertex);
-
+        virtual void Start() override;
         //--继承GameObject 的声明
         virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
         virtual bool DrawLine(glm::mat4 view, glm::mat4 projection);//绘制线条方法，在custom 类添加的新方法，针对线条绘制，可重写
@@ -60,18 +60,24 @@ namespace Game {
         /// <param name="velocity"></param>
         /// <param name="acceleration"></param>
         /// <returns></returns>
-        virtual bool AttachPhysicalEngine(bool ifStatic=false,float mass=1, float friction = 0.05f,float elasticity=0.5f, glm::vec3 acceleration = glm::vec3(0, -9.8f, 0),glm::vec3 velocity = glm::vec3(0));
-        virtual bool AttachCollider(CollisionType collider=CollisionType::Box,float radius=1,int layer=1,bool trigger=false,SpecailType type=SpecailType::OriginalT);//附件碰撞体可重写
+        virtual bool AttachPhysicalEngine(bool staticObj = false,float mass=1, float friction=0.05f, glm::vec3 velocity = glm::vec3(0), glm::vec3 acceleration = glm::vec3(0, -9.8f, 0),
+            float elasticity = 0.5f, bool lockXZAxi = true, float rotationDampping = 0.15f,  bool trigger = false, int layer = 1, float rotationAdjust = 0.382f
+            ); 
+        virtual bool AttachCollider(CollisionType collider=CollisionType::Box, SpecailType type = SpecailType::OriginalT,float radius=1);//附件碰撞体可重写
         //判断是否需要碰撞，碰撞的对象，封装在泛型基类中的vector容器里
         virtual bool GetIfCollision() override;
 
+  
+        //销毁
+         void DestroySelf();
+        //激活与失活
+         bool SetActive(bool active);
         //对象ID处理逻辑
         int GetID();
-        void SetID(int id);
-        //销毁
-        virtual void DestroySelf();
-        //激活与失活
-        virtual bool SetActive(bool active);
+        int SetID(int id);
+
+        //获取状态
+        bool GetActiveState()const ;
         
 
     protected:
@@ -100,9 +106,10 @@ namespace Game {
         glm::vec3 _collisionMin;
         glm::vec3 _collisionMax;
         bool _ifPhysics;
-
+        bool _ifActive = true;
         //游戏对象全局唯一标识符
         int ID;
+      
    
 
 

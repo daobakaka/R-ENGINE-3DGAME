@@ -125,9 +125,12 @@ int GLins() {
             GameUpdateMainLogicT(view, projection);
             //保持天空盒在其他物体之前渲染,渲染天空盒
             skybox->Draw(view, projection);
-            //控制器更新方法
+            //控制器更新方法1、基本更新2、变体更新
             manager->UpdateAll(view, projection);
+            manager->UpdateAllVariant(view, projection);
         }
+ /*       manager->UpdateAll(view, projection);
+        manager->UpdateAllVariant(view, projection);*/
         //字体渲染
         cusText->RenderText("FPS :" + std::to_string(scripts->TUpdateFPS()), 2200.0f, 1150.0f, .70f, glm::vec3(1.0f, .50f, 1.0f));//帧率渲染
         //设置时间控制器，将协程的方法在主循环中进行时间控制

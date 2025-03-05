@@ -147,13 +147,14 @@ void ShadowTexture::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint sha
 
 CustomModelShader::CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow)
 {
+   
     vertexCount = modelData.verticesStruct.size();
     index = modelData.indices.size();
     verticesTras = modelData.verticesStruct;
     IsSkinnedMesh = isSkinnedMesh;
     ifLight = ifLightIn;
     _ifShadow = ifShadow;
-    std::cout << _ifShadow << std::endl;
+    
     // 获取着色器程序
     shaderProgram = ShaderManager::GetInstance()->GetShader(name);
 
@@ -274,7 +275,7 @@ CustomModelInstance::CustomModelInstance()
 
 CustomModelInstance::CustomModelInstance(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow, int instanceCount, glm::vec3 positionOffset, glm::vec3 rotationAxis)
 {
-
+ 
     _instanceCount = instanceCount;
     _positionOffset = positionOffset;
     _rotationAxis = rotationAxis;

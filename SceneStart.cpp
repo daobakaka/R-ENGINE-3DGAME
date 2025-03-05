@@ -149,46 +149,47 @@ void GameStartT()
 
     auto* basePlane = new  CustomModelShader("commonLight", ModelDic["basePlane"], false, false, false);
     basePlane->SetVariant(ModelClass::StaticPlane);
-    basePlane->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(70.0f, 0.1f, 70.0f));
+    basePlane->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(100.0f, 0.1f, 100.0f));
     manager->RegisterObject(basePlane);
     basePlane->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
     basePlane->AttachPhysicalEngine(true);//声明为静态类型，目前注册为1
-    basePlane->AttachCollider(CollisionType::Box, 1,1,false,SpecailType::BasePlane);//注册特殊碰撞体--地板
+    basePlane->AttachCollider(CollisionType::Box,SpecailType::BasePlane,1);//注册特殊碰撞体--地板
 
     
     //测试小球
-    for (int i = 0; i < 50; i++)
+    for (int i = 0; i <1; i++)
     {
         auto* baseSphere = new CustomModelShader("commonLight", ModelDic["baseSphere"], false, true, true);
         baseSphere->SetVariant(ModelClass::TestPhysics);
-        baseSphere->Initialize(glm::vec3(-20+3.0f+2.5f*i, 10.0f+i, -50.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        baseSphere->Initialize(glm::vec3(-70+3.0f+3.5f*i, 10.0f+i, -50.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseSphere);
         baseSphere->AttachTexture(TextureDic["butterfly"][0], 0);
-        baseSphere->AttachPhysicalEngine(false, 5);
-        baseSphere->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));
+        baseSphere->AttachPhysicalEngine(false, 10);
+        baseSphere->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));  
         baseSphere->AttachCollider();
+        baseSphere->GetComponent<CollisionBody>()->SetRadius(1);
     }
     //测试圆柱
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 1; i++)
     {
         auto* baseCylinder = new CustomModelShader("commonLight", ModelDic["baseSphere"], false, true, true);
         baseCylinder->SetVariant(ModelClass::TestPhysics);
-        baseCylinder->Initialize(glm::vec3(-20+3.0f + 2.5f * i, 5.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        baseCylinder->Initialize(glm::vec3(-90+3.0f + 2.5f * i, 5.0f, -2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseCylinder);
         baseCylinder->AttachTexture(TextureDic["default"][0], 0);
         baseCylinder->AttachPhysicalEngine();
         baseCylinder->AttachCollider();
-        baseCylinder->GetComponent<CollisionBody>()->SetFixedAxisX(true);
+        baseCylinder->GetComponent<PhysicalEngine>()->SetFixedAxisX(true);
     }
 
     
 
     //测试盒子
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 1; i++)
     {
         auto* baseCube = new CustomModelShader("commonLight", ModelDic["baseCube"], false, true, true);
         baseCube->SetVariant(ModelClass::TestPhysics);
-        baseCube->Initialize(glm::vec3(-20+3.0f + 2.5f * i, 6.0f, 5.0f), glm::quat(glm::vec3(0.0f, 60.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        baseCube->Initialize(glm::vec3(-100+3.0f + 2.5f * i, 6.0f, 5.0f), glm::quat(glm::vec3(0.0f, 60.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseCube);
         baseCube->AttachTexture(TextureDic["default"][0], 0);
         baseCube->AttachPhysicalEngine();
@@ -202,9 +203,14 @@ void GameStartT()
     manager->RegisterObject(butterflyInstance);
     butterflyInstance->AttachTexture(TextureDic["butterfly"][0], 0, glm::vec2(1, 1));
 
+
+
+
+
+
     StepVector3 step;
     step.position = glm::vec3(0, -0.5f, 0);
-    step.scale = glm::vec3(0.9f);
+    step.scale = glm::vec3(1.0f);
     coroutine->StartSpawnByTimerAnimation<ButterflyScriptShader>(
         manager,
         "commonLight",
@@ -222,12 +228,12 @@ void GameStartT()
         {},
         glm::vec3(1.1f)
     );
-    //auto* testButterfly = new  ButterflyScriptShader("commonLight", ModelDic["butterfly"], true, false, true);
-    //testButterfly->SetVariant(ModelClass::TsetButterfly);
-    //testButterfly->Initialize(glm::vec3(0.0f, 3.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-    //manager->RegisterObject(testButterfly);
-    //testButterfly->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
-    //testButterfly->AttachAnimationController(AnimationDic["butterfly"]["fly"]);
+    auto* testButterfly = new  ButterflyScriptShader("commonLight", ModelDic["butterfly"], true, true, true);
+    testButterfly->SetVariant(ModelClass::TsetButterfly);
+    testButterfly->Initialize(glm::vec3(0.0f, 2.5f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+    manager->RegisterObject(testButterfly);
+    testButterfly->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
+    testButterfly->AttachAnimationController(AnimationDic["butterfly"]["fly"]);
 
 
     //CustomModel* testMonkey = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["testMonkey"], false, true);

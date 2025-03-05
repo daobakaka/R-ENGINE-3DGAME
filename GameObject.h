@@ -56,6 +56,8 @@ namespace Game {
 
         //添加光照模型默认值
         bool ifLight;
+        //阴影跳转到这里，方便lamda表达式访问
+        bool _ifShadow;
         //初始化判断参数模块
         bool justDrawVerteies = false;
         bool IsSkinnedMesh = false;
@@ -95,7 +97,7 @@ namespace Game {
         ModelClass variant = ModelClass::OriginalE;
 
     protected:
-        bool _ifShadow;
+  
         GLuint  _depthShaderProgram;
       
     };

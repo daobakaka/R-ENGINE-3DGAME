@@ -9,34 +9,36 @@ namespace Game {
     std::unordered_map<int, CollisionProperties*> CollisionProps;
 
 
-    CollisionBody::CollisionBody(glm::vec3& pos, glm::vec3& vel, glm::vec3& acc, glm::quat& rot, float mass, float friction, float elasticity,int id,bool ifStatic)
-        :_collisionProperties(pos, vel, acc,rot)//初始化结构体引用
+    CollisionBody::CollisionBody(glm::vec3& pos, glm::vec3& vel, glm::vec3& acc, glm::quat& rot, glm::vec3& ratio, int id, float& mass, float& friction, float& elasticity,
+        int& layer, bool& trigger, bool& active, float& rotationDamping, bool& lockXZAxi, float &rotationAdjust,
+         bool ifStatic, CollisionType collider, float radius,SpecailType type)
+        :_collisionProperties(pos, vel, acc,rot,ratio,active,rotationDamping,lockXZAxi,mass,friction,elasticity,layer,trigger, rotationAdjust)//初始化结构体引用
     {       
-        //这些参数在初始化时即确认，只能改变自身形状，不能在注册列表里面进行更改
-        _collisionProperties.layer = 1;//碰撞层默认为1
-        _collisionProperties.mass = mass;
-        _collisionProperties.friction = friction;
+        //这些参数在初始化时即确认，外面初始化的参数，传入之后不能改变，非引用
+  
         _collisionProperties.ID = id;//现在使用碰撞结构体储存相关的参数包括ID，碰撞检测中也直接与结构体进行快速交互
         _collisionProperties.staticObj = ifStatic;
+        _collisionProperties.radius = radius;
+        _collisionProperties.collider = collider;
+        _collisionProperties.sType = type;
+
+        //初始化重力加速度，储存在碰撞结构体中，便于计算中引用
+        _collisionProperties.gravity = _collisionProperties.acceleration;
+        _collisionProperties.timer = 0;//初始化碰撞体时间记数
         _collisionProperties.gravityEnabled = true;//默认均开启重力，重力可以参数初始加速度来影响重力，这里的开启关闭只是用于重力的储存计算
         _collisionProperties.angularVelocity = glm::vec3(0);//默认旋转速度
-        _collisionProperties.rotationDamping = 0.15F;
-        _lockXAxi = true;
-        _rotationPar = 0.382f;//旋转控制参数，默认黄金分割点
-        if (elasticity>1)
+        if (_collisionProperties.elasticity>1)
         {
-            elasticity = 1;
+           _collisionProperties. elasticity = 1;
         }
-        _collisionProperties.elasticity = elasticity;
         if (ifStatic)
             _collisionProperties.mass = 100000000;//设置静态物体的质量为亿        
 
-        //获取八叉树结构单例
-        _collisionProperties.currentNode = nullptr;//为碰撞体基于八叉树的指针赋空的初始值
-        _octree = Octree::GetInstance();
-        _octree->Insert(&_collisionProperties);
-        
+        //特殊碰撞类型注入全局访问模块,否则初始化八叉树实例，注册进入八叉树
+        RegisterCollisionBody();
+
     }
+
     // 析构函数
     CollisionBody::~CollisionBody()
     {
@@ -61,8 +63,9 @@ namespace Game {
         
         //满足碰撞检测范围才开启碰撞逻辑，否则移除碰撞体在八叉树中的位置，且取消所有碰撞计算逻辑（合并物理计算）
         if (CheckValidCollision())
-        {
-            //更细对象状态        
+        { 
+            _collisionProperties.timer += deltaTime;
+            //更新对象状态        
             UpdateCollisionParameters();
             //清空碰撞结构体内部数组
             _collisionProperties.collidingBodies.clear();
@@ -141,28 +144,32 @@ namespace Game {
     }
 
 
-    void CollisionBody::SetCollisionParameters(CollisionType collider,float radius, glm::vec3 ratio,int layer, bool trigger, SpecailType type)
+
+    void CollisionBody::SetRadius(float r)
     {
-
-        _collisionProperties.radius = radius;
-        _collisionProperties.ratio = ratio;
-        _collisionProperties.layer = layer;
-        _collisionProperties.trigger = trigger;
-        _collisionProperties.collider = collider;
-        _collisionProperties.sType = type;
-
-        //初始化重力加速度，储存在碰撞结构体中，便于计算中引用
-        _collisionProperties.gravity = _collisionProperties.acceleration;
-       //特殊碰撞类型注入全局访问模块
-        RegisterCollisionBody();
+        _collisionProperties.radius = r;
     }
 
+    void CollisionBody::SetLayer(int layer)
+    {
+        _collisionProperties.layer = layer;
+    }
+
+    void CollisionBody::SetTrigger(bool trigger)
+    {
+        _collisionProperties.trigger = trigger;
+    }
+    /// <summary>
+    ///只有在满足一定条件或者处于active状态的时候才会进行
+    /// </summary>
+    /// <param name="range"></param>
+    /// <returns></returns>
     bool CollisionBody::CheckValidCollision(glm::vec3 range)
     {
         
         if (glm::abs(_collisionProperties.position.x)<=range.x&&
             glm::abs(_collisionProperties.position.y)<=range.y&&
-            glm::abs(_collisionProperties.position.z)<=range.z)
+            glm::abs(_collisionProperties.position.z)<=range.z&&_collisionProperties.isActive==true)
         {
             return true;
         }
@@ -174,9 +181,16 @@ namespace Game {
     void CollisionBody::RegisterCollisionBody()
     {
         //这里静态大物体暂时采用专门的逻辑，如地面,玩儿家等， 这样可以保持持续性检测
-        if(_collisionProperties.sType!=SpecailType::OriginalT)
-        CollisionProps[_collisionProperties.ID] = &_collisionProperties;
-
+        if (_collisionProperties.sType != SpecailType::OriginalT)
+        {
+            CollisionProps[_collisionProperties.ID] = &_collisionProperties;
+        }
+      
+            //获取八叉树结构单例
+            _collisionProperties.currentNode = nullptr;//为碰撞体基于八叉树的指针赋空的初始值
+            _octree = Octree::GetInstance();
+            _octree->Insert(&_collisionProperties);
+        
     }
 
     void CollisionBody::UpdateCollisionParameters()
@@ -191,8 +205,8 @@ namespace Game {
             _collisionProperties._collisionMax.y = _collisionProperties.position.y + _collisionProperties.radius * _collisionProperties.ratio.y;
             _collisionProperties._collisionMax.z = _collisionProperties.position.z + _collisionProperties.radius * _collisionProperties.ratio.z;
       
-         
-            
+         //非特殊碰撞体
+            //if (_collisionProperties.sType == SpecailType::OriginalT)
                 _octree->Update(&_collisionProperties); // 更新八叉树中的位置
             
             break;
@@ -203,8 +217,8 @@ namespace Game {
             _collisionProperties._collisionMax.x = _collisionProperties.position.x + _collisionProperties.radius * _collisionProperties.ratio.x;
             _collisionProperties._collisionMax.y = _collisionProperties.position.y + _collisionProperties.radius * _collisionProperties.ratio.y;
             _collisionProperties._collisionMax.z = _collisionProperties.position.z + _collisionProperties.radius * _collisionProperties.ratio.z;
-            
-            
+         //非特殊碰撞体   
+            //if (_collisionProperties.sType == SpecailType::OriginalT)
                 _octree->Update(&_collisionProperties); // 更新八叉树中的位置
             
             break;
@@ -231,7 +245,7 @@ namespace Game {
             // 如果相对速度大于0，则发生碰撞
             if (relativeVelocity >1.05- _collisionProperties.elasticity) {
                
-                std::cout << _collisionProperties.ID<<"内部计算碰撞" << std::endl;
+               // std::cout << _collisionProperties.ID<<"内部计算碰撞" << std::endl;
 
                 // 弹性系数（恢复系数）
                 float e = _collisionProperties.elasticity;  //从物理碰撞模块中读取弹性系数
@@ -255,7 +269,7 @@ namespace Game {
                 glm::vec3 torque = glm::cross(r, impulse * collisionNormal);
 
                 // 临时计算角速度,乘一个矫正系数rotationPar --0.25f
-                _collisionProperties.angularVelocity = _rotationPar*torque*(1-_collisionProperties.rotationDamping) / _collisionProperties.mass; // 假设转动惯量为质量
+                _collisionProperties.angularVelocity =_collisionProperties.rotationAdjust*r*torque*(1-_collisionProperties.rotationDamping) / _collisionProperties.mass; // 假设转动惯量为质量
               
             }
 
@@ -342,7 +356,7 @@ namespace Game {
             }
                  // 更新旋转角度（四元数）
                  float  angularSpeedSquared = 0;              
-                if (_lockXAxi) {
+                if (_collisionProperties.lockXZAxi) {
                     _collisionProperties.angularVelocity.x = 0.0f; // 锁定 X 轴
                     _collisionProperties.angularVelocity.z = 0.0f; // 锁定 Z 轴
                      angularSpeedSquared = glm::dot(_collisionProperties.angularVelocity, _collisionProperties.angularVelocity); // 重新计算角速度的平方长度
@@ -358,7 +372,7 @@ namespace Game {
 
 
                     // 应用旋转阻尼：每帧按阻尼系数衰减角速度
-                    _collisionProperties.angularVelocity *= (1.0f - _collisionProperties.rotationDamping * (1 - _rotationPar) * (1 + _rotationPar));
+                    _collisionProperties.angularVelocity *= (1.0f - _collisionProperties.rotationDamping * (1 - _collisionProperties.rotationAdjust) * (1 + _collisionProperties.rotationAdjust));
                     // 计算旋转角度
                     float angle = glm::sqrt(angularSpeedSquared) * deltaTime;
 
@@ -418,17 +432,6 @@ namespace Game {
 
     }
 
-    bool CollisionBody::SetFixedAxisX(bool lock )
-    {
-
-        return _lockXAxi = lock;
-    }
-
-    void CollisionBody::SetRotationDamping(float damp)
-    {
-        
-        _collisionProperties.rotationDamping = damp;
-    }
 
 
     

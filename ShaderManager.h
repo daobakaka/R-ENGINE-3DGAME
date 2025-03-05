@@ -19,7 +19,7 @@ namespace Game
 
         void UseShader(const std::string& name);
 
-        void IntergratedShaderCompile();
+        void IntegratedShaderCompile();
 
         // Set methods for various uniform types
         void SetBool(const std::string& shaderName, const std::string& uniformName, bool value) ;
@@ -34,7 +34,7 @@ namespace Game
         void SetMat2(const std::string& shaderName, const std::string& uniformName, const glm::mat2& mat) ;
         void SetMat3(const std::string& shaderName, const std::string& uniformName, const glm::mat3& mat) ;
         void SetMat4(const std::string& shaderName, const std::string& uniformName, const glm::mat4& mat) ;
-        std::string _shaderMame;
+        std::string _shaderName;
         int num;
     private:
         ShaderManager();

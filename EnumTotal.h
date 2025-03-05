@@ -60,9 +60,12 @@ namespace Game {
 	struct CollisionProperties {
 		int ID;//全局唯一身份标识
 		OctreeNode* currentNode;
-		int layer;
+		bool &isActive;
+		int &layer;
 		//特殊碰撞体
 		SpecailType sType;
+		//时间记录
+		float timer;
 		// 碰撞盒类型
 		CollisionType collider;
 		glm::vec3 &position;    // 物体位置
@@ -72,23 +75,23 @@ namespace Game {
 		glm::vec3 _collisionMax;
 		//定向参数
 		//自身摩擦系数
-		float friction;
+		float &friction;
 		//解除对象摩擦系数
 		float otherFriction;
-		float mass;
+		float &mass;
 		glm::vec3 gravity;
-		float elasticity;//弹性系数
+		float &elasticity;//弹性系数
 		// 碰撞容器，记录当前与哪些物体发生碰撞
 		std::unordered_set<int> collidingBodies;
 
 		//碰撞盒半径
 		float radius;
 		//碰撞盒形状比率
-		glm::vec3 ratio;
+		glm::vec3 &ratio;
 		//碰撞状态判断
 		bool isCollision;
 		//触发器
-		bool trigger;
+		bool &trigger;
 		//静态物体
 		bool staticObj;
 		//开启重力加速度
@@ -97,10 +100,15 @@ namespace Game {
 		//增加碰撞旋转逻辑
 		glm::vec3 angularVelocity;
 		glm::quat &rotation;        // 旋转角度（四元数）
-		float rotationDamping; //旋转阻尼
+		float &rotationDamping; //旋转阻尼
+		bool &lockXZAxi;//XZ轴锁定
+		float &rotationAdjust;//旋转修正系数
 		//以上三个量可以完全控制碰撞盒大小
-		CollisionProperties(glm::vec3 &pos,glm::vec3 &vel,glm::vec3 &acc,glm::quat &rot)
-			: position(pos), velocity(vel), acceleration(acc), mass(1),friction(0.05f),_collisionMin(0),_collisionMax(0),isCollision(false),trigger(false),rotation(rot) {}
+		CollisionProperties(glm::vec3 &pos,glm::vec3 &vel,glm::vec3 &acc,glm::quat &rot,glm::vec3 &ratioIN,bool &ifActiveIN,float &rotationDampingIN,bool &lockSXAxiIN ,
+			float &massIN,float &frictionIN,float &elasticityIN,int &layerIN,bool &triggerIN,float &rotationAdjustIN)
+			: position(pos), velocity(vel), acceleration(acc),ratio(ratioIN), mass(massIN), friction(frictionIN), _collisionMin(0), _collisionMax(0), isCollision(false), trigger(triggerIN), rotation(rot)
+		,isActive(ifActiveIN),rotationDamping(rotationDampingIN),lockXZAxi(lockSXAxiIN),elasticity(elasticityIN),layer(layerIN),rotationAdjust(rotationAdjustIN)
+		{}
 	};
 
 	

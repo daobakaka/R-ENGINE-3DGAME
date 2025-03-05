@@ -4,9 +4,15 @@
 namespace Game {
 
     // 构造函数，初始化物理引擎的基本参数
-    PhysicalEngine::PhysicalEngine(glm::vec3 &positon,glm::quat &rotation,int id,bool staticObj)
-        : _mass(1.0f), _friction(0.1f), _velocity(0.0f), _acceleration(0.0f), _gravity(0, -9.8f, 0) ,_position(positon),_rotation(rotation),ID(id){
-        _ifStatic = staticObj;
+    PhysicalEngine::PhysicalEngine(glm::vec3& positon, glm::quat& rotation, glm::vec3& scale, bool& isActive ,int id, float mass, float friction,
+        glm::vec3 velocity, glm::vec3 acceleration, float elasticity, bool lockXZAxi, float rotationDampping,
+        bool trigger, int layer, float rotationAdjust, bool staticObj)
+        : _mass(mass), _friction(friction), _velocity(velocity), _acceleration(acceleration), _gravity(0, -9.8f, 0), _position(positon), _rotation(rotation),_scale(scale)
+        ,_elasticity(elasticity),_lockXZAxi(lockXZAxi),_rotationDamping(rotationDampping),_isActive(isActive),_trigger(trigger),_layer(layer),
+        _rotationAdjust(rotationAdjust)
+    {
+            _ifStatic = staticObj;
+            ID = id;
     }
 
     PhysicalEngine::~PhysicalEngine()
@@ -32,6 +38,10 @@ namespace Game {
     void PhysicalEngine::SetAcceleration( glm::vec3 a) {
         _acceleration = a;
     }
+    void PhysicalEngine::SetElasticity(float e)
+    {
+        _elasticity = e;
+    }
     /// <summary>
     /// 依次传入参数
     /// </summary>
@@ -40,22 +50,11 @@ namespace Game {
     /// <param name="friction"></param>
     /// <param name="velocity"></param>
     /// <param name="acceleration"></param>
-    void PhysicalEngine::SetParameters( float mass, float friction,  glm::vec3 velocity,  glm::vec3 acceleration, float elasticity )
-    {
-    
-        _mass = mass;
-        _friction = friction;
-        _velocity = velocity;
-        //设置初始加速度，这里可以设置重力加速度
-        _acceleration = acceleration;
-        _elasticity = elasticity;
-      
 
-    }
 
     void PhysicalEngine::UpdatePhysics(float deltaTime)
-    {
-        if (!_ifStatic)
+    {//非静态物体，且处于激活状态
+        if (!_ifStatic&&_isActive)
         {
 
             if (glm::dot(_velocity, _velocity) < 0.01f)
@@ -96,34 +95,59 @@ namespace Game {
         return _rotation;
     }
 
-    float PhysicalEngine::GetMass() const
+    glm::vec3& PhysicalEngine::GetScale()
+    {
+        return _scale;
+    }
+
+    float &PhysicalEngine::GetMass() 
     {
         return _mass;
     }
 
-    float PhysicalEngine::GetFriction() const
+    float &PhysicalEngine::GetFriction() 
     {
         return _friction;
     }
 
-    bool PhysicalEngine::GetStatic() const
+    bool &PhysicalEngine::GetStatic() 
     {
         return _ifStatic;
     }
 
-    float PhysicalEngine::GetElasticity() const
+    float &PhysicalEngine::GetElasticity() 
     {
         return _elasticity;
     }
 
-    bool PhysicalEngine::GetLockState() const
+    bool &PhysicalEngine::GetLockState() 
     {
-        return _lockxz;
+        return _lockXZAxi;
     }
 
-    float PhysicalEngine::GetDampping() const
+    float &PhysicalEngine::GetDamping() 
     {
-        return _rotationDampping;
+        return _rotationDamping;
+    }
+
+    bool &PhysicalEngine::GetActive() 
+    {
+        return _isActive;
+    }
+
+    bool &PhysicalEngine::GetTrigger() 
+    {
+        return _trigger;
+    }
+
+    int &PhysicalEngine::GetLayer() 
+    {
+        return _layer;
+    }
+
+    float &PhysicalEngine::GetRotationAdjust() 
+    {
+        return _rotationAdjust;
     }
 
     bool PhysicalEngine::Interface() {
@@ -134,12 +158,33 @@ namespace Game {
     void PhysicalEngine::SetRotationDamping(float damp)
     {
 
-        _rotationDampping = damp;
+        _rotationDamping = damp;
+    }
+
+    void PhysicalEngine::SetActive(bool active)
+    {
+        _isActive = active;
+    }
+
+    void PhysicalEngine::SetTrigger(bool trigger)
+    {
+        _trigger = trigger;
+    }
+
+    void PhysicalEngine::SetLayer(int layer)
+    {
+        _layer = layer;
+    }
+
+    void PhysicalEngine::SetRotationAdjust(float r)
+    {
+
+        _rotationAdjust = r;
     }
 
     bool PhysicalEngine::SetFixedAxisX(bool lock)
     {
-        return _lockxz=lock;
+        return _lockXZAxi=lock;
     }
 
 }  // namespace Game

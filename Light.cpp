@@ -253,12 +253,12 @@ void Game::LightRender::RenderDepthMapForParallelLight(glm::vec3 lightDirection)
 {
     // 设置平行光的视角矩阵（正交投影）
   // glm::mat4 lightProjection = glm::perspective(glm::radians(45.0f), 1.5f, 0.1f, 100.0f);
-   glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.10f, 100.0f);
+   glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.10f, 1000.0f);
    //  glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.5f, 7.5f);
 
 
       // 平行光的视角矩阵，注意：平行光没有位置，只有方向
-    glm::vec3 lightPos = -lightDirection * 30.0f;  // 通过光线方向向远处拉伸来设定虚拟光源位置
+    glm::vec3 lightPos = -lightDirection * 300.0f;  // 通过光线方向向远处拉伸来设定虚拟光源位置
 
 
      glm::mat4 lightView = glm::lookAt(lightPos, lightPos + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f)); // 视角矩阵
