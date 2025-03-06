@@ -27,14 +27,16 @@ namespace Game {
 		Skybox,//天空盒
 		StaticPlane,//静态地板
 		//独立模块
+		Player,//游戏主角
+		PlayerBullet,//主角子弹
 		
 	};
 
-	enum SpecailType
+	enum SpecialType
 	{
 		OriginalT,//原始类型
 		BasePlane,//基础地面
-		Player,//玩家
+		SPlayer,//玩家
 
 	};
 	enum ShaderClass
@@ -56,6 +58,16 @@ namespace Game {
 		glm::vec3 rotation = glm::vec3(0, 0, 0);
 		glm::vec3 scale = glm::vec3(1);
 	};
+	//游戏结构体
+	struct GameProperties
+	{
+		float health = 100;
+		float damage = 3;
+		float speed = 1;
+
+
+	};
+
 	//碰撞体结构体
 	struct CollisionProperties {
 		int ID;//全局唯一身份标识
@@ -63,7 +75,9 @@ namespace Game {
 		bool &isActive;
 		int &layer;
 		//特殊碰撞体
-		SpecailType sType;
+		SpecialType sType;
+		//逻辑类型
+		ModelClass logicType;
 		//时间记录
 		float timer;
 		// 碰撞盒类型
@@ -103,6 +117,9 @@ namespace Game {
 		float &rotationDamping; //旋转阻尼
 		bool &lockXZAxi;//XZ轴锁定
 		float &rotationAdjust;//旋转修正系数
+
+
+		GameProperties gameProperties;
 		//以上三个量可以完全控制碰撞盒大小
 		CollisionProperties(glm::vec3 &pos,glm::vec3 &vel,glm::vec3 &acc,glm::quat &rot,glm::vec3 &ratioIN,bool &ifActiveIN,float &rotationDampingIN,bool &lockSXAxiIN ,
 			float &massIN,float &frictionIN,float &elasticityIN,int &layerIN,bool &triggerIN,float &rotationAdjustIN)
@@ -110,8 +127,6 @@ namespace Game {
 		,isActive(ifActiveIN),rotationDamping(rotationDampingIN),lockXZAxi(lockSXAxiIN),elasticity(elasticityIN),layer(layerIN),rotationAdjust(rotationAdjustIN)
 		{}
 	};
-
-	
 
 }
 #endif

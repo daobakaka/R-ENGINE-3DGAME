@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "LifecycleManager.h"
 
 #include "Octree.h"//八叉树交由基本控制类控制
 namespace Game {
@@ -61,7 +62,10 @@ namespace Game {
 		//鼠标移动测试
 		void MouseButtonFun(GLFWwindow* window);
 		//鼠标输入旋转逻辑
-		void ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw, bool& rightMousePressed);
+		void ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw, bool& rightMousePressed,bool pitchRotation=true);
+
+
+		void GetPlayerPosition(CustomModel* player,glm::vec3 offset);
 
 		//处理滚轮缩放逻辑
 		
@@ -102,7 +106,22 @@ namespace Game {
 		void UseDepthShaderProgram();
 		//获取shader
 		GLint GetDepthShaderProgram();
-		
+	
+
+#pragma region 新增玩家模块
+	public:
+		//第三人称玩家
+		void FrameControlMethodPlayer(GLFWwindow* window, CustomModel* player);
+		//第三人称玩家视角矩阵
+		glm::mat4 GetPlayerViewMatrix(CustomModel* palyer, glm::vec3 offset = glm::vec3(0));
+
+	private:
+
+		//第三人称物理调整键盘输入
+		void ProcessInputPhysics(GLFWwindow* window, CustomModel* player);
+#pragma endregion
+
+
 	};
 }
 

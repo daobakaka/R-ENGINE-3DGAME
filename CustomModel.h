@@ -63,7 +63,7 @@ namespace Game {
         virtual bool AttachPhysicalEngine(bool staticObj = false,float mass=1, float friction=0.05f, glm::vec3 velocity = glm::vec3(0), glm::vec3 acceleration = glm::vec3(0, -9.8f, 0),
             float elasticity = 0.5f, bool lockXZAxi = true, float rotationDampping = 0.15f,  bool trigger = false, int layer = 1, float rotationAdjust = 0.382f
             ); 
-        virtual bool AttachCollider(CollisionType collider=CollisionType::Box, SpecailType type = SpecailType::OriginalT,float radius=1);//附件碰撞体可重写
+        virtual bool AttachCollider(CollisionType collider=CollisionType::Box, SpecialType type = SpecialType::OriginalT,float radius=1);//附件碰撞体可重写
         //判断是否需要碰撞，碰撞的对象，封装在泛型基类中的vector容器里
         virtual bool GetIfCollision() override;
 
@@ -78,7 +78,7 @@ namespace Game {
 
         //获取状态
         bool GetActiveState()const ;
-        
+
 
     protected:
 #pragma region   数组初始化原则：{}只能在声明时进行初始化

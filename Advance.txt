@@ -133,3 +133,18 @@
 
 ！3D游戏
 完成基本逻辑，开始Demo开发
+
+
+以下使用简易框架进行游戏开发，同时完善逻辑：
+
+！3D游戏
+增加paler基本摄像机控制逻辑:Controller-- 设计暗黑固定视角，增加旋转逻辑等
+
+！3D游戏
+增加生命结构体:CollisionBody --GameProperties 生命值 攻击力 速度，并构建碰撞检测、生命衰减的系统
+
+！游戏逻辑
+添加碰撞体trigger判断逻辑：CollisionBody-- 现在可以设置new 的物理对象为触发器，保留碰撞检测和基本物理效果，取消摩擦 旋转 力矩 反弹 等碰撞效果
+
+！3D游戏
+增加玩家的射击方法: IntegraterdScrpts-- PlayerControl 子弹生成

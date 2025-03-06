@@ -11,7 +11,7 @@ namespace Game {
 
     CollisionBody::CollisionBody(glm::vec3& pos, glm::vec3& vel, glm::vec3& acc, glm::quat& rot, glm::vec3& ratio, int id, float& mass, float& friction, float& elasticity,
         int& layer, bool& trigger, bool& active, float& rotationDamping, bool& lockXZAxi, float &rotationAdjust,
-         bool ifStatic, CollisionType collider, float radius,SpecailType type)
+         bool ifStatic, CollisionType collider, float radius,SpecialType type, ModelClass logicType)
         :_collisionProperties(pos, vel, acc,rot,ratio,active,rotationDamping,lockXZAxi,mass,friction,elasticity,layer,trigger, rotationAdjust)//初始化结构体引用
     {       
         //这些参数在初始化时即确认，外面初始化的参数，传入之后不能改变，非引用
@@ -23,6 +23,7 @@ namespace Game {
         _collisionProperties.sType = type;
 
         //初始化重力加速度，储存在碰撞结构体中，便于计算中引用
+        _collisionProperties.logicType = logicType;
         _collisionProperties.gravity = _collisionProperties.acceleration;
         _collisionProperties.timer = 0;//初始化碰撞体时间记数
         _collisionProperties.gravityEnabled = true;//默认均开启重力，重力可以参数初始加速度来影响重力，这里的开启关闭只是用于重力的储存计算
@@ -159,6 +160,13 @@ namespace Game {
     {
         _collisionProperties.trigger = trigger;
     }
+    void CollisionBody::SetGameProperties(float health, float damage,float speed)
+    {
+       _collisionProperties.gameProperties.health = health;
+       _collisionProperties.gameProperties.damage = damage;
+       _collisionProperties.gameProperties.speed = speed;
+
+    }
     /// <summary>
     ///只有在满足一定条件或者处于active状态的时候才会进行
     /// </summary>
@@ -181,7 +189,7 @@ namespace Game {
     void CollisionBody::RegisterCollisionBody()
     {
         //这里静态大物体暂时采用专门的逻辑，如地面,玩儿家等， 这样可以保持持续性检测
-        if (_collisionProperties.sType != SpecailType::OriginalT)
+        if (_collisionProperties.sType != SpecialType::OriginalT)
         {
             CollisionProps[_collisionProperties.ID] = &_collisionProperties;
         }
@@ -232,8 +240,8 @@ namespace Game {
     void CollisionBody::ResolveCollision(CollisionProperties* other) {
         
       //判断碰撞体不为触发器，且自身碰撞结构不为静态,则进行碰撞计算
-        if (!other->trigger&&!_collisionProperties.staticObj) {
-          //  std::cout << "外部计算碰撞" <<std::endl;
+        if (!_collisionProperties.staticObj) {
+          // std::cout << "外部计算碰撞" <<std::endl;
             //计算碰撞法向量
             auto collisionNormal = CalculateCollisionNormal(other);
             //更新物理属性中的它摩擦系数值，便于后期计算
@@ -245,32 +253,35 @@ namespace Game {
             // 如果相对速度大于0，则发生碰撞
             if (relativeVelocity >1.05- _collisionProperties.elasticity) {
                
-               // std::cout << _collisionProperties.ID<<"内部计算碰撞" << std::endl;
+              // std::cout << _collisionProperties.ID<<"内部计算碰撞" << std::endl;
+                //触发非静态非trigger碰撞计算
+                CalculateGameParameters(other);
+                //如果为触发器，则不参与物理计算,自身为触发器也不应该参数弹性等计算
+                if (!other->trigger&&!_collisionProperties.trigger)
+                {    // 弹性系数（恢复系数）
+                    float e = _collisionProperties.elasticity;  //从物理碰撞模块中读取弹性系数
 
-                // 弹性系数（恢复系数）
-                float e = _collisionProperties.elasticity;  //从物理碰撞模块中读取弹性系数
+                    // 计算冲量
+                    float impulse = -(1 + e) * relativeVelocity /
+                        (1 / _collisionProperties.mass + 1 / other->mass);
 
-                // 计算冲量
-                float impulse = -(1 + e) * relativeVelocity /
-                    (1 / _collisionProperties.mass + 1 / other->mass);
+                    // 更新当前物体的速度
+                    glm::vec3 newVelocity = _collisionProperties.velocity + impulse * collisionNormal / _collisionProperties.mass;
 
-                // 更新当前物体的速度
-                glm::vec3 newVelocity = _collisionProperties.velocity + impulse * collisionNormal / _collisionProperties.mass;
-
-                // 设置更新后的速度
-                _collisionProperties.velocity = newVelocity;
+                    // 设置更新后的速度
+                    _collisionProperties.velocity = newVelocity;
 
 
 
-                // 计算碰撞点到质心的向量
-                glm::vec3 r = _collisionProperties.position - other->position;
+                    // 计算碰撞点到质心的向量
+                    glm::vec3 r = _collisionProperties.position - other->position;
 
-                // 计算扭矩
-                glm::vec3 torque = glm::cross(r, impulse * collisionNormal);
+                    // 计算扭矩
+                    glm::vec3 torque = glm::cross(r, impulse * collisionNormal);
 
-                // 临时计算角速度,乘一个矫正系数rotationPar --0.25f
-                _collisionProperties.angularVelocity =_collisionProperties.rotationAdjust*r*torque*(1-_collisionProperties.rotationDamping) / _collisionProperties.mass; // 假设转动惯量为质量
-              
+                    // 临时计算角速度,乘一个矫正系数rotationPar --0.25f
+                    _collisionProperties.angularVelocity = _collisionProperties.rotationAdjust * r * torque * (1 - _collisionProperties.rotationDamping) / _collisionProperties.mass; // 假设转动惯量为质量
+                }
             }
 
         }
@@ -335,31 +346,35 @@ namespace Game {
             {
                 _collisionProperties.velocity = glm::vec3(0.0f);
             }
-          
-            //增加摩擦系数对物体运动的影响
-            if (_collisionProperties.isCollision)
+            //如果自身非触发器，才进行物理碰撞修正
+            if (!_collisionProperties.trigger)
             {
-                float totalFriction = (_collisionProperties.friction + _collisionProperties.otherFriction) / 1.5f;
-        
-                // 计算摩擦加速度
-                glm::vec3 frictionAcceleration = totalFriction * _collisionProperties.gravity.y * glm::normalize(glm::vec3(_collisionProperties.velocity.x, 0, _collisionProperties.velocity.z));
-                //当水平速度大于某个值时
-                if (glm::dot(glm::vec2(_collisionProperties.velocity.x, _collisionProperties.velocity.z), glm::vec2(_collisionProperties.velocity.x, _collisionProperties.velocity.z)) > 0.01f)
-                {  // 更新物体的速度
-                    _collisionProperties.velocity += frictionAcceleration * deltaTime;
-                }
-                else
+
+
+                //增加摩擦系数对物体运动的影响
+                if (_collisionProperties.isCollision)
                 {
-                    _collisionProperties.velocity.x = 0;
-                    _collisionProperties.velocity.z = 0;
+                    float totalFriction = (_collisionProperties.friction + _collisionProperties.otherFriction) / 1.5f;
+
+                    // 计算摩擦加速度
+                    glm::vec3 frictionAcceleration = totalFriction * _collisionProperties.gravity.y * glm::normalize(glm::vec3(_collisionProperties.velocity.x, 0, _collisionProperties.velocity.z));
+                    //当水平速度大于某个值时
+                    if (glm::dot(glm::vec2(_collisionProperties.velocity.x, _collisionProperties.velocity.z), glm::vec2(_collisionProperties.velocity.x, _collisionProperties.velocity.z)) > 0.01f)
+                    {  // 更新物体的速度
+                        _collisionProperties.velocity += frictionAcceleration * deltaTime;
+                    }
+                    else
+                    {
+                        _collisionProperties.velocity.x = 0;
+                        _collisionProperties.velocity.z = 0;
+                    }
                 }
-            }
-                 // 更新旋转角度（四元数）
-                 float  angularSpeedSquared = 0;              
+                // 更新旋转角度（四元数）
+                float  angularSpeedSquared = 0;
                 if (_collisionProperties.lockXZAxi) {
                     _collisionProperties.angularVelocity.x = 0.0f; // 锁定 X 轴
                     _collisionProperties.angularVelocity.z = 0.0f; // 锁定 Z 轴
-                     angularSpeedSquared = glm::dot(_collisionProperties.angularVelocity, _collisionProperties.angularVelocity); // 重新计算角速度的平方长度
+                    angularSpeedSquared = glm::dot(_collisionProperties.angularVelocity, _collisionProperties.angularVelocity); // 重新计算角速度的平方长度
                 }
                 else
                 {
@@ -392,21 +407,22 @@ namespace Game {
                     // 角速度过小，停止旋转
                     _collisionProperties.angularVelocity = glm::vec3(0.0f);
                 }
-            
+                //防止地板穿模
+                if (_collisionProperties.isCollision)
+                {
+                    if (_collisionProperties.velocity.y < 0 && _collisionProperties.position.y <= _collisionProperties.ratio.y)
+                    {
+                        _collisionProperties.position.y = _collisionProperties.ratio.y;
+                        _collisionProperties.velocity.y = 0;
+                    }
+                }
 
+            }
 
             // 更新位置：s = s0 + v * t
             _collisionProperties.position += _collisionProperties.velocity * deltaTime;
             
-            //防止地板穿模
-            if (_collisionProperties.isCollision)
-            {
-                if (_collisionProperties.velocity.y <0&&_collisionProperties.position.y<=_collisionProperties.ratio.y)
-                {
-                    _collisionProperties.position.y = _collisionProperties.ratio.y;
-                    _collisionProperties.velocity.y = 0;
-                }
-            }
+   
         }
     }
 
@@ -417,7 +433,7 @@ namespace Game {
         {
             switch (pair.second->sType)
             {
-            case SpecailType::BasePlane:
+            case SpecialType::BasePlane:
                 if (_collisionProperties.position.y > -10)
                 {
                     _potentialCollisions.push_back(pair.second);
@@ -425,9 +441,24 @@ namespace Game {
                 }
                 break;
 
+           
+                //玩家强碰撞
+            case SpecialType::SPlayer:               
+                    _potentialCollisions.push_back(pair.second);
+                 
+               break;
+
+
+
             default:
                 break;
+
+
             }
+
+
+
+
         }
 
     }
@@ -466,6 +497,21 @@ namespace Game {
             }
             return false; // 碰撞未发生
         }
+    }
+
+    void CollisionBody::CalculateGameParameters(CollisionProperties* other)
+    {
+       
+        if (other->logicType==ModelClass::TestPhysics&&_collisionProperties.logicType!=ModelClass::TestPhysics)
+        {
+            _collisionProperties.gameProperties.health -= other->gameProperties.damage;
+           std::cout << _collisionProperties.ID << "生命值为：" << _collisionProperties.gameProperties.health << std::endl;
+        }
+
+
+    
+
+    
     }
 
 

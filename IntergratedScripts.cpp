@@ -1,6 +1,11 @@
 #include "IntergratedScripts.h"
+#include "ScriptModel.h"
+#include "CustomModel.h"
+#include "LifecycleManager.h"
 using namespace Game;
 IntergratedScripts *IntergratedScripts:: instance = nullptr;//静态变量必须在CPP类中声明
+extern LifecycleManager<CustomModel>* manager;
+
 
 IntergratedScripts *IntergratedScripts::GetInstance()
 {
@@ -16,6 +21,8 @@ IntergratedScripts::IntergratedScripts()
     gen = std::mt19937(rd());  // 初始化梅森旋转引
      randomFloat = 0.1f;
      randomInt = 1;
+     //初始化控制器
+     manager = LifecycleManager<CustomModel>::GetInstance();
 }
 
 IntergratedScripts::~IntergratedScripts()
@@ -102,6 +109,32 @@ void Game::IntergratedScripts::ActorButtfly(GameObject* gameObject)
     float rotY = cos(time * 1.7f) * 0.1f;
     float rotZ = sin(time * 2.3f) * 0.1f;
     gameObject->rotation *= glm::quat(glm::vec3(rotX, rotY, rotZ));
+}
+
+void Game::IntergratedScripts::PlayerControl(GLFWwindow* window,CustomModel* other)
+{
+
+
+        //角色控制按钮
+        if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+
+            std::cout << "press F" << std::endl;
+            //生成一发子弹
+            auto* bullet = new GameBullet("commonLight", ModelDic["baseSphere"], false, false, true);
+            bullet->SetVariant(ModelClass::PlayerBullet);
+            bullet->Initialize(other->position + glm::vec3(0, 10, 2), glm::quat(glm::vec3(0)), glm::vec3(1.0f));
+            manager->RegisterObject(bullet);
+            bullet->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
+            bullet->AttachPhysicalEngine();
+            bullet->AttachCollider();
+            bullet->GetComponent<PhysicalEngine>()->SetMass(0.1f);//给子弹较小的质量
+            bullet->GetComponent<PhysicalEngine>()->SetAcceleration(glm::vec3(0, -3.0f, 0));//模拟子弹受较小的重力加速度
+            bullet->GetComponent<CollisionBody>()->SetTrigger(true);//被子弹碰撞的物体不会受到物理系统的影响，子弹为触发器，只受到速度和加速度影响
+            bullet->GetComponent<CollisionBody>()->SetGameProperties(1, 1, 1);//设置子弹的攻击力为1
+            bullet->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, -50));//给子弹10的前向速度   
+        }
+
+
 }
 
 

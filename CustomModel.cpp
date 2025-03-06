@@ -630,7 +630,7 @@ bool Game::CustomModel::AttachPhysicalEngine(bool staticObj,float mass, float fr
 /// <param name="radians"></param>
 /// <param name="ratio"></param>
 /// <returns></returns>
-bool CustomModel::AttachCollider(CollisionType collider , SpecailType type,float radius)
+bool CustomModel::AttachCollider(CollisionType collider , SpecialType type,float radius)
 {
    
     if (_physicsBody==nullptr)
@@ -643,7 +643,7 @@ bool CustomModel::AttachCollider(CollisionType collider , SpecailType type,float
                                       _physicsBody->GetAcceleration(),rotation,scale,ID,_physicsBody->GetMass(),_physicsBody->GetFriction(),
                                     _physicsBody->GetElasticity(),_physicsBody->GetLayer(),_physicsBody->GetTrigger(),_physicsBody->GetActive()
                                     ,_physicsBody->GetDamping(),_physicsBody->GetLockState(),_physicsBody->GetRotationAdjust(), 
-            _physicsBody->GetStatic(),collider,radius,type
+            _physicsBody->GetStatic(),collider,radius,type,this->GetVariant()
             );
    
     

@@ -1,7 +1,11 @@
 #include "ScriptModel.h"
 #include "ShaderManager.h"
+#include "LifecycleManager.h"
 using namespace Game;
 #pragma region 测试蝴蝶
+//extern LifecycleManager<CustomModel>* manager;//获取管理器控制器
+
+
 void ButterflyScript::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
 
@@ -457,3 +461,60 @@ void ButterflyScriptShader::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 }
 
 #pragma endregion
+
+#pragma region 玩家模型
+
+void GamePlayer::UpdateVariant(glm::mat4 view, glm::mat4 projection)
+{
+
+
+
+
+    
+
+
+}
+void Game::GamePlayer::Start()
+{
+
+    //调用公共初始化函数，初始化流程控制器变量
+    _manager= LifecycleManager<CustomModel>::GetInstance();
+    //获取控制器组件
+    _controller = Controller::GetInstance();
+}
+
+void Game::GamePlayer::PlayerController(GLFWwindow* window)
+{    //角色控制按钮
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+
+        std::cout << "press O" << std::endl;
+            //生成一发子弹
+        auto* bullet = new GameBullet("noneLight", ModelDic["baseSphere"], false, false, true);
+        bullet->SetVariant(ModelClass::PlayerBullet);
+        bullet->Initialize(position + glm::vec3(0, 2, 2), glm::quat(glm::vec3(0)), glm::vec3(0.3f));
+        _manager->RegisterObject(bullet);
+        bullet->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
+        bullet->AttachPhysicalEngine();
+        bullet->AttachCollider();
+        bullet->GetComponent<PhysicalEngine>()->SetMass(0.1f);//给子弹较小的质量
+        bullet->GetComponent<PhysicalEngine>()->SetAcceleration(glm::vec3(0, -2.0f, 0));//模拟子弹受较小重力加速度
+        bullet->GetComponent<CollisionBody>()->SetTrigger(true);//被子弹碰撞的物体不会受到物理系统的影响
+        bullet->GetComponent<CollisionBody>()->SetGameProperties(1, 1, 1);//设置子弹的攻击力为1
+        bullet->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));//给子弹10的前向速度   
+    }
+
+}
+
+
+#pragma endregion
+#pragma region 游戏道具板块
+
+
+void Game::GameBullet::UpdateVariant(glm::mat4 view, glm::mat4 projection)
+{
+    //给予子弹10 速度
+   // this->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));
+
+}
+#pragma endregion
+

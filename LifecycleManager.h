@@ -26,11 +26,15 @@ namespace Game {
         void SetActive(T* object, bool active);
         //销毁逻辑
         void DestroyObject(T* object);
+        //注册特殊对象，方便由名字获取
+        void RegisterSpecialObjects(T* object,const char * name);
 
         std::unordered_map<int, T*>& GetNativeObjects();
         std::unordered_map<int, T*>& GetVariantObjects();
         //这里的对象采取遍历的方法进行处理，针对同种变体的对象，进行复原，必须要对setActiveFalse的结构才使用
         std::unordered_map<int, T*>& GetCacheObjects();
+
+        std::unordered_map<const char*, T*>& GetspecialObjects();
 
         void StartAll();
         void UpdateAll(glm::mat4 view, glm::mat4 projection);
@@ -49,6 +53,7 @@ namespace Game {
         std::unordered_map<int, T*> nativeObjects;
         std::unordered_map<int, T*> variantObjects;
         std::unordered_map<int, T*> cacheObjects;
+        std::unordered_map<const char*, T*> specialObjects;
     };
 
     template <typename T>
@@ -135,6 +140,13 @@ namespace Game {
         object->DestroySelf();
     }
 
+    template<typename T>
+     void LifecycleManager<T>::RegisterSpecialObjects(T* object,const char* name)
+    {
+         specialObjects[name] = object;
+
+    }
+
     template <typename T>
     std::unordered_map<int, T*>& LifecycleManager<T>::GetNativeObjects() {
         return nativeObjects;
@@ -150,6 +162,12 @@ namespace Game {
     {
         return cacheObjects;
     }
+
+     template<typename T>
+ std::unordered_map<const char*, T*>& LifecycleManager<T>::GetspecialObjects()
+     {
+     return specialObjects;
+     }
 
     template <typename T>
     void LifecycleManager<T>::StartAll() {

@@ -28,6 +28,8 @@ Controller::Controller()
     view = glm::lookAt(position, position + front, up);
     projection = glm::perspective(glm::radians(fov), aspect, nearPlane, farPlane);//初始化
     instance = this;  // 单例的初始化
+    //初始化控制器
+
 
     ////八叉树在controller基本控制类中初始化
     //OCTREET = new Octree(glm::vec3(0), glm::vec3(1000,1000,1000),5,1000);
@@ -180,7 +182,7 @@ void Controller::MouseButtonFun(GLFWwindow* window)//手动测试方法，取消GLAPI监听
     }
 }
 
-void Controller::ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw, bool& rightMousePressed)
+void Controller::ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw, bool& rightMousePressed,bool pitchRotation)
 {
     
     double xpos, ypos;
@@ -189,12 +191,6 @@ void Controller::ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw,
     
     if (rightMousePressed) {  // 只有按住右键时才进行旋转
 
-        //yaw = 0;//要先归零，因为现有的视图矩阵，已经被储存更新
-        //pitch = 0;
-
-        // std::cout << width<< "and" << height << std::endl;
-
-      //  glfwSetCursorPos(window, windowWidth / 2.0, windowHeight / 2.0); // 每次移动后将鼠标位置重置为屏幕中心
 
         if ((xpos - tempX) * (xpos - tempX) + (ypos - tempY) * (ypos - tempY) > 1.0f)//一次点击判断只有不相等时，才移动，也就时移动鼠标时才移动
         {
@@ -204,11 +200,12 @@ void Controller::ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw,
             float offsetY = static_cast<float>(windowHeight / 2.0 - ypos); // Y轴反向，屏幕上方是负方向
             // std::cout << offsetX << "and" << offsetY << std::endl;//这个坐标值是准确的
               // 设置旋转的灵敏度
-            float sensitivity = 0.01f;
-            // usingn = (offsetY > 0) ? 1 : -1;
+            float sensitivity = pitchRotation ? 0.01f : 0.1f;
+             // usingn = (offsetY > 0) ? 1 : -1;
 
              // 更新旋转角度
             yaw += (offsetX - lastX) * sensitivity;   // 水平旋转，绕Y轴旋转
+            if(pitchRotation)
             pitch += (  offsetY-lastY) * sensitivity; // 垂直旋转，绕X轴旋转
           //  std::cout << pitch << std::endl;//流操作 在这里每一帧都打印0！
             // 限制俯仰角度，避免翻转
@@ -224,12 +221,117 @@ void Controller::ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw,
     }
 }
 
+
+/// <summary>
+/// 通用视角方法
+/// </summary>
+/// <param name="window"></param>
 void Controller::FrameControlMethod(GLFWwindow* window)
 {
     MouseButtonFun(window);
     ProcessInput(window, position);
     ProcessMouseInput(window, pitch, yaw, rightMousePressed);
 }
+/// <summary>
+/// 三人称玩家视角方法
+/// </summary>
+/// <param name="window"></param>
+/// <param name="player"></param>
+void Game::Controller::FrameControlMethodPlayer(GLFWwindow* window, CustomModel* player)
+{
+
+
+   // MouseButtonFun(window);
+    ProcessInputPhysics(window, player);
+}
+
+glm::mat4 Game::Controller::GetPlayerViewMatrix(CustomModel* player,glm::vec3 offset)
+{
+    if (rightMousePressed)
+    {
+        // 计算前向向量，绕 X 轴 (pitch) 和 Y 轴 (yaw) 旋转
+        glm::vec3 _front;
+        _front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));  // 水平和垂直方向旋转影响 X
+        _front.y = sin(glm::radians(pitch));  // 仅 pitch 影响 Y（俯仰）
+        _front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));  // 水平旋转影响 Z
+
+        // 归一化前向向量
+        front = glm::normalize(_front);
+
+        //// 重新计算右向量和上向量
+        //right = glm::normalize(glm::cross(front, up));  // 右向量是前向向量和上向量的叉积
+        //up = glm::normalize(glm::cross(right, front));   // 上向量是右向量和前向向量的叉积
+    }
+    // 重新计算右向量和上向量
+    right = glm::normalize(glm::cross(front, up));  // 右向量是前向向量和上向量的叉积
+    up = glm::normalize(glm::cross(right, front));   // 上向量是右向量和前向向量的叉积
+
+    // 通过 position, front 和 up 向量计算视图矩阵
+    return glm::lookAt(player->position+offset,player-> position + front, up);
+
+}
+
+void Game::Controller::ProcessInputPhysics(GLFWwindow* window, CustomModel* player)
+{
+    glm::vec3 velocity = player->GetComponent<PhysicalEngine>()->GetVelocity();
+    if (glm::dot(velocity, velocity) < 500)
+    {
+
+    
+
+    // 检查按键输入
+    float moveSpeed = 0.5f;  // 控制移动的速度
+
+    // 计算摄像机的右向向量（水平）和上向向量
+    //glm::vec3 right = glm::normalize(glm::cross(front, up));  // 右向向量
+  //  glm::vec3 up = glm::normalize(glm::cross(right, front));       // 上向向量
+
+    // 前进和后退，保持水平分量
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        // 前进：在水平面内移动（仅改变X和Z坐标）
+        player->GetComponent<PhysicalEngine>()->GetVelocity() += glm::vec3(front.x, 0.0f, front.z) * moveSpeed;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        // 后退：在水平面内移动（仅改变X和Z坐标）
+        player->GetComponent<PhysicalEngine>()->GetVelocity() -= glm::vec3(front.x, 0.0f, front.z) * moveSpeed;
+    }
+
+    // 左右移动，始终保持在水平面内
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        // 左移：沿右向向量的方向移动（仅改变X和Z坐标）
+        player->GetComponent<PhysicalEngine>()->GetVelocity() -= glm::vec3(right.x, 0.0f, right.z) * moveSpeed;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        // 右移：沿右向向量的方向移动（仅改变X和Z坐标）
+        player->GetComponent<PhysicalEngine>()->GetVelocity() += glm::vec3(right.x, 0.0f, right.z) * moveSpeed;
+    }
+
+    // 空格键：竖直方向的移动
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        player->GetComponent<PhysicalEngine>()->GetVelocity() += up * moveSpeed;  // 上移
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+        player->GetComponent<PhysicalEngine>()->GetVelocity() -= up * moveSpeed;  // 下移
+    }
+}
+        // 定义旋转速度（角度：单位为弧度），可结合 deltaTime 使旋转平滑
+        float rotationSpeed = 0.05f; // 每帧旋转的弧度数，视实际需求调整
+
+    // 如果鼠标左键被按下，则向左旋转（绕 Y 轴正向旋转）
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        player->rotation = glm::angleAxis(rotationSpeed, glm::vec3(0, 1, 0)) * player->rotation;
+    }
+    // 如果鼠标右键被按下，则向右旋转（绕 Y 轴负向旋转）
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+        player->rotation = glm::angleAxis(-rotationSpeed, glm::vec3(0, 1, 0)) * player->rotation;
+    }
+
+    
+}
+
 
 void Game::Controller::ProcessMouseScrollGlobal(float yoffset)
 {

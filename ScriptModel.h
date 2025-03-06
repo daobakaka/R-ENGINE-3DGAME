@@ -5,6 +5,8 @@
 
 namespace Game
 {
+
+
 #pragma region 特殊模型
 	//全局唯一标识
 	//extern int TGUID;
@@ -126,7 +128,9 @@ namespace Game
 
 #pragma region 实例化模型
 
-
+	/// <summary>
+	/// 实例化模型
+	/// </summary>
 	class CustomModelInstance :public CustomModel
 	{
 	public:
@@ -164,7 +168,9 @@ namespace Game
 #pragma endregion
 
 #pragma region  测试蝴蝶模型
-
+	/// <summary>
+	/// 用于测试的蝴蝶，后期可更改
+	/// </summary>
 	class ButterflyScriptShader :public CustomModelShader
 	{
 	public:
@@ -178,6 +184,54 @@ namespace Game
 	};
 
 #pragma endregion
+
+
+#pragma region 玩家模型
+	/// <summary>
+	/// 新建玩家，拟采用类似暗黑的锁定视角的模式
+	/// </summary>
+
+	class GamePlayer :public CustomModelShader
+	{
+	public:
+		using CustomModelShader::CustomModelShader;
+
+		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
+
+		void Start() override;//重写初始化代码
+		
+	private:
+		LifecycleManager<CustomModel>* _manager;
+		Controller* _controller;
+
+		void PlayerController(GLFWwindow* window );
+
+
+	};
+
+
+
+
+#pragma endregion
+#pragma region 游戏道具板块
+
+
+	/// <summary>
+/// 子弹
+/// </summary>
+	class GameBullet :public CustomModelShader
+	{
+
+	public:
+		using CustomModelShader::CustomModelShader;
+		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
+
+
+
+	};
+#pragma endregion
+
+	
 }
 
 #endif // ! SCRIPTMODEL_H

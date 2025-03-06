@@ -47,6 +47,10 @@ namespace Game {
 		void TestUpdateFun(GameObject* gameObject);
 		//其他对象方法
 		void ActorButtfly(GameObject *obj);
+	     
+		//玩家控制方法，综合控制器
+		void PlayerControl(GLFWwindow* window, CustomModel* other);
+		
 		
 
 

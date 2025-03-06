@@ -39,11 +39,11 @@ extern const char* colorlightsArraySourceFragmentShaderSource;
 //场景方法声明
 extern GLFWwindow* GLinitializeT();
 extern void GameAwakeT();
-extern void GameStartT();
+extern CustomModel* GameStartT();
 extern void LightInitialization();
 extern void SourceInitialize();
 extern void GameUpdateShadowRenderT();
-extern void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection);
+extern void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window);
 //控制组件标识
 extern Controller* controller;
 extern LifecycleManager<CustomModel>* manager;
@@ -83,11 +83,11 @@ int GLins() {
     SourceInitialize();
     //特殊构建,综合类构建方法，这里构建坐标系，编译通用着色器,天空盒的渲染是特殊的立方体贴图，并且去除摄像机平移，在这里单独声明
     controller->BuildWidgetShader(meshData, manager);
-    shaderManager->IntergratedShaderCompile(); 
+    shaderManager->IntegratedShaderCompile(); 
     auto* skybox = new Cube();
 
     //对象创建
-    GameStartT();
+  auto* gamePlayer = GameStartT();
     //灯光初始化
     LightInitialization();
     DEBUGLOG("开始进入GL");
@@ -103,9 +103,9 @@ int GLins() {
         // 渲染代码
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
         // 调用函数处理键盘输入并更新物体位置,这里采用自定以的帧综合控制方法
-        controller->FrameControlMethod(window);
+        controller->FrameControlMethodPlayer(window,gamePlayer);
         // 获取视图矩阵和投影矩阵
-        glm::mat4 view = controller->GetViewMatrix();//摄像机的朝向
+        glm::mat4 view = controller->GetPlayerViewMatrix(gamePlayer, glm::vec3(0, 30, 100));//摄像机的朝向
         glm::mat4 projection = controller->GetProjectionMatrix();//摄像机的裁剪方向
         //为通用shader 传入共用视图及透视矩阵,这里改善了方法，设置时直接传入名字调用相关shader，
         shaderManager->SetMat4("commonLight", "view", view);
@@ -122,15 +122,13 @@ int GLins() {
         //主逻辑
         if (true)
         {
-            GameUpdateMainLogicT(view, projection);
+            GameUpdateMainLogicT(view, projection,window);
             //保持天空盒在其他物体之前渲染,渲染天空盒
             skybox->Draw(view, projection);
             //控制器更新方法1、基本更新2、变体更新
             manager->UpdateAll(view, projection);
             manager->UpdateAllVariant(view, projection);
         }
- /*       manager->UpdateAll(view, projection);
-        manager->UpdateAllVariant(view, projection);*/
         //字体渲染
         cusText->RenderText("FPS :" + std::to_string(scripts->TUpdateFPS()), 2200.0f, 1150.0f, .70f, glm::vec3(1.0f, .50f, 1.0f));//帧率渲染
         //设置时间控制器，将协程的方法在主循环中进行时间控制

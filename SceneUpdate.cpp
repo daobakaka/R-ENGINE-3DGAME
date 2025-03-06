@@ -57,7 +57,7 @@ void GameUpdateShadowRenderT()
 
 
 
-void GameUpdateMainLogicT(glm::mat4 view,glm::mat4 projection)
+void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window)
 {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
@@ -110,9 +110,18 @@ void GameUpdateMainLogicT(glm::mat4 view,glm::mat4 projection)
         }
         else if (item.second->GetVariant() == ModelClass::TestPhysics)
         {
-            if(item.second->position.y<-10)
+            //设置生命值小于0时，物体消失
+            if(item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health<=0)
             toActiveFalse .push_back(item.second);
         }
+        else if (item.second->GetVariant()==ModelClass::Player)
+        { 
+            //玩家按键生成子弹
+            scripts->PlayerControl(window, item.second);
+        }
+
+
+       
     }
 
     //遍历缓存池

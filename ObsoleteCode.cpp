@@ -522,5 +522,45 @@ if (false)
     }
 }
 
+
+
+// 废弃查找最近距离目标的代码
+float minDistSq = std::numeric_limits<float>::max();
+glm::vec3 closestObjPos;
+bool found = false;
+
+// 遍历变体对象，利用差向量的平方长度（dot(diff, diff)）判断最小距离
+for (auto& item : _manager->GetVariantObjects())
+{
+    // 判断目标类型（此处仅挑选 TestPhysics 类型，后期可扩展为怪物等）
+    if (item.second->GetVariant() == ModelClass::TestPhysics)
+    {
+        glm::vec3 diff = item.second->position - position;
+        float distSq = glm::dot(diff, diff);  // 直接比较平方距离，避免 sqrt
+        if (distSq < minDistSq)
+        {
+            minDistSq = distSq;
+            closestObjPos = item.second->position;
+            found = true;
+        }
+    }
+}
+
+if (found)
+{
+    // 计算玩家到目标的方向，忽略 Y 轴（只考虑水平面）
+    glm::vec3 dir = closestObjPos - position;
+    dir.y = 0.0f;
+    // 检查方向向量长度是否足够，防止除 0
+    if (glm::dot(dir, dir) > 0.0001f)
+    {
+        dir = glm::normalize(dir);
+        // 利用 atan2 计算 yaw 角度（注意：0弧度对应默认前方 (0,0,-1)）
+        float yaw = glm::atan(dir.x, -dir.z);
+        // 根据 yaw 角度生成绕 Y 轴旋转的四元数，使玩家直接面向目标
+        rotation = glm::angleAxis(yaw, glm::vec3(0, 1, 0));
+    }
+}
+
 /
 #endif

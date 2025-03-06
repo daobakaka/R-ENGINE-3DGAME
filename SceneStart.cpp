@@ -19,6 +19,7 @@
 #include <chrono>
 #include <thread>
 #include "ShaderManager.h"
+#define PI 3.1415926  //定义PI宏
 
 using namespace Game;
 //泛型类的实例化指针,这里最初始
@@ -130,30 +131,44 @@ void LightInitialization()
 //初始化用于渲染阴影的平行光深度图，可以在类中直接构造，编译阴影着色器
     lightRender->CreateShadowMapForParallelLight();
     //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
-    //auto pointLight2 = lightSpawner->SpawPointLight(glm::vec3(2, 2, 2), glm::vec3(1, 1, 1), 10);
-    //auto pointLight = lightSpawner->SpawPointLight(glm::vec3(3, 0, 0), glm::vec3(0, 1, 1), 10);
-    //auto pointLight3 = lightSpawner->SpawPointLight(glm::vec3(0, 3, 0), glm::vec3(0, 1, 0), 20);
-    //auto pointLight4 = lightSpawner->SpawPointLight(glm::vec3(-3, 0, -3), glm::vec3(0, 0, 1), 20);
+    auto pointLight2 = lightSpawner->SpawPointLight(glm::vec3(2, 2, 2), glm::vec3(1, 1, 1), 10);
+    auto pointLight = lightSpawner->SpawPointLight(glm::vec3(3, 0, 0), glm::vec3(0, 1, 1), 10);
+    auto pointLight3 = lightSpawner->SpawPointLight(glm::vec3(0, 3, 0), glm::vec3(0, 1, 0), 20);
+    auto pointLight4 = lightSpawner->SpawPointLight(glm::vec3(-3, 0, -3), glm::vec3(0, 0, 1), 20);
 
     //平行光使用灯光生成器生成，默认一个
     auto parallelLight = lightSpawner->SpawParallelLight(glm::vec3(-1), glm::vec3(1, 1, 1), 10);//使用默认值 强度10
     //手电筒光使用灯光生成器生成，默认支持4个
-    //auto splashLight = lightSpawner->SpawFlashLight(glm::vec3(0, 5, -2), glm::vec3(0, -1, 0));//使用默认值 强度10
+    auto splashLight = lightSpawner->SpawFlashLight(glm::vec3(0, 5, -2), glm::vec3(0, -1, 0));//使用默认值 强度10
 
 }
-void GameStartT()
+CustomModel* GameStartT()
 {
-
-
     //生成基础面 默认第一，ID 为0
-
     auto* basePlane = new  CustomModelShader("commonLight", ModelDic["basePlane"], false, false, false);
     basePlane->SetVariant(ModelClass::StaticPlane);
     basePlane->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(100.0f, 0.1f, 100.0f));
     manager->RegisterObject(basePlane);
     basePlane->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
     basePlane->AttachPhysicalEngine(true);//声明为静态类型，目前注册为1
-    basePlane->AttachCollider(CollisionType::Box,SpecailType::BasePlane,1);//注册特殊碰撞体--地板
+    basePlane->AttachCollider(CollisionType::Box,SpecialType::BasePlane,1);//注册特殊碰撞体--地板
+
+    //生成游戏玩家
+    auto* gamePlayer = new  GamePlayer("commonLight", ModelDic["testMonkey"], true, true, true);
+    gamePlayer->SetVariant(ModelClass::Player);
+    gamePlayer->Initialize(glm::vec3(0.0f, 5.0f, 0.0f), glm::quat(glm::vec3(0.0f,0, 0.0f)), glm::vec3(3));
+    manager->RegisterObject(gamePlayer);
+    manager->RegisterSpecialObjects(gamePlayer, "player");//注册入特殊对象储存器，方便在在玩家类内部使用，且在更新方法中引用
+    gamePlayer->AttachTexture(TextureDic["grass"][0], 0, glm::vec2(1, 1));
+    gamePlayer->AttachPhysicalEngine();
+    gamePlayer->GetComponent<PhysicalEngine>()->SetElasticity(0);//设置弹性系数为0
+    gamePlayer->GetComponent<PhysicalEngine>()->SetFriction(0.9f);//设置摩擦系数为0.5，减少滑动
+    gamePlayer->GetComponent<PhysicalEngine>()->SetRotationDamping(1);//设置旋转阻尼为1，避免碰撞旋转
+    gamePlayer->GetComponent<PhysicalEngine>()->SetRotationAdjust(1);//同时设置碰撞调整系数为1，杜绝物理系统的碰撞旋转
+    gamePlayer->GetComponent<PhysicalEngine>()->SetMass(5);//设置较大质量，增强碰撞抗性
+    gamePlayer->AttachCollider(CollisionType::Box,SpecialType::SPlayer,1);//注册为玩家，设置较小碰撞半径避免与地面直接摩擦        
+    gamePlayer->GetComponent<CollisionBody>()->SetGameProperties(1000, 20, 1);//设置玩家攻击力
+
 
     
     //测试小球
@@ -235,7 +250,7 @@ void GameStartT()
     testButterfly->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
     testButterfly->AttachAnimationController(AnimationDic["butterfly"]["fly"]);
 
-
+    return gamePlayer;
     //CustomModel* testMonkey = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["testMonkey"], false, true);
     //testMonkey->SetVariant(ModelClass::CubeTestE);
     //testMonkey->Initialize(glm::vec3(-0.0f, 3.0f, 2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(0.5f));
