@@ -147,4 +147,4 @@
 添加碰撞体trigger判断逻辑：CollisionBody-- 现在可以设置new 的物理对象为触发器，保留碰撞检测和基本物理效果，取消摩擦 旋转 力矩 反弹 等碰撞效果
 
 ！3D游戏
-增加玩家的射击方法: IntegraterdScrpts-- PlayerControl 子弹生成，待优化
+增加玩家的射击方法: IntegraterdScrpts-- PlayerControl 子弹生成，待优化，有卡顿现象
