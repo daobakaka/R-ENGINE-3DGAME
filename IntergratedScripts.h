@@ -51,7 +51,10 @@ namespace Game {
 		//玩家控制方法，综合控制器
 		void PlayerControl(GLFWwindow* window, CustomModel* other);
 		
-		
+	private:
+		//玩家控制模块
+		float _shootPrepare;
+		bool _enableShoot;
 
 
 	};

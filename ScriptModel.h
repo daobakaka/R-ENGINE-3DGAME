@@ -118,7 +118,13 @@ namespace Game
 
 		virtual void RenderingTexture()override;
 
+		virtual void RenderingTextureAdditional() override;//重写附件纹理方法;
+
+		virtual void RenderingLight();//通过着色器的光照渲染
+
 	protected:
+		LightSpawner* lightSpawner;
+
 
 	};
 
@@ -143,7 +149,8 @@ namespace Game
 			bool ifShadow,
 			int instanceCount = 100,  // 实例化数量，默认为 100
 			glm::vec3 positionOffset = glm::vec3(0.0f),  // 平移偏移，默认为 (0, 0, 0)
-			glm::vec3 rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f)); // 旋转增量，通过 rotationAxis 控制
+			glm::vec3 rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f),
+			ModelClass type = ModelClass::InstanceCube); // 旋转增量，通过 rotationAxis 控制
 
 
 		virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
@@ -154,7 +161,7 @@ namespace Game
 
 
 		virtual void RenderingTexture()override;
-		virtual void GenerateInstanceMatrices();
+		virtual void GenerateInstanceMatrices(ModelClass type=ModelClass::InstanceCube);
 
 	protected:
 		int _instanceCount;  // 存储实例数量
@@ -199,6 +206,8 @@ namespace Game
 		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
 
 		void Start() override;//重写初始化代码
+
+		void  UniformParametersInput();//玩家类在这里重写传参
 		
 	private:
 		LifecycleManager<CustomModel>* _manager;

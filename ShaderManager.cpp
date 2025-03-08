@@ -76,7 +76,7 @@ using namespace Game;
     void Game::ShaderManager::IntegratedShaderCompile()
     {
 
-        ShaderCompile(noneLightLightVertexShaderSource, noneLightLightFragmentShaderSource, "noneLight");
+        ShaderCompile(noneLightVertexShaderSource, noneLightFragmentShaderSource, "noneLight");
         ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "commonLight");
         ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "noneLightInstancer");
 
@@ -159,6 +159,22 @@ using namespace Game;
     {
         glUseProgram(_shaderMap[shaderName]);
         glUniformMatrix4fv(glGetUniformLocation(_shaderMap[shaderName], uniformName.c_str()), 1, GL_FALSE, &mat[0][0]);
+    }
+
+    void Game::ShaderManager::SetTexture(const std::string& shaderName, const std::string& uniformName,GLuint textureID ,int order)
+    {
+        glUseProgram(_shaderMap[shaderName]);
+        // 获取 Uniform 的位置
+        GLint uniformLocation = glGetUniformLocation(_shaderMap[shaderName], uniformName.c_str());
+        // 激活指定的纹理单元
+        glActiveTexture(GL_TEXTURE0 + order);
+
+        // 绑定纹理
+        glBindTexture(GL_TEXTURE_2D, textureID);
+
+        // 将纹理单元传递给片段着色器
+        glUniform1i(uniformLocation, order);
+
     }
 
     // 检查 shader 编译或链接时的错误

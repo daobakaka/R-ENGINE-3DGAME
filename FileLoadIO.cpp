@@ -531,6 +531,24 @@ void MakeModel()
 
     ModelDic["testMonkey"] = modelData;
 #pragma endregion
+#pragma region 打石头游戏
+
+    //树
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\tree.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["tree"] = modelData;
+
+    //宝箱
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\chest.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["chest"] = modelData;
+#pragma endregion
 
 
 
@@ -547,6 +565,13 @@ void MakeTxture()
     //--地形
     GLuint grassTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\grass.jpg");
     GLuint stoneTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\stone.jpg");
+    //打石头游戏树
+    GLuint treeTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_texture.png");
+    GLuint treeTextureSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_specular.png");
+    //打石头游戏宝箱
+    GLuint chestTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Chest_texture.png");
+    GLuint chsetextureSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Chest_specular.png");
+
     //初始化参数
     std::vector<GLuint> pic;
     //加载默认纹理
@@ -572,6 +597,22 @@ void MakeTxture()
     pic.clear();
     pic.push_back(stoneTexture);
     TextureDic["stone"] = pic;
+#pragma region 打石头游戏区域
+    //树
+    pic.clear();
+    pic.push_back(treeTexture);
+    pic.push_back(treeTextureSpecular);// 这里加载了两张图片
+    TextureDic["tree"] = pic;
+
+    //宝箱
+    pic.clear();
+    pic.push_back(chestTexture);
+    pic.push_back(chsetextureSpecular);// 这里加载了两张图片
+    TextureDic["chest"] = pic;
+#pragma endregion
+
+
+
 }
 
 void MakeFronts()

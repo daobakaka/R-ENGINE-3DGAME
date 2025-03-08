@@ -407,8 +407,8 @@ namespace Game {
                     // 角速度过小，停止旋转
                     _collisionProperties.angularVelocity = glm::vec3(0.0f);
                 }
-                //防止地板穿模
-                if (_collisionProperties.isCollision)
+                //防止地板穿模.添加一个新地板判断，防止脱离地板碰撞
+                if (_collisionProperties.isCollision&&_collisionProperties.isOnGround)
                 {
                     if (_collisionProperties.velocity.y < 0 && _collisionProperties.position.y <= _collisionProperties.ratio.y)
                     {
@@ -485,6 +485,10 @@ namespace Game {
             if (_collisionProperties.collidingBodies.find(other->ID) == _collisionProperties.collidingBodies.end()) {
                // std::cout << _collisionProperties.ID << " 碰撞了 " << other->ID << std::endl;
                 _collisionProperties.collidingBodies.insert(other->ID); // 添加到碰撞容器
+                if (other->sType == SpecialType::BasePlane)
+                {
+                    _collisionProperties.isOnGround = true;
+                }
                 ResolveCollision(other); // 处理碰撞
             }
             return true; // 碰撞发生
@@ -493,6 +497,11 @@ namespace Game {
             // 如果当前碰撞体在碰撞容器中，则移除并标记碰撞结束
             if (_collisionProperties.collidingBodies.find(other->ID) != _collisionProperties.collidingBodies.end()) {
                 std::cout << _collisionProperties.ID << " 碰撞结束 " << other->ID << std::endl;
+                if (other->sType == SpecialType::BasePlane)
+                {
+                    _collisionProperties.isOnGround = false;
+                }
+
                 _collisionProperties.collidingBodies.erase(other->ID); // 从碰撞容器移除
             }
             return false; // 碰撞未发生

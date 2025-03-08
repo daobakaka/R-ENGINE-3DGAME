@@ -6,6 +6,7 @@
 
 namespace Game {
     extern std::unordered_map<int, CollisionProperties*> CollisionProps;//就在碰撞体内部这个大类内部进行检查
+    class LightSpawner;
     class CustomModel : public GameObject
     {
     public:
@@ -52,6 +53,9 @@ namespace Game {
         /// <returns></returns>
         virtual bool AttachTexture(GLuint textureName, int order=0,glm::vec2 textureScale=glm::vec2(1.0f,1.0f)) ;//附加纹理处理可重写
         virtual void RenderingTexture();//渲染纹理方法可重写
+        virtual void RenderingTextureAdditional();//附加的渲染纹理方法
+        virtual void UniformParametersInput();//全局shader参数输入重写
+        virtual void RenderingLight(LightSpawner* lightSpawner);
         /// <summary>
         /// 添加物理组件，初始化基本参数
         /// </summary>

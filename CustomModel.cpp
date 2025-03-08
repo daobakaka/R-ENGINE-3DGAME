@@ -1,4 +1,5 @@
 #include "CustomModel.h"
+#include "Light.h"
 using namespace Game;
 extern const char* depthShaderVertexShaderSource;
 extern const char* depthShaderFragmentShaderSource;
@@ -493,10 +494,151 @@ void CustomModel::RenderingTexture()
         glBindTexture(GL_TEXTURE_2D, texture);  // 绑定纹理对象到纹理单元 0+order,这里添加DicTexture集合的纹理对象
         // 绑定纹理到纹理单元 0+order，这个顺序的所有纹理单元都遍历绑定一次
         glUniform1i(picData, textureOrder);
+
+        RenderingTextureAdditional();//附加传入纹理方法，可以在这里重写，默认运行空方法
+
     }
 
 
 
+
+}
+void Game::CustomModel::RenderingTextureAdditional()
+{
+}
+void Game::CustomModel::UniformParametersInput()
+{
+    //金属度
+    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
+    glUniform1f(metallicLoc, 0.0f);
+
+    //糙度
+    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
+    glUniform1f(roughnessLoc, 1.0f);
+    //透明度
+    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
+    glUniform1f(opacityLoc, 1.0f);
+    //基础材料折射率，纯金属折射率不受影响
+    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
+    glUniform1f(IORLoc, 1.5f);
+    //环境光贡献率
+    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
+    glUniform1f(aoLoc, 0.6f);
+
+    // 自发光
+    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
+    glUniform3f(emissionLoc, 0.1f, 0.1f, 0.1f); // 传入自发光颜色
+
+    // 基本色
+    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
+    glUniform3f(baseColorLoc, 0.5f, 0.5f, 0.5f); // 传入基本色（暗色）
+
+
+
+}
+void Game::CustomModel::RenderingLight(LightSpawner* lightSpawner)
+{
+
+    glUseProgram(shaderProgram);
+
+    // 2. 点光源数据
+    const auto& pointLights = lightSpawner->GetPointLights();
+    std::vector<std::pair<float, int>> pointLightDistances;  // 存储每个点光源到物体的距离平方和索引,新声明的结构
+    glm::vec3 objectPosition = position;  // 使用物体的当前位置作为参考
+
+    // 遍历点光源计算距离平方，并且筛选出距离小于等于 1000 的光源
+    for (int i = 0; i < pointLights.size(); i++) {
+        const auto& light = pointLights[i];
+        float distanceSquared = glm::dot(objectPosition - light.position, objectPosition - light.position);
+        if (distanceSquared <= 1000.0f) {  // 只选择距离平方小于等于 100 的光源
+            pointLightDistances.push_back({ distanceSquared, i });
+            //std::cout << i << "距离" << distanceSquared << std::endl;
+        }
+    }
+
+    // 按照距离平方升序排序
+    std::sort(pointLightDistances.begin(), pointLightDistances.end(), [](const std::pair<float, int>& a, const std::pair<float, int>& b) {
+        return a.first < b.first;  // 按照距离平方升序排序
+        });
+    //不能动态传入数组数量，shader里面不支持，数组索引需写死，但是可以通过常量来约束 
+    GLuint numPointLightsLoc = glGetUniformLocation(shaderProgram, "numPointLights");
+    glUniform1i(numPointLightsLoc, std::min(static_cast<int>(pointLightDistances.size()), 4));
+
+    // 只选择最近的 4 个点光源
+    for (int i = 0; i < std::min(4, static_cast<int>(pointLightDistances.size())); i++) {
+        int index = pointLightDistances[i].second;  // 获取最近的点光源的索引，第一个值是距离，第二个值是距离
+        auto light = pointLights[index];
+        //  std::cout << "点光源强度" << light.intensity << std::endl;
+          // 计算距离平方并传递到 shader
+        float distanceSquared = pointLightDistances[i].first;
+        //  std::cout <<i<< "距离" << distanceSquared << std::endl;
+        std::string posName = "lightPos[" + std::to_string(i) + "]";
+        std::string colorName = "lightColor[" + std::to_string(i) + "]";
+        std::string intensityName = "lightIntensity[" + std::to_string(i) + "]";
+        std::string distanceSquaredName = "lightDistanceSquared[" + std::to_string(i) + "]"; // 新增变量
+
+        GLuint posLoc = glGetUniformLocation(shaderProgram, posName.c_str());
+        GLuint colorLoc = glGetUniformLocation(shaderProgram, colorName.c_str());
+        GLuint intensityLoc = glGetUniformLocation(shaderProgram, intensityName.c_str());
+        GLuint distanceSquaredLoc = glGetUniformLocation(shaderProgram, distanceSquaredName.c_str()); // 获取距离平方位置
+
+        glUniform3fv(posLoc, 1, glm::value_ptr(light.position));
+        glUniform3fv(colorLoc, 1, glm::value_ptr(light.color));
+        glUniform1f(intensityLoc, light.intensity);
+        glUniform1f(distanceSquaredLoc, distanceSquared);  // 传递距离平方
+    }
+
+
+    // 4. 手电筒（聚光灯）数据
+    auto flashLights = lightSpawner->GetFlashLights();
+    std::vector<std::pair<float, int>> flashLightDistances;  // 存储每个聚光灯到物体的距离平方和索引
+
+    // 遍历聚光灯计算距离平方，并且筛选出距离小于等于 100 的聚光灯
+    for (int j = 0; j < flashLights.size(); j++) {
+        const auto& flash = flashLights[j];
+        float distanceSquared = glm::dot(objectPosition - flash.position, objectPosition - flash.position);
+        if (distanceSquared <= 100.0f) {  // 只选择距离小于等于 100 的聚光灯
+            flashLightDistances.push_back({ distanceSquared, j });
+        }
+    }
+
+    // 按照距离平方升序排序
+    std::sort(flashLightDistances.begin(), flashLightDistances.end(), [](const std::pair<float, int>& a, const std::pair<float, int>& b) {
+        return a.first < b.first;  // 按照距离平方升序排序
+        });
+
+    GLuint numFlashLightsLoc = glGetUniformLocation(shaderProgram, "numFlashLights");
+    glUniform1i(numFlashLightsLoc, std::min(static_cast<int>(flashLightDistances.size()), 4));
+
+    // 只选择最近的 4 个聚光灯
+    for (int j = 0; j < std::min(4, static_cast<int>(flashLightDistances.size())); j++) {
+        int index = flashLightDistances[j].second;  // 获取最近的聚光灯的索引
+        auto flash = flashLights[index];
+
+        // 计算距离平方并传递到 shader
+        float distanceSquared = flashLightDistances[j].first;
+
+        std::string flashPosName = "flashLightPos[" + std::to_string(j) + "]";
+        std::string flashDirName = "flashLightDirection[" + std::to_string(j) + "]";
+        std::string flashColorName = "flashLightColor[" + std::to_string(j) + "]";
+        std::string flashIntensityName = "flashLightIntensity[" + std::to_string(j) + "]";
+        std::string flashCutoffName = "flashLightCutoff[" + std::to_string(j) + "]";
+        std::string flashDistanceSquaredName = "flashLightDistanceSquared[" + std::to_string(j) + "]"; // 新增变量
+
+        GLuint flashPosLoc = glGetUniformLocation(shaderProgram, flashPosName.c_str());
+        GLuint flashDirLoc = glGetUniformLocation(shaderProgram, flashDirName.c_str());
+        GLuint flashColorLoc = glGetUniformLocation(shaderProgram, flashColorName.c_str());
+        GLuint flashIntensityLoc = glGetUniformLocation(shaderProgram, flashIntensityName.c_str());
+        GLuint flashCutoffLoc = glGetUniformLocation(shaderProgram, flashCutoffName.c_str());
+        GLuint flashDistanceSquaredLoc = glGetUniformLocation(shaderProgram, flashDistanceSquaredName.c_str()); // 获取距离平方位置
+
+        glUniform3fv(flashPosLoc, 1, glm::value_ptr(flash.position));
+        glUniform3fv(flashDirLoc, 1, glm::value_ptr(flash.direction));
+        glUniform3fv(flashColorLoc, 1, glm::value_ptr(flash.color));
+        glUniform1f(flashIntensityLoc, flash.intensity);
+        glUniform1f(flashCutoffLoc, flash.cutoff);
+        glUniform1f(flashDistanceSquaredLoc, distanceSquared);  // 传递距离平方
+    }
 
 }
 void CustomModel::AttachAnimationController(AnimationData animationData)

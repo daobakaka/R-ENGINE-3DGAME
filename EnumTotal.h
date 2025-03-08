@@ -18,6 +18,10 @@ namespace Game {
 		TsetButterfly,
 		LightColorTestCube,
 		TestPhysics,
+		//实例化模块
+		InstanceCube,
+		InstanceCircle,
+		InstanceSphere,
 		//特殊模块
 		Ray,//射线
 		AxisWidget,//坐标轴模型
@@ -45,6 +49,7 @@ namespace Game {
 		DepthCalculate,
 		DepthRender,
 		DepthTest,
+		DepthMapParallel,//深度贴图ID
 	};
 	enum CollisionType
 	{
@@ -104,6 +109,8 @@ namespace Game {
 		glm::vec3 &ratio;
 		//碰撞状态判断
 		bool isCollision;
+		//是否在地面
+		bool isOnGround;
 		//触发器
 		bool &trigger;
 		//静态物体

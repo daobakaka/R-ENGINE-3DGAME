@@ -34,6 +34,7 @@ namespace Game
         void SetMat2(const std::string& shaderName, const std::string& uniformName, const glm::mat2& mat) ;
         void SetMat3(const std::string& shaderName, const std::string& uniformName, const glm::mat3& mat) ;
         void SetMat4(const std::string& shaderName, const std::string& uniformName, const glm::mat4& mat) ;
+        void SetTexture(const std::string& shaderName, const std::string& uniformName,GLuint textureID, int order);
         std::string _shaderName;
         int num;
     private:

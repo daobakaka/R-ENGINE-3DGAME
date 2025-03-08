@@ -98,7 +98,7 @@ namespace Game {
 
         // RenderLights: 将所有光源参数传入 shaderProgram 中，
         // controllerPtr 为控制器指针，spawnerPtr 为 LightSpawner 指针
-        void RenderLights(GLuint shaderProgram, const Controller* controllerPtr, const Game::LightSpawner* spawnerPtr,glm::vec3 position);
+        void RenderLights(GLuint shaderProgram,glm::vec3 position);
         /// <summary>
         /// 创建平行光阴影贴图,编译阴影深度着色器
         /// </summary>
@@ -107,7 +107,7 @@ namespace Game {
         /// <summary>
         ///计算平行光视角矩阵
         /// </summary>
-        void RenderDepthMapForParallelLight( glm::vec3 lightDirection);
+        void RenderDepthMapForParallelLight(glm::vec3 lightDirection, const glm::mat4& cameraView, CustomModel* player, glm::vec3 offset);
         glm::mat4 GetLightMatrix();
 
         GLuint CompileShader(const char* ver, const char* fra);

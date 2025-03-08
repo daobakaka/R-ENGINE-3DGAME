@@ -111,30 +111,45 @@ void Game::IntergratedScripts::ActorButtfly(GameObject* gameObject)
     gameObject->rotation *= glm::quat(glm::vec3(rotX, rotY, rotZ));
 }
 
-void Game::IntergratedScripts::PlayerControl(GLFWwindow* window,CustomModel* other)
+void Game::IntergratedScripts::PlayerControl(GLFWwindow* window, CustomModel* other)
 {
+    // 发射周期控制
+    if (!_enableShoot)
+    {
+        _shootPrepare += 0.0167f;
+        if (_shootPrepare > 1)
+        {
+            _enableShoot = true;
+        }
+    }
 
-
-        //角色控制按钮
-        if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-
+    // 角色控制按钮
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+        if (_enableShoot)
+        {
             std::cout << "press F" << std::endl;
-            //生成一发子弹
+
+            // 生成一发子弹
             auto* bullet = new GameBullet("commonLight", ModelDic["baseSphere"], false, false, true);
             bullet->SetVariant(ModelClass::PlayerBullet);
-            bullet->Initialize(other->position + glm::vec3(0, 10, 2), glm::quat(glm::vec3(0)), glm::vec3(1.0f));
+            bullet->Initialize(other->position + glm::vec3(0, 8, 0), glm::quat(glm::vec3(0)), glm::vec3(1.0f));
             manager->RegisterObject(bullet);
             bullet->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
             bullet->AttachPhysicalEngine();
             bullet->AttachCollider();
-            bullet->GetComponent<PhysicalEngine>()->SetMass(0.1f);//给子弹较小的质量
-            bullet->GetComponent<PhysicalEngine>()->SetAcceleration(glm::vec3(0, -3.0f, 0));//模拟子弹受较小的重力加速度
-            bullet->GetComponent<CollisionBody>()->SetTrigger(true);//被子弹碰撞的物体不会受到物理系统的影响，子弹为触发器，只受到速度和加速度影响
-            bullet->GetComponent<CollisionBody>()->SetGameProperties(1, 1, 1);//设置子弹的攻击力为1
-            bullet->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, -50));//给子弹10的前向速度   
+            bullet->GetComponent<PhysicalEngine>()->SetMass(0.1f); // 给子弹较小的质量
+            bullet->GetComponent<PhysicalEngine>()->SetAcceleration(glm::vec3(0, -3.0f, 0)); // 模拟子弹受较小的重力加速度
+            bullet->GetComponent<CollisionBody>()->SetTrigger(false); // 被子弹碰撞的物体不会受到物理系统的影响，子弹为触发器，只受到速度和加速度影响
+            bullet->GetComponent<CollisionBody>()->SetGameProperties(1, 1, 1); // 设置子弹的攻击力为1
+
+            // 获取 other->rotation 的方向向量
+            glm::vec3 forwardDirection = other->rotation * glm::vec3(0, 0,1); // 假设向前是 -Z 方向
+            bullet->GetComponent<PhysicalEngine>()->SetVelocity(forwardDirection * 50.0f); // 给子弹50的前向速度
+
+            _enableShoot = false;
+            _shootPrepare = 0;
         }
-
-
+    }
 }
 
 

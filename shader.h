@@ -269,7 +269,6 @@ void main()
 }
 )";
 
-
 const char* colorlightsArraySourceFragmentShaderSource = R"(
 #version 450 core
 
@@ -280,11 +279,11 @@ in vec3 ViewPos;   // 相机位置传入（从顶点着色器）
 out vec4 FragColor;
 
 // 基本参数
-uniform float metallic = 0.5f; // 金属度
-uniform float roughness = 0.5f; // 粗糙度
-uniform float opacity = 1.0f; // 透明度
-uniform float IOR = 1.0f; // 折射率
-uniform float ao = 1.0f; // 环境光遮蔽率
+uniform float metallic; // 金属度
+uniform float roughness; // 粗糙度
+uniform float opacity; // 透明度
+uniform float IOR; // 折射率
+uniform float ao; // 环境光遮蔽率
 
 // 颜色
 uniform vec3 baseColor;   // 模型固有色
@@ -305,11 +304,11 @@ uniform mat4 lightSpaceMatrix;  // 从光源视角计算的矩阵
 
 // 点光源参数
 const int MAX_POINT_LIGHTS =4;
-uniform int numPointLights=0;
+uniform int numPointLights;
 uniform vec3 lightPos[MAX_POINT_LIGHTS];
 uniform vec3 lightColor[MAX_POINT_LIGHTS];
 uniform float lightIntensity[MAX_POINT_LIGHTS];
-uniform float lightAttenuation=1; // 距离衰减系数
+float lightAttenuation=0.01F; // 距离衰减系数
 uniform float lightDistanceSquared[MAX_POINT_LIGHTS]; // 传入的距离平方
 
 // 平行光（方向光）参数
@@ -319,51 +318,95 @@ uniform float parallelLightIntensity;
 
 // 手电筒（聚光灯）参数
 const int MAX_FLASHLIGHTS =4;//数组计算不能是动态值，只能是空值，参照上下文索引符号
-uniform int numFlashLights=0;//可以采用传入数据变量来进行更改
+uniform int numFlashLights;//可以采用传入数据变量来进行更改
 uniform vec3 flashLightPos[MAX_FLASHLIGHTS];
 uniform vec3 flashLightDirection[MAX_FLASHLIGHTS];
 uniform vec3 flashLightColor[MAX_FLASHLIGHTS];
 uniform float flashLightIntensity[MAX_FLASHLIGHTS];
 uniform float flashLightCutoff[MAX_FLASHLIGHTS]; // cutoff 值为余弦值
-uniform float flashlightAttenuation=1; // 手电筒光的衰减系数
+float flashlightAttenuation=0.01F; // 手电筒光的衰减系数
 uniform float flashLightDistanceSquared[MAX_FLASHLIGHTS]; // 传入的聚光灯距离平方
 
+// PBR 光照计算函数
+vec3 calculatePBR(vec3 lightDir, vec3 viewDir, vec3 norm, vec3 lightColor, float lightIntensity, float metallicValue, float roughnessValue) {
+    vec3 halfDir = normalize(lightDir + viewDir);
+
+    // 基础反射率（F0）：金属度决定
+    vec3 F0 = mix(vec3(0.04), baseColor, metallicValue);
+
+    // Fresnel 项（Schlick 近似）
+    float HdotV = max(dot(halfDir, viewDir), 0.0);
+    vec3 F = F0 + (1.0 - F0) * pow(1.0 - HdotV, 5.0);
+
+    // 漫反射部分
+    float NdotL = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = lightColor * NdotL * (1.0 - metallicValue);
+
+    // 镜面反射部分（Cook-Torrance BRDF）
+    float NdotV = max(dot(norm, viewDir), 0.0);
+    float NdotH = max(dot(norm, halfDir), 0.0);
+
+    float alpha = roughnessValue * roughnessValue;
+    float alphaSq = alpha * alpha;
+
+    // 几何函数（Smith-Schlick GGX）
+    float G1 = NdotV / (NdotV * (1.0 - alphaSq) + alphaSq);
+    float G2 = NdotL / (NdotL * (1.0 - alphaSq) + alphaSq);
+    float G = G1 * G2;
+
+    // 法线分布函数（Trowbridge-Reitz GGX）
+    float denom = (NdotH * NdotH * (alphaSq - 1.0) + 1.0);
+    float D = alphaSq / (3.14159 * denom * denom);
+
+    // 镜面反射
+    vec3 specular = (D * G * F) / (4.0 * NdotV * NdotL + 0.0001);
+
+    return (diffuse + specular) * lightIntensity;
+}
+
+// 计算光线损失（折射率仅在透明度低于 0.6 时生效）
+float calculateLightLoss(float opacityValue, float IORValue) {
+    if (opacityValue < 0.6) {
+        // 透明度低于 0.6 时，根据折射率计算光线损失
+        return 1.0 - pow((IORValue - 1.0) / (IORValue + 1.0), 2.0);
+    } else {
+        // 否则，光线损失为 0
+        return 0.0;
+    }
+}
+
 void main() {
-    vec3 emissionDefault = (emission == vec3(0.0)) ? vec3(0.1) : emission;
-
-    vec3 colorToUse = (baseColor == vec3(0.0)) ? vec3(0.1, 0.1, 0.1) : baseColor;
-
+    // 直接使用 uniform 的值
     vec3 norm = normalize(Normal);
 
+    // 初始化光照贡献
     vec3 ambientTotal = vec3(0.0);
     vec3 diffuseTotal = vec3(0.0);
     vec3 specularTotal = vec3(0.0);
-    
+
+    // 计算视图方向
+    vec3 viewDir = normalize(ViewPos - FragPos);
+
     // --- 点光源部分 ---
-    for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
+    for (int i = 0; i < numPointLights; i++) {
         if (lightIntensity[i] > 0.0001) {
             // 使用传入的距离平方进行衰减
             float attenuation = 1.0 / (1.0 + lightAttenuation * lightDistanceSquared[i]);
 
             // 环境光：每个点光源均贡献 10%
             ambientTotal += 0.1 * lightColor[i];
-            
-            // 漫反射
+
+            // 计算 PBR 光照
             vec3 lightDir = normalize(lightPos[i] - FragPos);
-            float diff = max(dot(norm, lightDir), 0.0);
-            diffuseTotal += diff * lightColor[i] * lightIntensity[i] * attenuation;
-            
-            // 镜面反射（Phong 模型）
-            vec3 viewDir = normalize(ViewPos - FragPos);
-            vec3 reflectDir = reflect(-lightDir, norm);
-            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-            specularTotal += spec * lightColor[i] * lightIntensity[i] * 0.1 * attenuation;
+            vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, lightColor[i], lightIntensity[i], metallic, roughness);
+
+            // 累加光照贡献
+            diffuseTotal += pbrLighting * attenuation;
         }
     }
-    
-    
+
     // --- 手电筒（聚光灯）部分 ---
-    for (int j = 0; j < MAX_FLASHLIGHTS; j++) {
+    for (int j = 0; j < numFlashLights; j++) {
         if (flashLightIntensity[j] > 0.0001) {
             vec3 lightDir = normalize(flashLightPos[j] - FragPos);
             
@@ -373,77 +416,87 @@ void main() {
             // 计算聚光效果
             float theta = dot(lightDir, normalize(flashLightDirection[j]));
             if (theta > flashLightCutoff[j]) {
+                // 环境光：每个聚光灯均贡献 10%
                 ambientTotal += 0.1 * flashLightColor[j];
-                
-                float diff = max(dot(norm, lightDir), 0.0);
-                diffuseTotal += diff * flashLightColor[j] * flashLightIntensity[j] * attenuation;
-                
-                vec3 viewDir = normalize(ViewPos - FragPos);
-                vec3 reflectDir = reflect(-lightDir, norm);
-                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-                specularTotal += spec * flashLightColor[j] * flashLightIntensity[j] * 0.1 * attenuation;
+
+                // 计算 PBR 光照
+                vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, flashLightColor[j], flashLightIntensity[j], metallic, roughness);
+
+                // 累加光照贡献
+                diffuseTotal += pbrLighting * attenuation;
             }
         }
     }
 
-
-
- // --- 平行光（方向光）部分 ---
+    // --- 平行光（方向光）部分 ---
     if (parallelLightIntensity > 0.0001) {
-        ambientTotal += 0.2f * parallelLightColor;//平行光单独贡献20%
-        
+        // 环境光：平行光单独贡献 20%
+        ambientTotal += 0.2f * parallelLightColor;
+
+        // 计算 PBR 光照
         vec3 lightDir = normalize(-parallelLightDirection);
-        float diff = max(dot(norm, lightDir), 0.0);
-        diffuseTotal += diff * parallelLightColor * parallelLightIntensity;
-        
-        vec3 viewDir = normalize(ViewPos - FragPos);
-        vec3 reflectDir = reflect(-lightDir, norm);
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-        specularTotal += spec * parallelLightColor * parallelLightIntensity * 0.1;
+        vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, parallelLightColor, parallelLightIntensity, metallic, roughness);
+
+        // 累加光照贡献
+        diffuseTotal += pbrLighting;
 
         // 计算阴影
         vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
         vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
         projCoords = projCoords * 0.5 + 0.5;  // 将坐标从[-1, 1]映射到[0, 1]
 
+        // 定义边缘阈值
+        const float edgeThreshold = 0.01; // 边缘阈值，可以根据需要调整
+
+        // 判断是否临近阴影贴图边缘
+        bool isNearEdge = (projCoords.x < edgeThreshold || projCoords.x > 1.0 - edgeThreshold ||
+                          projCoords.y < edgeThreshold || projCoords.y > 1.0 - edgeThreshold);
+
         // 从阴影贴图中获取深度值
         float closestDepth = texture(autoParallelShadowMap, projCoords.xy).r;
         float currentDepth = projCoords.z;
 
+        // 动态调整阴影偏差
+        float bias = max(0.005 * (1.0 - dot(norm, lightDir)), 0.001);
+
         // 阴影判断：比较当前片段的深度与从阴影贴图中取出的深度
-        float bias = 0.005;  // 阴影偏差，用来避免自阴影问题
         float shadow = currentDepth > (closestDepth + bias) ? 1.0 : 0.0;
 
+        // 使用 PCF 平滑阴影边缘
+        float shadowPCF = 0.0f;
+        vec2 texelSize = 1.0 / textureSize(autoParallelShadowMap, 0);
+        for(int x = -1; x <= 1; ++x) {
+            for(int y = -1; y <= 1; ++y) {
+                float pcf = texture(autoParallelShadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+                shadowPCF += (currentDepth - bias > pcf) ? 1.0 : 0.0;
+            }
+        }
+        shadowPCF /= 9.0f;  // 平均结果
+
         // 如果在阴影中，漫反射和镜面反射会变暗
-        diffuseTotal *= (1.0 - shadow);
-        specularTotal *= (1.0 - shadow);
-
-        // 计算阴影平滑（PCF）
-        //float shadowPCF = 0.0f;
-        //for(int x = -1; x <= 1; ++x) {
-        //    for(int y = -1; y <= 1; ++y) {
-        //        float pcf = texture(autoParallelShadowMap, projCoords.xy + vec2(x, y) * 0.005).r;
-        //        shadowPCF += pcf;
-        //    }
-        //}
-        //shadowPCF /= 9.0f;  // 平均结果
-        //diffuseTotal *= (1.0 - shadowPCF);
-        //specularTotal *= (1.0 - shadowPCF);
-
+        if (isNearEdge) {
+            // 临近边缘时，禁用阴影计算
+            diffuseTotal *= 1.0;
+        } else {
+            // 正常应用阴影
+            diffuseTotal *= (1.0 - shadowPCF);
+        }
     }
     
-    vec3 lighting = ambientTotal + diffuseTotal + specularTotal;
-    
+    // 最终光照
+    vec3 lighting = ambientTotal * ao + diffuseTotal;
+
+    // 计算光线损失（仅在透明度低于 0.6 时生效）
+    float lightLoss = calculateLightLoss(opacity, IOR);
+
     // 最终颜色 = (光照效果 × 物体固有色) + 自发光
-    vec3 result = lighting * colorToUse + emissionDefault;
-    
+    vec3 result = lighting * baseColor * (1.0 - lightLoss) + emission;
+
     // 采样纹理颜色，并与光照结果相乘
     vec4 texColor = texture(baseTexture, TexCoord);
-    FragColor = vec4(result, 1.0) * texColor;
+    FragColor = vec4(result, opacity) * texColor;
 }
-
 )";
-
 /// <summary>
 /// 无光照通用着色器
 /// </summary>
@@ -477,7 +530,13 @@ in vec2 TexCoord;   // 从顶点着色器接收的纹理坐标
 in vec3 FragPos;    // 从顶点着色器接收的片段位置
 
 uniform vec3 baseColor;      // 可以当作模型的固有色
-uniform sampler2D texture1;  // 纹理
+uniform sampler2D baseTexture;  // 纹理
+
+
+//--平行光贴图
+uniform sampler2D autoParallelShadowMap;//平行光光照贴图，用于生成主阴影
+// 接收光源的阴影矩阵
+uniform mat4 lightSpaceMatrix;  // 从光源视角计算的矩阵
 
 void main()
 {
@@ -486,7 +545,7 @@ void main()
     vec3 colorToUse = (baseColor == vec3(0.0)) ? vec3(0.1, 0.1, 0.1) : baseColor;
 
     // 无需把 baseColor 加到纹理颜色，可改为乘法叠加
-    FragColor = (texture(texture1, TexCoord) + vec4(colorToUse, 1.0)) ;
+    FragColor = (texture(baseTexture, TexCoord) + vec4(colorToUse, 1.0)) ;
 } 
 )";
 /// <summary>
@@ -521,7 +580,7 @@ in vec2 TexCoord;   // 从顶点着色器接收的纹理坐标
 in vec3 FragPos;    // 从顶点着色器接收的片段位置
 
 uniform vec3 baseColor;      // 可以当作模型的固有色
-uniform sampler2D texture1;  // 纹理
+uniform sampler2D baseTexture;  // 纹理
 uniform float lightIntensity; // 光强度可视化
 uniform float lightDirection;//光照方向，暂时不用
 void main()
@@ -535,7 +594,7 @@ void main()
 
     // 纹理取样 + baseColor，再乘以光强度
     // 无需把 baseColor 加到纹理颜色，可改为乘法叠加
-    FragColor = (texture(texture1, TexCoord) *vec4(colorToUse, 1.0))* 0.5f* tempIntensity;
+    FragColor = (texture(baseTexture, TexCoord) *vec4(colorToUse, 1.0))* 0.5f* tempIntensity;
 } 
 )";
 
@@ -777,10 +836,10 @@ void main()
 {
     
   // 自发光默认值(可选逻辑)
-    vec3 emissionDefault = (emission == vec3(0.0)) ? vec3(0.1) : emission;
+    vec3 emissionDefault = (emission == vec3(0.0)) ? vec3(0.3) : emission;
 
     // 如果 baseColor 没设置，默认给一个大概颜色
-    vec3 colorToUse = (baseColor == vec3(0.0)) ? vec3(0.1, 0.1, 0.1) : baseColor;
+    vec3 colorToUse = (baseColor == vec3(0.0)) ? vec3(0.5, 0.5, 0.5) : baseColor;
 
      // 纹理采样
     vec4 texColor = texture(baseTexture, TexCoord);

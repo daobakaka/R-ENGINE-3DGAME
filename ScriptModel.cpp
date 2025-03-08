@@ -1,6 +1,7 @@
 #include "ScriptModel.h"
 #include "ShaderManager.h"
 #include "LifecycleManager.h"
+#include "light.h"
 using namespace Game;
 #pragma region 测试蝴蝶
 //extern LifecycleManager<CustomModel>* manager;//获取管理器控制器
@@ -159,6 +160,7 @@ CustomModelShader::CustomModelShader(const std::string& name, const ModelData& m
     ifLight = ifLightIn;
     _ifShadow = ifShadow;
     
+    lightSpawner = LightSpawner::GetInstance();
     // 获取着色器程序
     shaderProgram = ShaderManager::GetInstance()->GetShader(name);
 
@@ -211,12 +213,16 @@ CustomModelShader::CustomModelShader(const std::string& name, const ModelData& m
 
 CustomModelShader::CustomModelShader()
 {
+
+
 }
 
 bool CustomModelShader::Draw(glm::mat4 view, glm::mat4 projection)
 {
     //集成纹理渲染方法,要在draw之前调用，才能生效
     RenderingTexture();
+    UniformParametersInput();//父类在这里调用空方法
+    RenderingLight();//通用shader，光的渲染在这里进行
 
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
     glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
@@ -234,11 +240,11 @@ bool Game::CustomModelShader::DrawDynamical(glm::mat4 view, glm::mat4 projection
 
     //集成纹理渲染方法,要在draw之前调用，才能生效
     RenderingTexture();
-
+    UniformParametersInput();//父类在这里调用空方法
+    RenderingLight();//通用shader，光的渲染在这里进行
     // glUseProgram(shaderProgram);
 
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
-
     glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -268,8 +274,119 @@ void Game::CustomModelShader::RenderingTexture()
         glBindTexture(GL_TEXTURE_2D, texture);  // 绑定纹理对象到纹理单元 0+order,这里添加DicTexture集合的纹理对象
         // 绑定纹理到纹理单元 0+order，这个顺序的所有纹理单元都遍历绑定一次
         glUniform1i(picData, textureOrder);
+
+
+        RenderingTextureAdditional();
     }
 
+}
+void Game::CustomModelShader::RenderingTextureAdditional()
+{
+}
+void Game::CustomModelShader::RenderingLight()
+{
+
+    if (ifLight)
+    {  // 2. 点光源数据
+        const auto& pointLights = lightSpawner->GetPointLights();
+        std::vector<std::pair<float, int>> pointLightDistances;  // 存储每个点光源到物体的距离平方和索引,新声明的结构
+        glm::vec3 objectPosition = position;  // 使用物体的当前位置作为参考
+
+        // 遍历点光源计算距离平方，并且筛选出距离小于等于 1000 的光源
+        for (int i = 0; i < pointLights.size(); i++) {
+            const auto& light = pointLights[i];
+            float distanceSquared = glm::dot(objectPosition - light.position, objectPosition - light.position);
+            if (distanceSquared <= 1000.0f) {  // 只选择距离平方小于等于 100 的光源
+                pointLightDistances.push_back({ distanceSquared, i });
+               // std::cout << i << "距离" << distanceSquared << std::endl;
+            }
+        }
+
+        // 按照距离平方升序排序
+        std::sort(pointLightDistances.begin(), pointLightDistances.end(), [](const std::pair<float, int>& a, const std::pair<float, int>& b) {
+            return a.first < b.first;  // 按照距离平方升序排序
+            });
+        //不能动态传入数组数量，shader里面不支持，数组索引需写死，但是可以通过常量来约束 
+        GLuint numPointLightsLoc = glGetUniformLocation(shaderProgram, "numPointLights");
+        glUniform1i(numPointLightsLoc, std::min(static_cast<int>(pointLightDistances.size()), 4));
+
+        // 只选择最近的 4 个点光源
+        for (int i = 0; i < std::min(4, static_cast<int>(pointLightDistances.size())); i++) {
+            int index = pointLightDistances[i].second;  // 获取最近的点光源的索引，第一个值是距离，第二个值是距离
+            auto light = pointLights[index];
+            //  std::cout << "点光源强度" << light.intensity << std::endl;
+              // 计算距离平方并传递到 shader
+            float distanceSquared = pointLightDistances[i].first;
+            //  std::cout <<i<< "距离" << distanceSquared << std::endl;
+            std::string posName = "lightPos[" + std::to_string(i) + "]";
+            std::string colorName = "lightColor[" + std::to_string(i) + "]";
+            std::string intensityName = "lightIntensity[" + std::to_string(i) + "]";
+            std::string distanceSquaredName = "lightDistanceSquared[" + std::to_string(i) + "]"; // 新增变量
+
+            GLuint posLoc = glGetUniformLocation(shaderProgram, posName.c_str());
+            GLuint colorLoc = glGetUniformLocation(shaderProgram, colorName.c_str());
+            GLuint intensityLoc = glGetUniformLocation(shaderProgram, intensityName.c_str());
+            GLuint distanceSquaredLoc = glGetUniformLocation(shaderProgram, distanceSquaredName.c_str()); // 获取距离平方位置
+
+            glUniform3fv(posLoc, 1, glm::value_ptr(light.position));
+            glUniform3fv(colorLoc, 1, glm::value_ptr(light.color));
+            glUniform1f(intensityLoc, light.intensity);
+            glUniform1f(distanceSquaredLoc, distanceSquared);  // 传递距离平方
+        }
+
+
+        // 4. 手电筒（聚光灯）数据
+        auto flashLights = lightSpawner->GetFlashLights();
+        std::vector<std::pair<float, int>> flashLightDistances;  // 存储每个聚光灯到物体的距离平方和索引
+
+        // 遍历聚光灯计算距离平方，并且筛选出距离小于等于 100 的聚光灯
+        for (int j = 0; j < flashLights.size(); j++) {
+            const auto& flash = flashLights[j];
+            float distanceSquared = glm::dot(objectPosition - flash.position, objectPosition - flash.position);
+            if (distanceSquared <= 1000.0f) {  // 只选择距离小于等于 1000 的聚光灯
+                flashLightDistances.push_back({ distanceSquared, j });
+            }
+        }
+
+        // 按照距离平方升序排序
+        std::sort(flashLightDistances.begin(), flashLightDistances.end(), [](const std::pair<float, int>& a, const std::pair<float, int>& b) {
+            return a.first < b.first;  // 按照距离平方升序排序
+            });
+
+        GLuint numFlashLightsLoc = glGetUniformLocation(shaderProgram, "numFlashLights");
+        glUniform1i(numFlashLightsLoc, std::min(static_cast<int>(flashLightDistances.size()), 4));
+
+        // 只选择最近的 4 个聚光灯
+        for (int j = 0; j < std::min(4, static_cast<int>(flashLightDistances.size())); j++) {
+            int index = flashLightDistances[j].second;  // 获取最近的聚光灯的索引
+            auto flash = flashLights[index];
+
+            // 计算距离平方并传递到 shader
+            float distanceSquared = flashLightDistances[j].first;
+
+            std::string flashPosName = "flashLightPos[" + std::to_string(j) + "]";
+            std::string flashDirName = "flashLightDirection[" + std::to_string(j) + "]";
+            std::string flashColorName = "flashLightColor[" + std::to_string(j) + "]";
+            std::string flashIntensityName = "flashLightIntensity[" + std::to_string(j) + "]";
+            std::string flashCutoffName = "flashLightCutoff[" + std::to_string(j) + "]";
+            std::string flashDistanceSquaredName = "flashLightDistanceSquared[" + std::to_string(j) + "]"; // 新增变量
+
+            GLuint flashPosLoc = glGetUniformLocation(shaderProgram, flashPosName.c_str());
+            GLuint flashDirLoc = glGetUniformLocation(shaderProgram, flashDirName.c_str());
+            GLuint flashColorLoc = glGetUniformLocation(shaderProgram, flashColorName.c_str());
+            GLuint flashIntensityLoc = glGetUniformLocation(shaderProgram, flashIntensityName.c_str());
+            GLuint flashCutoffLoc = glGetUniformLocation(shaderProgram, flashCutoffName.c_str());
+            GLuint flashDistanceSquaredLoc = glGetUniformLocation(shaderProgram, flashDistanceSquaredName.c_str()); // 获取距离平方位置
+
+            glUniform3fv(flashPosLoc, 1, glm::value_ptr(flash.position));
+            glUniform3fv(flashDirLoc, 1, glm::value_ptr(flash.direction));
+            glUniform3fv(flashColorLoc, 1, glm::value_ptr(flash.color));
+            glUniform1f(flashIntensityLoc, flash.intensity);
+            glUniform1f(flashCutoffLoc, flash.cutoff);
+            glUniform1f(flashDistanceSquaredLoc, distanceSquared);  // 传递距离平方
+        }
+
+    }
 }
 #pragma endregion
 #pragma region 实例化模型
@@ -277,7 +394,8 @@ CustomModelInstance::CustomModelInstance()
 {
 }
 
-CustomModelInstance::CustomModelInstance(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow, int instanceCount, glm::vec3 positionOffset, glm::vec3 rotationAxis)
+CustomModelInstance::CustomModelInstance(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow, int instanceCount, glm::vec3 positionOffset,
+    glm::vec3 rotationAxis,ModelClass type)
 {
  
     _instanceCount = instanceCount;
@@ -295,7 +413,7 @@ CustomModelInstance::CustomModelInstance(const std::string& name, const ModelDat
     GLuint useageBuffer = isSkinnedMesh ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
     // 调用生成实例化矩阵的方法
-    GenerateInstanceMatrices();
+    GenerateInstanceMatrices(type);
     // 创建 VAO, VBO, EBO
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -338,31 +456,127 @@ CustomModelInstance::CustomModelInstance(const std::string& name, const ModelDat
     glBindVertexArray(0);
 }
 
-void Game::CustomModelInstance::GenerateInstanceMatrices()
-
+void Game::CustomModelInstance::GenerateInstanceMatrices(ModelClass type)
 {
     _modelMatrices.resize(_instanceCount);  // 根据实例数量调整 vector 大小
 
-   int gridSize = std::cbrt(_instanceCount); // 计算立方体的边长
-    for (GLuint i = 0; i < _modelMatrices.size(); i++) {
-        glm::mat4 model = glm::mat4(1.0f);
+    switch (type)
+    {
+    case Game::InstanceCube:
+    {
+        int gridSize = std::cbrt(_instanceCount); // 计算立方体的边长
+        for (GLuint i = 0; i < _modelMatrices.size(); i++) {
+            glm::mat4 model = glm::mat4(1.0f);
 
-        // 计算平移：将实例沿 X, Y, Z 轴等间距分布
-        float xOffset = (i % gridSize) * _positionOffset.x;  // 沿X轴平移
-        float yOffset = ((i / gridSize) % gridSize) * _positionOffset.y;  // 沿Y轴平移
-        float zOffset = (i / (gridSize * gridSize)) * _positionOffset.z;  // 沿Z轴平移
+            // 计算平移：将实例沿 X, Y, Z 轴等间距分布
+            float xOffset = (i % gridSize) * _positionOffset.x;  // 沿X轴平移
+            float yOffset = ((i / gridSize) % gridSize) * _positionOffset.y;  // 沿Y轴平移
+            float zOffset = (i / (gridSize * gridSize)) * _positionOffset.z;  // 沿Z轴平移
 
-        // 使用计算出的平移量进行平移
-        model = glm::translate(model, glm::vec3(xOffset, yOffset, zOffset));  // 形成规则立方体
+            // 使用计算出的平移量进行平移
+            model = glm::translate(model, glm::vec3(xOffset, yOffset, zOffset));  // 形成规则立方体
 
-        // 旋转：绕指定的轴旋转，旋转增量由 rotationAxis 控制
-        model = glm::rotate(model, glm::radians(i * _rotationAxis.x), glm::vec3(1.0f, 0.0f, 0.0f));  // 绕 X 轴旋转
-        model = glm::rotate(model, glm::radians(i * _rotationAxis.y), glm::vec3(0.0f, 1.0f, 0.0f));  // 绕 Y 轴旋转
-        model = glm::rotate(model, glm::radians(i * _rotationAxis.z), glm::vec3(0.0f, 0.0f, 1.0f));  // 绕 Z 轴旋转
+            // 旋转：绕指定的轴旋转，旋转增量由 rotationAxis 控制
+            model = glm::rotate(model, glm::radians(i * _rotationAxis.x), glm::vec3(1.0f, 0.0f, 0.0f));  // 绕 X 轴旋转
+            model = glm::rotate(model, glm::radians(i * _rotationAxis.y), glm::vec3(0.0f, 1.0f, 0.0f));  // 绕 Y 轴旋转
+            model = glm::rotate(model, glm::radians(i * _rotationAxis.z), glm::vec3(0.0f, 0.0f, 1.0f));  // 绕 Z 轴旋转
 
-        _modelMatrices[i] = model;
+            _modelMatrices[i] = model;
+        }
+        break;
+    }
 
+    case Game::InstanceCircle:
+    {
+        // 圆环实例化（树的效果）
+        float baseRadius = 20.0f; // 基础半径
+        int layers = 100; // 树的层数
+        int remainingInstances = _instanceCount; // 剩余的实例数量
 
+        // 设置整体偏移参数
+        float offsetX = 0.0f; // X 轴整体偏移
+        float offsetZ = 20.0f; // Z 轴整体偏移
+
+        for (int layer = 0; layer < layers; layer++) {
+            // 计算当前层的半径
+            float radius = baseRadius * (static_cast<float>(layer) / layers) * 100.0f;
+
+            // 确保基础半径范围内没有树
+            if (radius < baseRadius) {
+                continue; // 跳过基础半径范围内的层
+            }
+
+            // 计算当前层的实例数量
+            int instancesInLayer = (layer == layers - 1) ? remainingInstances : remainingInstances / (layers - layer);
+            remainingInstances -= instancesInLayer;
+
+            for (int i = 0; i < instancesInLayer; i++) {
+                glm::mat4 model = glm::mat4(1.0f);
+
+                // 计算圆环上的位置
+                float angle = static_cast<float>(i) / instancesInLayer * 2.0f * glm::pi<float>(); // 当前实例的角度
+                float x = radius * cos(angle); // X 坐标
+                float z = radius * sin(angle); // Z 坐标
+
+                // 添加随机偏移
+                float randomOffsetX = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * _positionOffset.x * 0.5f;
+                float randomOffsetZ = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * _positionOffset.z * 0.5f;
+
+                // 平移：将实例放置在圆环上，并应用随机偏移和整体偏移
+                model = glm::translate(model, glm::vec3(x + randomOffsetX + offsetX, 0.0f, z + randomOffsetZ + offsetZ));
+
+                // 添加随机缩放（树的大小随机化）
+                float randomScale = 0.5f + static_cast<float>(rand()) / RAND_MAX * 1.5f; // 随机缩放范围：0.5 到 2.0
+                model = glm::scale(model, glm::vec3(randomScale));
+
+                // 旋转：使实例朝向圆环中心，并应用 _rotationAxis
+                float rotationAngle = glm::degrees(angle) + 90.0f; // 调整朝向
+                model = glm::rotate(model, glm::radians(rotationAngle * _rotationAxis.y), glm::vec3(0.0f, 1.0f, 0.0f)); // 绕 Y 轴旋转
+                model = glm::rotate(model, glm::radians(i * _rotationAxis.x), glm::vec3(1.0f, 0.0f, 0.0f)); // 绕 X 轴旋转
+                model = glm::rotate(model, glm::radians(i * _rotationAxis.z), glm::vec3(0.0f, 0.0f, 1.0f)); // 绕 Z 轴旋转
+
+                _modelMatrices.push_back(model);
+            }
+        }
+        break;
+    }
+
+    case Game::InstanceSphere:
+    {
+        // 球形实例化
+        float radius = 5.0f; // 球体半径
+        int rows = static_cast<int>(std::sqrt(_instanceCount)); // 球体的行数
+        int cols = rows; // 球体的列数
+
+        for (GLuint i = 0; i < _modelMatrices.size(); i++) {
+            glm::mat4 model = glm::mat4(1.0f);
+
+            // 计算球体上的位置（基于极坐标）
+            float phi = static_cast<float>(i / cols) / rows * glm::pi<float>(); // 极角 (0 到 π)
+            float theta = static_cast<float>(i % cols) / cols * 2.0f * glm::pi<float>(); // 方位角 (0 到 2π)
+
+            float x = radius * sin(phi) * cos(theta); // X 坐标
+            float y = radius * cos(phi);             // Y 坐标
+            float z = radius * sin(phi) * sin(theta); // Z 坐标
+
+            // 平移：将实例放置在球体上，并应用 _positionOffset
+            model = glm::translate(model, glm::vec3(x * _positionOffset.x, y * _positionOffset.y, z * _positionOffset.z));
+
+            // 旋转：使实例朝向球体中心，并应用 _rotationAxis
+            float rotationAngleX = glm::degrees(phi) * _rotationAxis.x; // 绕 X 轴旋转
+            float rotationAngleY = glm::degrees(theta) * _rotationAxis.y; // 绕 Y 轴旋转
+            float rotationAngleZ = i * _rotationAxis.z; // 绕 Z 轴旋转
+            model = glm::rotate(model, glm::radians(rotationAngleX), glm::vec3(1.0f, 0.0f, 0.0f)); // 绕 X 轴旋转
+            model = glm::rotate(model, glm::radians(rotationAngleY), glm::vec3(0.0f, 1.0f, 0.0f)); // 绕 Y 轴旋转
+            model = glm::rotate(model, glm::radians(rotationAngleZ), glm::vec3(0.0f, 0.0f, 1.0f)); // 绕 Z 轴旋转
+
+            _modelMatrices[i] = model;
+        }
+        break;
+    }
+
+    default:
+        break;
     }
 }
 
@@ -481,6 +695,35 @@ void Game::GamePlayer::Start()
     _manager= LifecycleManager<CustomModel>::GetInstance();
     //获取控制器组件
     _controller = Controller::GetInstance();
+}
+
+void Game::GamePlayer::UniformParametersInput()
+{
+    //金属度
+    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
+    glUniform1f(metallicLoc,0.9f);
+
+    //糙度
+    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
+    glUniform1f(roughnessLoc, .5f);
+    //透明度
+    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
+    glUniform1f(opacityLoc, 1.0f);
+    //折射率
+    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
+    glUniform1f(IORLoc, 1.330f);
+    //环境光贡献率
+    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
+    glUniform1f(aoLoc, 1.5f);
+
+
+    // 自发光
+    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
+    glUniform3f(emissionLoc, .05f, .05f, .05f); // 传入自发光颜色
+
+    // 基本色
+    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
+    glUniform3f(baseColorLoc, 0.9f, 0.9f, 0.9f); // 传入基本色（暗色）
 }
 
 void Game::GamePlayer::PlayerController(GLFWwindow* window)

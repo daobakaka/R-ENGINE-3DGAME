@@ -32,6 +32,7 @@ extern const char* depthTestShaderFragmentShaderSource;
 extern LifecycleManager<CustomModel>* manager; 
 extern MeshDataManager* meshData ;
 extern Controller* controller ;
+extern LightSpawner* lightSpawner;
 LightSpawner* LightSpawner::GetInstance() {
     if (instance == nullptr) {
         instance = new LightSpawner();
@@ -224,7 +225,7 @@ GLuint Game::LightRender::CreateShadowMapForParallelLight()
     glGenFramebuffers(1, &_depthMapParallelFBO);//基于深度贴图的帧缓冲贴图对象GLuint
     glGenTextures(1, &_depthMapParallel);//深度贴图
     glBindTexture(GL_TEXTURE_2D, _depthMapParallel);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 2400, 1200, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 4800, 2400, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     //这里同样设置几种纹理参数 近线性
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -249,31 +250,21 @@ GLuint Game::LightRender::CreateShadowMapForParallelLight()
 /// 计算光源视图，绑定深度图进入帧缓冲区
 /// </summary>
 /// <param name="lightDirection"></param>
-void Game::LightRender::RenderDepthMapForParallelLight(glm::vec3 lightDirection)
+void Game::LightRender::RenderDepthMapForParallelLight(glm::vec3 lightDirection, const glm::mat4& cameraView, CustomModel* player, glm::vec3 offset)
 {
-    // 设置平行光的视角矩阵（正交投影）
-  // glm::mat4 lightProjection = glm::perspective(glm::radians(45.0f), 1.5f, 0.1f, 100.0f);
-   glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.10f, 1000.0f);
-   //  glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.5f, 7.5f);
+    // 固定正交投影矩阵的范围
+    glm::mat4 lightProjection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, 0.10f, 1000.0f);
 
+    // 光源的基础位置（相对于世界坐标系）
+    glm::vec3 baseLightPos = -lightDirection * 300.0f; // 基础位置 = -光线方向 * 距离
 
-      // 平行光的视角矩阵，注意：平行光没有位置，只有方向
-    glm::vec3 lightPos = -lightDirection * 300.0f;  // 通过光线方向向远处拉伸来设定虚拟光源位置
+    // 根据玩家的位置动态调整光源的位置
+    glm::vec3 lightPos = baseLightPos + player->position*1.0f; // 光源位置 = 基础位置 + 玩家位置
 
-
-     glm::mat4 lightView = glm::lookAt(lightPos, lightPos + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f)); // 视角矩阵
-     //std::cout << "lightDirection: (" << lightDirection.x << ", " << lightDirection.y << ", " << lightDirection.z << ")" << std::endl;
-   /* glm::mat4 lightView = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f),
-        glm::vec3(0, 0, 0),
-        glm::vec3(0.0f, 1.0f, 0.0f));*/
-    //glm::vec3 lightPos = glm::vec3(-0,50,0);  // 通过光线方向向远处拉伸来设定虚拟光源位置
-
-
-    //glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(-3,-2,-2), glm::vec3(0.0f, 1.0f, 0.0f)); // 视角矩阵
+    glm::mat4 lightView = glm::lookAt(lightPos, lightPos+lightDirection, glm::vec3(0.0f, 1.0f, 0.0f));
 
     // 计算光源空间矩阵
-    _lightSpaceMatrix = lightProjection * lightView * glm::mat4(1.0);
-
+    _lightSpaceMatrix = lightProjection * lightView;
 }
 glm::mat4 Game::LightRender::GetLightMatrix()
 {
@@ -317,6 +308,9 @@ GLuint Game::LightRender::GetDepthShaderProgram(ShaderClass shader)
         return _depthVisualShader;
     case ShaderClass::DepthTest:
         return _depthTestShader;
+    case ShaderClass::DepthMapParallel://获取渲染完成之后的平行光深度阴影贴图
+        return _depthMapParallel;
+
     default:
         // 如果 num 的值不在 1, 2, 3 之内，返回一个默认值或处理错误
         return 0;  // 假设返回 0 或者其他默认值作为错误处理
@@ -350,12 +344,13 @@ void Game::LightRender::UnbindFramebuffer()
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);//解除绑定
 
-
+    glViewport(0, 0, 2400, 1200);//阴影贴图渲染完成之后，解绑缓冲区，恢复本来的视口
 }
 
 void Game::LightRender::BindFramebuffer()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, _depthMapParallelFBO);
+    glViewport(0, 0, 4800, 2400);//调整视口以适应阴影贴图分辨率
     glClear(GL_DEPTH_BUFFER_BIT);  // 清空深度缓冲
    // glBindFramebuffer(GL_FRAMEBUFFER, 0);//解除绑定
 
@@ -415,43 +410,29 @@ void Game::LightRender::RenderShadowTexture(GLuint shader)
 LightRender::LightRender() {
     // 构造函数为空
     controller = Controller::GetInstance();
+    lightSpawner = LightSpawner::GetInstance();
 }
 
 LightRender::~LightRender() {
     // 如有必要进行资源清理
 }
 
-void LightRender::RenderLights(GLuint shaderProgram, const Controller* controllerPtr, const Game::LightSpawner* spawnerPtr, glm::vec3 position) {
-    if (!controllerPtr || !spawnerPtr) return; // 简单检查指针有效性
-
+void LightRender::RenderLights(GLuint shaderProgram, glm::vec3 position) {
+  
     glUseProgram(shaderProgram);
-
-
-    // 1. 将平行光的阴影贴图传递到片段着色器
-    GLuint depthMapLoc = glGetUniformLocation(shaderProgram, "autoParallelShadowMap");
-    //这里是上传贴图的操作,必须先绑定纹理单元
-    glActiveTexture(GL_TEXTURE1);//这里使用纹理单元1
-    glBindTexture(GL_TEXTURE_2D, _depthMapParallel);  // 绑定平行光的深度贴图
-    glUniform1i(depthMapLoc, 1);  // 将深度贴图传递给片段着色器
-
-
-    // 2. 将预计算的 `lightSpaceMatrix` 传递给片段着色器
-    GLuint lightSpaceMatrixLoc = glGetUniformLocation(shaderProgram, "lightSpaceMatrix");
-    glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(_lightSpaceMatrix));  // 传递光源视角矩阵
-
-
-
+  
     // 2. 点光源数据
-    const auto& pointLights = spawnerPtr->GetPointLights();
-    std::vector<std::pair<float, int>> pointLightDistances;  // 存储每个点光源到物体的距离平方和索引
+    const auto& pointLights = lightSpawner->GetPointLights();
+    std::vector<std::pair<float, int>> pointLightDistances;  // 存储每个点光源到物体的距离平方和索引,新声明的结构
     glm::vec3 objectPosition = position;  // 使用物体的当前位置作为参考
 
-    // 遍历点光源计算距离平方，并且筛选出距离小于等于 100 的光源
+    // 遍历点光源计算距离平方，并且筛选出距离小于等于 1000 的光源
     for (int i = 0; i < pointLights.size(); i++) {
         const auto& light = pointLights[i];
         float distanceSquared = glm::dot(objectPosition - light.position, objectPosition - light.position);
-        if (distanceSquared <= 100.0f) {  // 只选择距离平方小于等于 100 的光源
+        if (distanceSquared <= 1000.0f) {  // 只选择距离平方小于等于 100 的光源
             pointLightDistances.push_back({ distanceSquared, i });
+            std::cout << i << "距离" << distanceSquared << std::endl;
         }
     }
 
@@ -465,12 +446,12 @@ void LightRender::RenderLights(GLuint shaderProgram, const Controller* controlle
 
     // 只选择最近的 4 个点光源
     for (int i = 0; i < std::min(4, static_cast<int>(pointLightDistances.size())); i++) {
-        int index = pointLightDistances[i].second;  // 获取最近的点光源的索引
-        const auto& light = pointLights[index];
-
+        int index = pointLightDistances[i].second;  // 获取最近的点光源的索引，第一个值是距离，第二个值是距离
+        auto light = pointLights[index];
+      //  std::cout << "点光源强度" << light.intensity << std::endl;
         // 计算距离平方并传递到 shader
         float distanceSquared = pointLightDistances[i].first;
-
+      //  std::cout <<i<< "距离" << distanceSquared << std::endl;
         std::string posName = "lightPos[" + std::to_string(i) + "]";
         std::string colorName = "lightColor[" + std::to_string(i) + "]";
         std::string intensityName = "lightIntensity[" + std::to_string(i) + "]";
@@ -487,19 +468,9 @@ void LightRender::RenderLights(GLuint shaderProgram, const Controller* controlle
         glUniform1f(distanceSquaredLoc, distanceSquared);  // 传递距离平方
     }
 
-    // 3. 平行光数据
-    // 平行光不使用距离判断，直接渲染
-    Game::CustomParallelLight parallelLight = spawnerPtr->GetParallelLight();
-    GLint parallelDirLoc = glGetUniformLocation(shaderProgram, "parallelLightDirection");
-    GLint parallelColorLoc = glGetUniformLocation(shaderProgram, "parallelLightColor");
-    GLint parallelIntensityLoc = glGetUniformLocation(shaderProgram, "parallelLightIntensity");
-
-    glUniform3fv(parallelDirLoc, 1, glm::value_ptr(parallelLight.direction));
-    glUniform3fv(parallelColorLoc, 1, glm::value_ptr(parallelLight.color));
-    glUniform1f(parallelIntensityLoc, parallelLight.intensity);
 
     // 4. 手电筒（聚光灯）数据
-    const auto& flashLights = spawnerPtr->GetFlashLights();
+     auto flashLights = lightSpawner->GetFlashLights();
     std::vector<std::pair<float, int>> flashLightDistances;  // 存储每个聚光灯到物体的距离平方和索引
 
     // 遍历聚光灯计算距离平方，并且筛选出距离小于等于 100 的聚光灯
@@ -522,7 +493,7 @@ void LightRender::RenderLights(GLuint shaderProgram, const Controller* controlle
     // 只选择最近的 4 个聚光灯
     for (int j = 0; j < std::min(4, static_cast<int>(flashLightDistances.size())); j++) {
         int index = flashLightDistances[j].second;  // 获取最近的聚光灯的索引
-        const auto& flash = flashLights[index];
+         auto flash = flashLights[index];
 
         // 计算距离平方并传递到 shader
         float distanceSquared = flashLightDistances[j].first;

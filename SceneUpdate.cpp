@@ -34,13 +34,13 @@ extern ShaderManager* shaderManager;
 std::vector<CustomModel*> toActiveFalse;
 std::vector<CustomModel*> toActiveTrue;
 std::vector<CustomModel*> toDestory;
-void GameUpdateShadowRenderT()
+void GameUpdateShadowRenderT(const glm::mat4 &view,CustomModel* player,glm::vec3 offset)
 {
 
 
     //--全局执行区域阴影
 //使用Controller内部全局着色器
-    lightRender->RenderDepthMapForParallelLight(lightSpawner->GetParallelLight().direction);//渲染深度缓冲图，用于阴影，内含绑定_paralleLightDepthMapFBO
+    lightRender->RenderDepthMapForParallelLight(lightSpawner->GetParallelLight().direction,view,player,offset);//渲染深度缓冲图，用于阴影，内含绑定_paralleLightDepthMapFBO
     lightRender->BindFramebuffer();
     shaderManager->SetMat4("depthCal", "lightSpaceMatrix", lightRender->GetLightMatrix());
     manager->UpdateDepthPic(lightRender->GetLightMatrix(), shaderManager->GetShader("depthCal"));//获取light的光源矩阵，并为场景中的每个对象绘制进入_paralleLightDepthMapFBO,独立对象的绘制采用模板方法
@@ -50,33 +50,41 @@ void GameUpdateShadowRenderT()
     lightRender->RenderShadowTexture(shaderManager->GetShader("depthVisual"));
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
      //--控制平行光的旋转
-  //  lightSpawner->ParalletLightController(glm::vec3(0, 0.1F, 0.0f));
+  lightSpawner->ParalletLightController(glm::vec3(0, 0.01F, 0.0f));
 
 
 }
 
 
+void LightGlobalCalculate()
+{
+
+    //为渲染阴影设置阴影光源矩阵
+    shaderManager->SetMat4("commonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
+    //激活阴影纹理单元
+    shaderManager->SetTexture("commonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 1);
+    //平行光强度渲染,平行光的参数是一致的
+    shaderManager->SetVec3("commonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
+    shaderManager->SetVec3("commonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
+    shaderManager->SetFloat("commonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
+
+}
 
 void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window)
 {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
+    //执行光源参数的全局输入
+    LightGlobalCalculate();
     //每帧清空可移除对象
     toActiveFalse.clear();
     toActiveTrue.clear();
     toDestory.clear();
     //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
     //遍历执行池
-    for (auto &item : manager->GetNativeObjects()) {
-        //将多光源照射效果封装在 灯光渲染器中.如果是光照shader，则需要加入这一段代码，引入光照渲染，如果不是则不需要
-        //现在更改为使用构造化方式，统一使用
-       //--是否光照模型判断
-        if (item.second->ifLight)
-        {
-            //这里既可以使用独有shader 也可以使用共有shader，看使用什么类去构造
-            lightRender->RenderLights(item.second->shaderProgram, controller, lightSpawner, item.second->position);//更改渲染逻辑，减少访问次数
-        }
 
+    for (auto &item : manager->GetNativeObjects()) {
+        //现在更改为使用构造化方式，统一使用
         if (item.second->GetVariant() == 0)
         {
 

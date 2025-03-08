@@ -42,7 +42,7 @@ extern void GameAwakeT();
 extern CustomModel* GameStartT();
 extern void LightInitialization();
 extern void SourceInitialize();
-extern void GameUpdateShadowRenderT();
+extern void GameUpdateShadowRenderT(const glm::mat4& view, CustomModel* player, glm::vec3 offset);
 extern void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window);
 //控制组件标识
 extern Controller* controller;
@@ -113,15 +113,22 @@ int GLins() {
         //传入实例化shader的渲染
         shaderManager->SetMat4("noneLightInstancer", "view", view);
         shaderManager->SetMat4("noneLightInstancer", "projection", projection);
+        //传入无光照着色器
+        shaderManager->SetMat4("noneLight", "view", view);
+        shaderManager->SetMat4("noneLight", "projection", projection);
+
+       
 #pragma endregion
         //阴影渲染
         if (true)
         {
-            GameUpdateShadowRenderT();
+            GameUpdateShadowRenderT(view,gamePlayer, glm::vec3(0, 30, 100));
         }
         //主逻辑
         if (true)
         {
+
+
             GameUpdateMainLogicT(view, projection,window);
             //保持天空盒在其他物体之前渲染,渲染天空盒
             skybox->Draw(view, projection);
