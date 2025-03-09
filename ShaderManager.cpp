@@ -79,7 +79,11 @@ using namespace Game;
         ShaderCompile(noneLightVertexShaderSource, noneLightFragmentShaderSource, "noneLight");
         ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "commonLight");
         ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "noneLightInstancer");
-
+        ShaderCompile(CustomNoLightShadowShaderVertexSource, CustomNoLightShadowShaderFragmentSource, "commonNoneLight");
+       
+        
+        
+        
         //深度图着色器模块儿
         ShaderCompile(depthShaderVertexShaderSource, depthShaderFragmentShaderSource,"depthCal");
         ShaderCompile(depthVisualShaderVertexShaderSource, depthVisualShaderFragmentShaderSource,"depthVisual");

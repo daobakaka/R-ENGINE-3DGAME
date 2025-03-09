@@ -469,42 +469,40 @@ bool CustomModel::DrawDynamical(glm::mat4 view, glm::mat4 projection)
 /// <param name="textureName"></param>
 /// <param name="order"></param>
 /// <returns></returns>
-bool CustomModel::AttachTexture(GLuint textureName, int order, glm::vec2 textureScale)//opengl 采用的是状态机模式
-{  
+bool CustomModel::AttachTexture(const std::unordered_map<PictureTpye, GLuint>& textureData, int order, glm::vec2 textureScale) {
+    // 检查 order 是否有效
+    if (order < 0) {
+        return false; // 无效的 order
+    }
 
-    texture = textureName;
-    textureOrder = order;
+    _textures = textureData;
+    _textureOrder = order;
     _textureScale = textureScale;
-   // RenderingTexture();
     return _drawTexture = true;
 }
 void CustomModel::RenderingTexture()
 {
-   
-    glUseProgram(shaderProgram);
-    if (_drawTexture)
-    {
-
+    if (_drawTexture) {
         // 传入纹理缩放因子
         GLuint textureScaleLoc = glGetUniformLocation(shaderProgram, "textureScale");
-        glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y); // 设置纹理缩放因子
+        glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y);
 
-        GLuint picData = glGetUniformLocation(shaderProgram, "baseTexture");//预写入图像的shader定义内容
-        glActiveTexture(GL_TEXTURE0 + textureOrder);          // 激活纹理单元 0+order
-        glBindTexture(GL_TEXTURE_2D, texture);  // 绑定纹理对象到纹理单元 0+order,这里添加DicTexture集合的纹理对象
-        // 绑定纹理到纹理单元 0+order，这个顺序的所有纹理单元都遍历绑定一次
-        glUniform1i(picData, textureOrder);
 
-        RenderingTextureAdditional();//附加传入纹理方法，可以在这里重写，默认运行空方法
-
+            GLuint baseTextureLoc = glGetUniformLocation(shaderProgram, "baseTexture");
+            glActiveTexture(GL_TEXTURE0+_textureOrder); // 激活纹理单元 0
+            glBindTexture(GL_TEXTURE_2D, _textures[BaseP]); // 绑定基础纹理
+            glUniform1i(baseTextureLoc, 0); // 传递纹理单元 
+        
+        // 加载其他纹理
+        RenderingTextureAdditional();
     }
+ }
 
 
-
-
-}
 void Game::CustomModel::RenderingTextureAdditional()
-{
+{   
+    //commonlight 的参数输入留在子类进行，通用类就只有一张纹理图片
+
 }
 void Game::CustomModel::UniformParametersInput()
 {

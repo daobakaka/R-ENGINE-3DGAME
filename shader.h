@@ -294,7 +294,7 @@ uniform sampler2D baseTexture;  // 基础纹理采样器
 uniform sampler2D normalTexture; // 法线纹理采样器
 uniform sampler2D heightTexture; // 高度贴图
 uniform sampler2D roughnessTexture; // 糙度贴图
-uniform samplerCube reflectionTexture; // 高光反射贴图
+uniform samplerCube specularTexture; // 高光反射贴图（原名 reflectionTexture）
 uniform sampler2D aoTexture;  // 环境光遮蔽贴图
 
 //--平行光贴图
@@ -303,12 +303,12 @@ uniform sampler2D autoParallelShadowMap;//平行光光照贴图，用于生成主阴影
 uniform mat4 lightSpaceMatrix;  // 从光源视角计算的矩阵
 
 // 点光源参数
-const int MAX_POINT_LIGHTS =4;
+const int MAX_POINT_LIGHTS = 4;
 uniform int numPointLights;
 uniform vec3 lightPos[MAX_POINT_LIGHTS];
 uniform vec3 lightColor[MAX_POINT_LIGHTS];
 uniform float lightIntensity[MAX_POINT_LIGHTS];
-float lightAttenuation=0.01F; // 距离衰减系数
+float lightAttenuation = 0.01F; // 距离衰减系数
 uniform float lightDistanceSquared[MAX_POINT_LIGHTS]; // 传入的距离平方
 
 // 平行光（方向光）参数
@@ -317,14 +317,14 @@ uniform vec3 parallelLightColor;
 uniform float parallelLightIntensity;
 
 // 手电筒（聚光灯）参数
-const int MAX_FLASHLIGHTS =4;//数组计算不能是动态值，只能是空值，参照上下文索引符号
-uniform int numFlashLights;//可以采用传入数据变量来进行更改
+const int MAX_FLASHLIGHTS = 4;
+uniform int numFlashLights;
 uniform vec3 flashLightPos[MAX_FLASHLIGHTS];
 uniform vec3 flashLightDirection[MAX_FLASHLIGHTS];
 uniform vec3 flashLightColor[MAX_FLASHLIGHTS];
 uniform float flashLightIntensity[MAX_FLASHLIGHTS];
 uniform float flashLightCutoff[MAX_FLASHLIGHTS]; // cutoff 值为余弦值
-float flashlightAttenuation=0.01F; // 手电筒光的衰减系数
+float flashlightAttenuation = 0.01F; // 手电筒光的衰减系数
 uniform float flashLightDistanceSquared[MAX_FLASHLIGHTS]; // 传入的聚光灯距离平方
 
 // PBR 光照计算函数
@@ -376,31 +376,47 @@ float calculateLightLoss(float opacityValue, float IORValue) {
 }
 
 void main() {
-    // 直接使用 uniform 的值
-    vec3 norm = normalize(Normal);
+
+
+// 计算视图方向，必须在使用 viewDir 前计算
+    vec3 viewDir = normalize(ViewPos - FragPos);
+    // 采样法线纹理并调整法线
+    vec3 normalMap = texture(normalTexture, TexCoord).rgb;
+    normalMap = normalMap * 2.0 - 1.0;  // 映射到 [-1, 1]
+    vec3 norm = normalize(Normal + normalMap);  // 结合原始法线
+
+    // 采样高度纹理并调整纹理坐标
+    float height = texture(heightTexture, TexCoord).r;
+    vec2 parallaxOffset = viewDir.xy * (height * 0.1);  // 简单的视差偏移
+    vec2 adjustedTexCoord = TexCoord + parallaxOffset;
+
+    // 采样粗糙度纹理并调整粗糙度
+    float roughnessValue = texture(roughnessTexture, adjustedTexCoord).r * roughness;
+
+    // 采样环境光遮蔽纹理并调整 AO
+    float aoValue = texture(aoTexture, adjustedTexCoord).r * ao;
+
+    // 采样高光反射纹理
+    vec3 reflectionDir = reflect(-viewDir, norm);
+    vec3 specularColor = texture(specularTexture, reflectionDir).rgb;
+
+    // 采样基础纹理并调整基础颜色
+    vec4 texColor = texture(baseTexture, adjustedTexCoord);
+    vec3 finalBaseColor = baseColor * texColor.rgb;
 
     // 初始化光照贡献
     vec3 ambientTotal = vec3(0.0);
     vec3 diffuseTotal = vec3(0.0);
     vec3 specularTotal = vec3(0.0);
 
-    // 计算视图方向
-    vec3 viewDir = normalize(ViewPos - FragPos);
 
     // --- 点光源部分 ---
     for (int i = 0; i < numPointLights; i++) {
         if (lightIntensity[i] > 0.0001) {
-            // 使用传入的距离平方进行衰减
             float attenuation = 1.0 / (1.0 + lightAttenuation * lightDistanceSquared[i]);
-
-            // 环境光：每个点光源均贡献 10%
             ambientTotal += 0.1 * lightColor[i];
-
-            // 计算 PBR 光照
             vec3 lightDir = normalize(lightPos[i] - FragPos);
-            vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, lightColor[i], lightIntensity[i], metallic, roughness);
-
-            // 累加光照贡献
+            vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, lightColor[i], lightIntensity[i], metallic, roughnessValue);
             diffuseTotal += pbrLighting * attenuation;
         }
     }
@@ -409,20 +425,11 @@ void main() {
     for (int j = 0; j < numFlashLights; j++) {
         if (flashLightIntensity[j] > 0.0001) {
             vec3 lightDir = normalize(flashLightPos[j] - FragPos);
-            
-            // 使用传入的聚光灯距离平方进行衰减
             float attenuation = 1.0 / (1.0 + flashlightAttenuation * flashLightDistanceSquared[j]);
-            
-            // 计算聚光效果
             float theta = dot(lightDir, normalize(flashLightDirection[j]));
             if (theta > flashLightCutoff[j]) {
-                // 环境光：每个聚光灯均贡献 10%
                 ambientTotal += 0.1 * flashLightColor[j];
-
-                // 计算 PBR 光照
-                vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, flashLightColor[j], flashLightIntensity[j], metallic, roughness);
-
-                // 累加光照贡献
+                vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, flashLightColor[j], flashLightIntensity[j], metallic, roughnessValue);
                 diffuseTotal += pbrLighting * attenuation;
             }
         }
@@ -430,39 +437,21 @@ void main() {
 
     // --- 平行光（方向光）部分 ---
     if (parallelLightIntensity > 0.0001) {
-        // 环境光：平行光单独贡献 20%
         ambientTotal += 0.2f * parallelLightColor;
-
-        // 计算 PBR 光照
         vec3 lightDir = normalize(-parallelLightDirection);
-        vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, parallelLightColor, parallelLightIntensity, metallic, roughness);
-
-        // 累加光照贡献
+        vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, parallelLightColor, parallelLightIntensity, metallic, roughnessValue);
         diffuseTotal += pbrLighting;
 
-        // 计算阴影
+        // 阴影计算
         vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
         vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-        projCoords = projCoords * 0.5 + 0.5;  // 将坐标从[-1, 1]映射到[0, 1]
+        projCoords = projCoords * 0.5 + 0.5;
 
-        // 定义边缘阈值
-        const float edgeThreshold = 0.01; // 边缘阈值，可以根据需要调整
-
-        // 判断是否临近阴影贴图边缘
-        bool isNearEdge = (projCoords.x < edgeThreshold || projCoords.x > 1.0 - edgeThreshold ||
-                          projCoords.y < edgeThreshold || projCoords.y > 1.0 - edgeThreshold);
-
-        // 从阴影贴图中获取深度值
         float closestDepth = texture(autoParallelShadowMap, projCoords.xy).r;
         float currentDepth = projCoords.z;
-
-        // 动态调整阴影偏差
         float bias = max(0.005 * (1.0 - dot(norm, lightDir)), 0.001);
-
-        // 阴影判断：比较当前片段的深度与从阴影贴图中取出的深度
         float shadow = currentDepth > (closestDepth + bias) ? 1.0 : 0.0;
 
-        // 使用 PCF 平滑阴影边缘
         float shadowPCF = 0.0f;
         vec2 texelSize = 1.0 / textureSize(autoParallelShadowMap, 0);
         for(int x = -1; x <= 1; ++x) {
@@ -471,34 +460,25 @@ void main() {
                 shadowPCF += (currentDepth - bias > pcf) ? 1.0 : 0.0;
             }
         }
-        shadowPCF /= 9.0f;  // 平均结果
-
-        // 如果在阴影中，漫反射和镜面反射会变暗
-        if (isNearEdge) {
-            // 临近边缘时，禁用阴影计算
-            diffuseTotal *= 1.0;
-        } else {
-            // 正常应用阴影
-            diffuseTotal *= (1.0 - shadowPCF);
-        }
+        shadowPCF /= 9.0f;
+        diffuseTotal *= (1.0 - shadowPCF);
     }
-    
-    // 最终光照
-    vec3 lighting = ambientTotal * ao + diffuseTotal;
 
-    // 计算光线损失（仅在透明度低于 0.6 时生效）
+    // 最终光照
+    vec3 lighting = ambientTotal * aoValue + diffuseTotal + specularColor * metallic;
+
+    // 计算光线损失
     float lightLoss = calculateLightLoss(opacity, IOR);
 
     // 最终颜色 = (光照效果 × 物体固有色) + 自发光
-    vec3 result = lighting * baseColor * (1.0 - lightLoss) + emission;
+    vec3 result = lighting * finalBaseColor * (1.0 - lightLoss) + emission;
 
-    // 采样纹理颜色，并与光照结果相乘
-    vec4 texColor = texture(baseTexture, TexCoord);
+    // 输出颜色
     FragColor = vec4(result, opacity) * texColor;
 }
 )";
 /// <summary>
-/// 无光照通用着色器
+/// 无光照基础着色器
 /// </summary>
 
 const char* noneLightVertexShaderSource = R"(
@@ -548,6 +528,134 @@ void main()
     FragColor = (texture(baseTexture, TexCoord) + vec4(colorToUse, 1.0)) ;
 } 
 )";
+/// <summary>
+/// 无光照通用渲染着色器
+/// </summary>
+const char* CustomNoLightShadowShaderVertexSource = R"(
+#version 450 core
+layout(location = 0) in vec3 aPos;       // 顶点位置
+layout(location = 1) in vec2 aTexCoord;    // 纹理坐标
+layout(location = 2) in vec3 aNormal;      // 顶点法线
+
+// 输出到片段着色器
+out vec2 TexCoord;   // 传递纹理坐标
+out vec3 FragPos;    // 世界空间中的片段位置
+out vec3 Normal;     // 世界空间中的法线
+out vec3 ViewPos;   // 相机位置
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+uniform vec2 textureScale ; // uniform 变量设计赋值非法，只能外部传递纹理缩放因子,改变纹理的缩放方式
+
+void main()
+{
+    // 计算世界空间坐标
+    vec4 worldPos = model * vec4(aPos, 1.0);
+    FragPos = worldPos.xyz;
+
+    // 传递纹理坐标
+    TexCoord = aTexCoord * textureScale;
+  
+    // 正确变换法线，防止非均匀缩放问题
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+
+ // 计算相机位置 (viewPos)，视图矩阵是从世界空间转换到相机空间的
+    ViewPos = -mat3(view) * vec3(view[3]);
+
+    // 计算最终屏幕坐标
+    gl_Position = projection * view * worldPos;
+}
+)";
+
+
+const char* CustomNoLightShadowShaderFragmentSource = R"(
+#version 450 core
+
+in vec3 FragPos;  
+in vec3 Normal;
+in vec2 TexCoord;  
+in vec3 ViewPos;  
+out vec4 FragColor;
+
+// 基本参数（保留接口，后续可扩展）
+uniform float metallic;      // 金属度
+uniform float roughness;     // 粗糙度
+uniform float opacity;       // 透明度
+uniform float IOR;           // 折射率
+uniform float ao;            // 环境光遮蔽率
+
+// 颜色
+uniform vec3 baseColor;      // 模型固有色
+uniform vec3 emission;       // 自发光
+
+// 贴图采样器
+uniform sampler2D baseTexture;      // 基础纹理
+uniform sampler2D normalTexture;     // 法线纹理
+uniform sampler2D heightTexture;     // 高度贴图（用于视差映射）
+uniform sampler2D roughnessTexture;   // 粗糙度贴图
+uniform samplerCube specularTexture;  // 反光贴图（cube map）
+uniform sampler2D aoTexture;          // 环境光遮蔽贴图
+
+// 阴影相关（保留方向光阴影计算）
+uniform sampler2D autoParallelShadowMap; // 平行光阴影贴图
+uniform mat4 lightSpaceMatrix;           // 从光源视角计算的矩阵
+uniform vec3 parallelLightDirection;     // 平行光方向，用于计算阴影偏置
+
+// 以下点光源、聚光等均取消，不参与计算
+
+void main()
+{
+    // 计算视图方向
+    vec3 viewDir = normalize(ViewPos - FragPos);
+
+    // 采样法线纹理并映射到[-1, 1]，与原始法线结合
+    vec3 normalMap = texture(normalTexture, TexCoord).rgb;
+    normalMap = normalMap * 2.0 - 1.0;
+    vec3 norm = normalize(Normal + normalMap);
+
+    // 视差映射：使用高度贴图计算偏移
+    float heightVal = texture(heightTexture, TexCoord).r;
+    vec2 parallaxOffset = viewDir.xy * (heightVal * 0.1);
+    vec2 adjustedTexCoord = TexCoord + parallaxOffset;
+
+    // 采样基础纹理
+    vec4 texColor = texture(baseTexture, adjustedTexCoord);
+    // 采样 AO 贴图并调制
+    float aoVal = texture(aoTexture, adjustedTexCoord).r * ao;
+    vec3 finalBaseColor = baseColor * texColor.rgb * aoVal;
+
+    // ---- 阴影计算（方向光阴影） ----
+    vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5; // 将坐标映射到 [0, 1]
+
+    // 使用平行光方向计算阴影偏置（保留原逻辑）
+    vec3 lightDir = normalize(-parallelLightDirection);
+    float bias = max(0.005 * (1.0 - dot(norm, lightDir)), 0.005);//保留bias值 最小0.005f
+    float currentDepth = projCoords.z;
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(autoParallelShadowMap, 0);
+    // PCF 软阴影采样（3x3 邻域）
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            float pcfDepth = texture(autoParallelShadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            shadow += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 9.0;
+    // 将阴影因子应用到基础颜色
+    finalBaseColor *= (1.0 - shadow);
+    // ---- 阴影计算结束 ----
+
+    // 最终输出颜色：基础调制结果加上自发光
+    vec3 result = finalBaseColor + emission;
+     FragColor = vec4(result, opacity * texColor.a);
+    // FragColor = vec4(1,1,1,1); 
+}
+)";
+
+
 /// <summary>
 /// 无光照光源渲染着色器
 /// </summary>

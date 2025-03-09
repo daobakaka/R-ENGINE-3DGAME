@@ -51,7 +51,7 @@ namespace Game {
         /// <param name="order"></param>
         /// <param name="textureScale"></param>
         /// <returns></returns>
-        virtual bool AttachTexture(GLuint textureName, int order=0,glm::vec2 textureScale=glm::vec2(1.0f,1.0f)) ;//附加纹理处理可重写
+        virtual bool AttachTexture(const  std::unordered_map<PictureTpye, GLuint>& textureData, int order=0, glm::vec2 textureScale= glm::vec2(1));
         virtual void RenderingTexture();//渲染纹理方法可重写
         virtual void RenderingTextureAdditional();//附加的渲染纹理方法
         virtual void UniformParametersInput();//全局shader参数输入重写
@@ -96,8 +96,8 @@ namespace Game {
 
     protected:
         //贴图组件,存在继承关系，这里子类需要访问
-        GLuint texture;
-        int textureOrder;
+        std::unordered_map<PictureTpye, GLuint> _textures; // 纹理容器
+        int _textureOrder;//绘制使用的纹理单元
         bool _drawTexture;
         glm::vec2 _textureScale;
         size_t index;

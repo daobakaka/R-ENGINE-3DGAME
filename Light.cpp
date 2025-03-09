@@ -70,7 +70,7 @@ CustomPointLight LightSpawner::SpawPointLight(glm::vec3 position, glm::vec3 colo
         pointLightPtr->SetVariant(ModelClass::PointLight);
         pointLightPtr->Initialize(position, glm::quat(glm::vec3(0, 0, 1.5f)), glm::vec3(0.3f));
         manager->RegisterObject(pointLightPtr);
-        pointLightPtr->AttachTexture(TextureDic["light"][0]);
+        pointLightPtr->AttachTexture(TextureDic["light"]);
         //子类的方法，设置灯光参数
         pointLightPtr->SteLightParameters(color, intensity);
     }
@@ -93,7 +93,7 @@ CustomParallelLight LightSpawner::SpawParallelLight(glm::vec3 direction, glm::ve
         pointLightPtr->SetVariant(ModelClass::ParallelLight);
         pointLightPtr->Initialize(glm::vec3(0), glm::vec3(0), glm::vec3(0.3f));
         manager->RegisterObject(pointLightPtr);
-        pointLightPtr->AttachTexture(TextureDic["light"][0]);
+        pointLightPtr->AttachTexture(TextureDic["light"]);
         //子类的方法，设置灯光参数
         pointLightPtr->SteLightParameters(color, intensity);
 
@@ -145,7 +145,7 @@ CustomFlashLight LightSpawner::SpawFlashLight(glm::vec3 position, glm::vec3 dire
         pointLightPtr->SetVariant(ModelClass::FlashLight);
         pointLightPtr->Initialize(position, finalRotation, glm::vec3(0.3f));
         manager->RegisterObject(pointLightPtr);
-        pointLightPtr->AttachTexture(TextureDic["light"][0]);
+        pointLightPtr->AttachTexture(TextureDic["light"]);
         //子类的方法，设置灯光参数
         pointLightPtr->SteLightParameters(color, intensity);
 
@@ -363,7 +363,7 @@ void Game::LightRender::RenderShadowTexture(CustomModel* obj,glm::mat4 crossView
   
     
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, TextureDic["butterfly"][0]);
+    glBindTexture(GL_TEXTURE_2D, TextureDic["butterfly"][PictureTpye::BaseP]);
 
     GLuint depthMapLoc = glGetUniformLocation(_depthVisualShader, "depthMap");
     glUniform1i(depthMapLoc, 0);  // 将纹理单元0传递给着色器

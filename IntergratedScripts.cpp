@@ -132,13 +132,13 @@ void Game::IntergratedScripts::PlayerControl(GLFWwindow* window, CustomModel* ot
             // 生成一发子弹
             auto* bullet = new GameBullet("commonLight", ModelDic["baseSphere"], false, false, true);
             bullet->SetVariant(ModelClass::PlayerBullet);
-            bullet->Initialize(other->position + glm::vec3(0, 8, 0), glm::quat(glm::vec3(0)), glm::vec3(1.0f));
+            bullet->Initialize(other->position + glm::vec3(0, 8, 0), glm::quat(glm::vec3(0)), glm::vec3(3.0f));
             manager->RegisterObject(bullet);
-            bullet->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
+            bullet->AttachTexture(TextureDic["stoneMonster"], 0, glm::vec2(1, 1));
             bullet->AttachPhysicalEngine();
             bullet->AttachCollider();
-            bullet->GetComponent<PhysicalEngine>()->SetMass(0.1f); // 给子弹较小的质量
-            bullet->GetComponent<PhysicalEngine>()->SetAcceleration(glm::vec3(0, -3.0f, 0)); // 模拟子弹受较小的重力加速度
+            bullet->GetComponent<PhysicalEngine>()->SetMass(0.3f); // 给子弹较小的质量
+            bullet->GetComponent<PhysicalEngine>()->SetAcceleration(glm::vec3(0, -5.0f, 0)); // 模拟子弹受较小的重力加速度
             bullet->GetComponent<CollisionBody>()->SetTrigger(false); // 被子弹碰撞的物体不会受到物理系统的影响，子弹为触发器，只受到速度和加速度影响
             bullet->GetComponent<CollisionBody>()->SetGameProperties(1, 1, 1); // 设置子弹的攻击力为1
 

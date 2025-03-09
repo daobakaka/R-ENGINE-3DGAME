@@ -36,6 +36,19 @@ namespace Game {
 		
 	};
 
+	enum PictureTpye
+	{
+		BaseP,
+		NormalP,
+		SpecularP,
+		HightP,
+		RoughnessP,
+		AOP,
+		OtherP,
+
+	};
+
+
 	enum SpecialType
 	{
 		OriginalT,//原始类型

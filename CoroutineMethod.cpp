@@ -18,30 +18,6 @@ using namespace Game;
 
     CoroutineMethod::~CoroutineMethod() { }
     //原生的方法，但是目前渲染会出问题---
-    void CoroutineMethod::StartSpawnButterfliesAsync(LifecycleManager<CustomModel>* manager) {
-        std::thread([manager]() {
-            for (int i = 0; i < 30; i++) {
-                CustomModel* model = new CustomModel(
-                    noneLightVertexShaderSource,
-                    noneLightFragmentShaderSource,
-                    ModelDic["butterfly"],
-                    true
-                );
-                manager->RegisterObject(model);
-                model->Initialize(
-                    glm::vec3(2.0f, 0.0f, i * 0.5f),
-                    glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)),
-                    glm::vec3(0.1f, 0.1f, 0.1f)
-                );
-                model->AttachTexture(TextureDic["default"][0],0);
-                model->AttachAnimationController(AnimationDic["butterfly"]["fly"]);
-                model->AttachPhysicalEngine();
-                model->AttachCollider();
-                model->SetVariant(ModelClass::ActorButterfly);
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-            }
-            }).detach();
-    }
     //一个新增的添加任务的方法
     void CoroutineMethod::AddTimerTask(float intervalSeconds, int repeatCount, std::function<void()> callback) {
         float currentTime = static_cast<float>(glfwGetTime());
@@ -71,33 +47,6 @@ using namespace Game;
         );
     }
 
-    //事实上这个方法可以通过配置，转换成通用的初始化方法
-    void CoroutineMethod::StartSpawnButterfliesByTimer(LifecycleManager<CustomModel>* manager, GLuint textureName, int order) {
-        // 重复 5 次、每次间隔 1 秒
-        AddTimerTask(1.0f, 20, [manager, textureName,order]() {
-             int counter = 0;
-            std::cout << "[TimerTask] 创建蝴蝶对象 #" << counter << std::endl;
-            counter++;
-
-            CustomModel* model = new CustomModel(
-                noneLightVertexShaderSource,
-                noneLightFragmentShaderSource,
-                ModelDic["butterfly"],
-                true
-            );
-            manager->RegisterObject(model);
-            model->Initialize(
-                glm::vec3(2.0f, 0.0f, counter * 0.5f),
-                glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)),
-                glm::vec3(0.1f, 0.1f, 0.1f)
-            );
-            model->AttachTexture(textureName,order);
-            model->AttachAnimationController((AnimationDic["butterfly"]["fly"]));
-            model->AttachPhysicalEngine();
-            model->AttachCollider();
-            model->SetVariant(ModelClass::ActorButterfly);
-            });
-    }
   
 
     

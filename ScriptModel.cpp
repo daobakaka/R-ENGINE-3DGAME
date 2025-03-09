@@ -52,13 +52,13 @@ void LightModel::RenderingTexture()
 
 
     // 5) 激活纹理单元 (GL_TEXTURE0 + textureOrder)
-    glActiveTexture(GL_TEXTURE0 + textureOrder);
+    glActiveTexture(GL_TEXTURE0 + _textureOrder);
 
     // 6) 绑定你的纹理对象 (texture) 到该单元
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, _textures[PictureTpye::BaseP]);
 
     // 7) 告诉 sampler uniform "texture1" 使用第 textureOrder 号纹理单元
-    glUniform1i(samplerLoc, textureOrder);
+    glUniform1i(samplerLoc, _textureOrder);
 
 }
 #pragma endregion
@@ -270,10 +270,10 @@ void Game::CustomModelShader::RenderingTexture()
         glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y); // 设置纹理缩放因子
 
         GLuint picData = glGetUniformLocation(shaderProgram, "baseTexture");//预写入图像的shader定义内容
-        glActiveTexture(GL_TEXTURE0 + textureOrder);          // 激活纹理单元 0+order
-        glBindTexture(GL_TEXTURE_2D, texture);  // 绑定纹理对象到纹理单元 0+order,这里添加DicTexture集合的纹理对象
+        glActiveTexture(GL_TEXTURE0 + _textureOrder);          // 激活纹理单元 0+order
+        glBindTexture(GL_TEXTURE_2D, _textures[PictureTpye::BaseP]);  // 绑定纹理对象到纹理单元 0+order,这里添加DicTexture集合的纹理对象
         // 绑定纹理到纹理单元 0+order，这个顺序的所有纹理单元都遍历绑定一次
-        glUniform1i(picData, textureOrder);
+        glUniform1i(picData, _textureOrder);
 
 
         RenderingTextureAdditional();
@@ -282,6 +282,61 @@ void Game::CustomModelShader::RenderingTexture()
 }
 void Game::CustomModelShader::RenderingTextureAdditional()
 {
+    int textureUnit = _textureOrder + 1; // 从 textureOrder + 1 开始
+
+    for (const auto& pair : _textures) {
+        PictureTpye type = pair.first;
+        GLuint textureID = pair.second;
+
+        // 跳过基础纹理（已经在 RenderingTexture 中加载）
+        if (type == BaseP) {
+            continue;
+        }
+
+        // 根据纹理类型绑定到对应的纹理单元
+        switch (type) {
+        case NormalP: {
+            GLuint normalTextureLoc = glGetUniformLocation(shaderProgram, "normalTexture");
+            glActiveTexture(GL_TEXTURE0 + textureUnit); // 激活纹理单元
+            glBindTexture(GL_TEXTURE_2D, textureID); // 绑定法线纹理
+            glUniform1i(normalTextureLoc, textureUnit); // 传递纹理单元
+            break;
+        }
+        case SpecularP: {
+            GLuint specularTextureLoc = glGetUniformLocation(shaderProgram, "specularTexture");
+            glActiveTexture(GL_TEXTURE0 + textureUnit); // 激活纹理单元
+            glBindTexture(GL_TEXTURE_2D, textureID); // 绑定高光反射纹理
+            glUniform1i(specularTextureLoc, textureUnit); // 传递纹理单元
+            break;
+        }
+        case HightP: {
+            GLuint heightTextureLoc = glGetUniformLocation(shaderProgram, "heightTexture");
+            glActiveTexture(GL_TEXTURE0 + textureUnit); // 激活纹理单元
+            glBindTexture(GL_TEXTURE_2D, textureID); // 绑定高度纹理
+            glUniform1i(heightTextureLoc, textureUnit); // 传递纹理单元
+            break;
+        }
+        case RoughnessP: {
+            GLuint roughnessTextureLoc = glGetUniformLocation(shaderProgram, "roughnessTexture");
+            glActiveTexture(GL_TEXTURE0 + textureUnit); // 激活纹理单元
+            glBindTexture(GL_TEXTURE_2D, textureID); // 绑定粗糙度纹理
+            glUniform1i(roughnessTextureLoc, textureUnit); // 传递纹理单元
+            break;
+        }
+        case AOP: {
+            GLuint aoTextureLoc = glGetUniformLocation(shaderProgram, "aoTexture");
+            glActiveTexture(GL_TEXTURE0 + textureUnit); // 激活纹理单元
+            glBindTexture(GL_TEXTURE_2D, textureID); // 绑定 AO 纹理
+            glUniform1i(aoTextureLoc, textureUnit); // 传递纹理单元
+            break;
+        }
+        default:
+            break;
+        }
+
+        textureUnit++; // 递增纹理单元
+    }
+
 }
 void Game::CustomModelShader::RenderingLight()
 {
@@ -296,7 +351,7 @@ void Game::CustomModelShader::RenderingLight()
         for (int i = 0; i < pointLights.size(); i++) {
             const auto& light = pointLights[i];
             float distanceSquared = glm::dot(objectPosition - light.position, objectPosition - light.position);
-            if (distanceSquared <= 1000.0f) {  // 只选择距离平方小于等于 100 的光源
+            if (distanceSquared <= 2000.0f) {  // 只选择距离平方小于等于 100 的光源
                 pointLightDistances.push_back({ distanceSquared, i });
                // std::cout << i << "距离" << distanceSquared << std::endl;
             }
@@ -343,7 +398,7 @@ void Game::CustomModelShader::RenderingLight()
         for (int j = 0; j < flashLights.size(); j++) {
             const auto& flash = flashLights[j];
             float distanceSquared = glm::dot(objectPosition - flash.position, objectPosition - flash.position);
-            if (distanceSquared <= 1000.0f) {  // 只选择距离小于等于 1000 的聚光灯
+            if (distanceSquared <= 2000.0f) {  // 只选择距离小于等于 1000 的聚光灯
                 flashLightDistances.push_back({ distanceSquared, j });
             }
         }
@@ -660,9 +715,9 @@ void Game::CustomModelInstance::RenderingTexture()
         glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y); // 设置纹理缩放因子
 
         GLuint picData = glGetUniformLocation(shaderProgram, "baseTexture");
-        glActiveTexture(GL_TEXTURE0 + textureOrder); // 激活纹理单元 0+order
-        glBindTexture(GL_TEXTURE_2D, texture);      // 绑定纹理对象到纹理单元 0+order
-        glUniform1i(picData, textureOrder);         // 将纹理单元绑定到着色器的“baseTexture” uniform
+        glActiveTexture(GL_TEXTURE0 + _textureOrder); // 激活纹理单元 0+order
+        glBindTexture(GL_TEXTURE_2D, _textures[PictureTpye::BaseP]);      // 绑定纹理对象到纹理单元 0+order
+        glUniform1i(picData, _textureOrder);         // 将纹理单元绑定到着色器的“baseTexture” uniform
     }
 }
 
@@ -726,27 +781,6 @@ void Game::GamePlayer::UniformParametersInput()
     glUniform3f(baseColorLoc, 0.9f, 0.9f, 0.9f); // 传入基本色（暗色）
 }
 
-void Game::GamePlayer::PlayerController(GLFWwindow* window)
-{    //角色控制按钮
-    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
-
-        std::cout << "press O" << std::endl;
-            //生成一发子弹
-        auto* bullet = new GameBullet("noneLight", ModelDic["baseSphere"], false, false, true);
-        bullet->SetVariant(ModelClass::PlayerBullet);
-        bullet->Initialize(position + glm::vec3(0, 2, 2), glm::quat(glm::vec3(0)), glm::vec3(0.3f));
-        _manager->RegisterObject(bullet);
-        bullet->AttachTexture(TextureDic["stone"][0], 0, glm::vec2(1, 1));
-        bullet->AttachPhysicalEngine();
-        bullet->AttachCollider();
-        bullet->GetComponent<PhysicalEngine>()->SetMass(0.1f);//给子弹较小的质量
-        bullet->GetComponent<PhysicalEngine>()->SetAcceleration(glm::vec3(0, -2.0f, 0));//模拟子弹受较小重力加速度
-        bullet->GetComponent<CollisionBody>()->SetTrigger(true);//被子弹碰撞的物体不会受到物理系统的影响
-        bullet->GetComponent<CollisionBody>()->SetGameProperties(1, 1, 1);//设置子弹的攻击力为1
-        bullet->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));//给子弹10的前向速度   
-    }
-
-}
 
 
 #pragma endregion
@@ -757,6 +791,35 @@ void Game::GameBullet::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
     //给予子弹10 速度
    // this->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));
+
+}
+void Game::GameBullet::UniformParametersInput()
+{
+    //金属度
+    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
+    glUniform1f(metallicLoc, 0.1f);
+
+    //糙度
+    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
+    glUniform1f(roughnessLoc, .5f);
+    //透明度
+    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
+    glUniform1f(opacityLoc, 0.3f);
+    //折射率
+    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
+    glUniform1f(IORLoc, 1.330f);
+    //环境光贡献率
+    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
+    glUniform1f(aoLoc, 1.5f);
+
+
+    // 自发光
+    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
+    glUniform3f(emissionLoc, .05f, .05f, .05f); // 传入自发光颜色
+
+    // 基本色
+    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
+    glUniform3f(baseColorLoc, 0.9f, 0.9f, 0.9f); // 传入基本色（暗色）
 
 }
 #pragma endregion

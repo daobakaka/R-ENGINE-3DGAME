@@ -114,6 +114,8 @@ void SourceInitialize()
 {
     //加载模型区域
     MakeModel();
+    //加载FBX模型区域
+    MakeModelFbx();
     // 动画控制模块，这个方法动态拓展，用于添加不同的动画，接下来可以高度封装的动画声明及添加
     MakeAnimation();
     // 加载纹理
@@ -149,7 +151,7 @@ CustomModel* GameStartT()
     basePlane->SetVariant(ModelClass::StaticPlane);
     basePlane->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(1000.0f, 0.1f, 1000.0f));
     manager->RegisterObject(basePlane);
-    basePlane->AttachTexture(TextureDic["grass"][0], 0, glm::vec2(50, 50));
+    basePlane->AttachTexture(TextureDic["grass"], 0, glm::vec2(50, 50));
     basePlane->AttachPhysicalEngine(true);//声明为静态类型，目前注册为1
     basePlane->AttachCollider(CollisionType::Box,SpecialType::BasePlane,1);//注册特殊碰撞体--地板
 
@@ -159,7 +161,7 @@ CustomModel* GameStartT()
     gamePlayer->Initialize(glm::vec3(0.0f, 5.0f, 0.0f), glm::quat(glm::vec3(0.0f,0, 0.0f)), glm::vec3(3));
     manager->RegisterObject(gamePlayer);
     manager->RegisterSpecialObjects(gamePlayer, "player");//注册入特殊对象储存器，方便在在玩家类内部使用，且在更新方法中引用
-    gamePlayer->AttachTexture(TextureDic["butterfly"][0], 0, glm::vec2(1, 1));
+    gamePlayer->AttachTexture(TextureDic["butterfly"], 0, glm::vec2(1, 1));
     gamePlayer->AttachPhysicalEngine();
     gamePlayer->GetComponent<PhysicalEngine>()->SetElasticity(0);//设置弹性系数为0
     gamePlayer->GetComponent<PhysicalEngine>()->SetFriction(0.9f);//设置摩擦系数为0.5，减少滑动
@@ -178,7 +180,7 @@ CustomModel* GameStartT()
         baseSphere->SetVariant(ModelClass::TestPhysics);
         baseSphere->Initialize(glm::vec3(-70+3.0f+3.5f*i, 10.0f+i, -50.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
         manager->RegisterObject(baseSphere);
-        baseSphere->AttachTexture(TextureDic["butterfly"][0], 0);
+        baseSphere->AttachTexture(TextureDic["butterfly"], 0);
         baseSphere->AttachPhysicalEngine(false, 10);
         baseSphere->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));  
         baseSphere->AttachCollider();
@@ -187,24 +189,34 @@ CustomModel* GameStartT()
     //测试树
     for (int i = 0; i < 1; i++)
     {
-        auto* tree = new CustomModelShader("commonLight", ModelDic["tree"], false, true, true);
+        auto* tree = new CustomModelShader("commonLight", ModelDic["tree"], false, false, true);
         tree->SetVariant(ModelClass::CubeE);
         tree->Initialize(glm::vec3(60,0,20), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(15));
         manager->RegisterObject(tree);
-        tree->AttachTexture(TextureDic["tree"][1], 0,glm::vec2(4, 4));
+        tree->AttachTexture(TextureDic["tree"], 0,glm::vec2(4, 4));
 
     }
     //测试宝箱
     for (int i = 0; i < 1; i++)
     {
-        auto* chest = new CustomModelShader("noneLight", ModelDic["chest"], false, true, true);
+        auto* chest = new CustomModelShader("commonNoneLight", ModelDic["chest"], false, false, true);
         chest->SetVariant(ModelClass::OriginalE);
         chest->Initialize(glm::vec3(20, 0, 0), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(10));
         manager->RegisterObject(chest);
-        chest->AttachTexture(TextureDic["chest"][0], 0);
+        chest->AttachTexture(TextureDic["chest"], 0);
 
     }
-    
+    //测试石头怪
+    for (int i = 0; i < 1; i++)
+    {
+        auto* stoneMonster = new CustomModelShader("commonLight", ModelDic["stoneMonster"], false, true, true);
+        stoneMonster->SetVariant(ModelClass::CubeE);
+        stoneMonster->Initialize(glm::vec3(-40, 20, 30), glm::quat(glm::vec3(0, 0.0f, 0.0f)), glm::vec3(0.3F));
+        manager->RegisterObject(stoneMonster);
+        stoneMonster->AttachTexture(TextureDic["stoneMonster"], 0,glm::vec2(1,1));
+
+
+    }
 
     //测试盒子
     for (int i = 0; i < 10; i++)
@@ -213,7 +225,7 @@ CustomModel* GameStartT()
         baseCube->SetVariant(ModelClass::TestPhysics);
         baseCube->Initialize(glm::vec3(-100+6.0f + 10.0f * i, 6.0f, -30.0f), glm::quat(glm::vec3(0.0f, 60.0f, 0.0f)), glm::vec3(3));
         manager->RegisterObject(baseCube);
-        baseCube->AttachTexture(TextureDic["stone"][0], 0);
+        baseCube->AttachTexture(TextureDic["stone"], 0);
         baseCube->AttachPhysicalEngine();
         baseCube->GetComponent<PhysicalEngine>()->SetFriction(0.4f);
         baseCube->AttachCollider();
@@ -224,7 +236,7 @@ CustomModel* GameStartT()
     butterflyInstance->SetVariant(ModelClass::InstanceCube);
     butterflyInstance->Initialize(glm::vec3(0.0f, 5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(0.3f, 0.3f, 0.30f));
     manager->RegisterObject(butterflyInstance);
-    butterflyInstance->AttachTexture(TextureDic["butterfly"][0], 0, glm::vec2(1, 1));
+    butterflyInstance->AttachTexture(TextureDic["butterfly"], 0, glm::vec2(1, 1));
 
     //树实例化
     auto* treeInstance = new  CustomModelInstance("noneLightInstancer", ModelDic["tree"], false, false, false, 20000, glm::vec3(10),glm::vec3(0,1,0),
@@ -232,7 +244,7 @@ CustomModel* GameStartT()
     treeInstance->SetVariant(ModelClass::InstanceCircle);
     treeInstance->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(5));
     manager->RegisterObject(treeInstance);
-    treeInstance->AttachTexture(TextureDic["tree"][0], 0, glm::vec2(2, 2));
+    treeInstance->AttachTexture(TextureDic["tree"], 0, glm::vec2(2, 2));
 
 
 
@@ -246,7 +258,7 @@ CustomModel* GameStartT()
         true,
         ModelDic["butterfly"],
         AnimationDic["butterfly"]["fly"],
-        TextureDic["butterfly"][0],
+        TextureDic["butterfly"],
         0,
         glm::vec2(10, 10),
         ModelClass::TsetButterfly,

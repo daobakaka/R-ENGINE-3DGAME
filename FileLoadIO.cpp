@@ -4,16 +4,21 @@
 #include <glm/glm.hpp>
 #include <cstring>
 #include "TextRender.h"
-using namespace Game;
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/ImporterDesc.h>
 /// <summary>
 /// 资源缓存区域，小型场景可以完全加载缓存资源
 /// </summary>
-std::unordered_map<std::string, std::unordered_map<std::string, AnimationData>> AnimationDic;
-std::unordered_map<std::string, ModelData> ModelDic;
-std::unordered_map<std::string, std::vector<GLuint>> TextureDic;
-
-
-bool LoadOBJ(const char* path, std::vector<glm::vec3>& out_vertices, std::vector<glm::vec2>& out_uvs, std::vector<glm::vec3>& out_normals)
+namespace Game {
+    std::unordered_map<std::string, std::unordered_map<std::string, AnimationData>> AnimationDic;
+    std::unordered_map<std::string, ModelData> ModelDic;
+    std::unordered_map<std::string, std::unordered_map<PictureTpye, GLuint>> TextureDic;
+    std::unordered_map<std::string, Model> ModelDesignDic;
+}
+using namespace Game;
+bool Game:: LoadOBJ(const char* path, std::vector<glm::vec3>& out_vertices, std::vector<glm::vec2>& out_uvs, std::vector<glm::vec3>& out_normals)
 {
     // Temporary storage for file data
     std::vector<glm::vec3> temp_vertices;
@@ -113,7 +118,7 @@ bool LoadOBJ(const char* path, std::vector<glm::vec3>& out_vertices, std::vector
     return true;
 }
 
-bool LoadOBJ(const char* path, std::vector<Vertex>& out_vertices, std::vector<unsigned int>& out_indices,bool removeDuplicates)
+bool Game::LoadOBJ(const char* path, std::vector<Vertex>& out_vertices, std::vector<unsigned int>& out_indices,bool removeDuplicates)
 {
     // 临时存储：按索引存储每种属性
     std::vector<glm::vec3> temp_positions;
@@ -243,7 +248,7 @@ bool LoadOBJ(const char* path, std::vector<Vertex>& out_vertices, std::vector<un
     return true;
 }
 
-bool LoadOBJ(const char* path, std::vector<Vertex>& out_vertices, std::vector<unsigned int>& out_indices)
+bool Game::LoadOBJ(const char* path, std::vector<Vertex>& out_vertices, std::vector<unsigned int>& out_indices)
 {
     //资源清理，确保每次加载模型独立
     out_vertices.clear();
@@ -354,7 +359,7 @@ bool LoadOBJ(const char* path, std::vector<Vertex>& out_vertices, std::vector<un
 }
 
 
-GLuint LoadPicTexture(const char* picImagePath)
+GLuint Game::LoadPicTexture(const char* picImagePath)
 {
     // 1. 使用 stb_image 加载图片
     int picWidth, picHeight, picChannels;
@@ -418,7 +423,7 @@ GLuint LoadPicTexture(const char* picImagePath)
     return picTextureID;
 }
 
-std::vector<Vertex> LoadVerticesFromFile(const std::string& name)
+std::vector<Vertex> Game::LoadVerticesFromFile(const std::string& name)
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -435,7 +440,7 @@ std::vector<Vertex> LoadVerticesFromFile(const std::string& name)
     return vertices; // 返回顶点数据
 }
 
-void MakeAnimation()
+void Game::MakeAnimation()
 {
 
     //非引用的备份传入，内容可以一直更改
@@ -466,7 +471,7 @@ void MakeAnimation()
 
 }
 
-void MakeModel()
+void Game::MakeModel()
 {
     std::vector<Vertex> verticesStruct;
     std::vector<unsigned int> indices;
@@ -548,6 +553,16 @@ void MakeModel()
     modelData.indices = indices;
 
     ModelDic["chest"] = modelData;
+
+
+    //石头怪
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\stoneMonster.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["stoneMonster"] = modelData;
+
 #pragma endregion
 
 
@@ -556,9 +571,47 @@ void MakeModel()
 
 }
 
-void MakeTxture()
+void Game::MakeModelFbx()
+{
+  // LoadFBX("chest", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\Chest.obj");
+  
+    LoadFBX("stoneMonster", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\stoneMonster.obj");
+  // 通过名称获取模型
+  auto& model = Game::ModelDesignDic["stoneMonster"];
+
+  // 打印模型信息
+  std::cout << "----- 模型信息 -----" << std::endl;
+  std::cout << "网格数量: " << model.meshes.size() << std::endl;
+  for (size_t i = 0; i < model.meshes.size(); i++) {
+      const auto& mesh = model.meshes[i];
+      std::cout << "------------------------------" << std::endl;
+      std::cout << "网格 " << i << " 顶点数量: " << mesh.vertices.size() << std::endl;
+      std::cout << "网格 " << i << " 索引数量: " << mesh.indices.size() << std::endl;
+
+      // 如果网格中有顶点，打印第一个顶点的详细信息
+      if (!mesh.vertices.empty()) {
+          const auto& vertex = mesh.vertices[0];
+          std::cout << " 示例顶点 0 详细信息:" << std::endl;
+          std::cout << "   位置: (" << vertex.Position.x << ", " << vertex.Position.y << ", " << vertex.Position.z << ")" << std::endl;
+          std::cout << "   法线: (" << vertex.Normal.x << ", " << vertex.Normal.y << ", " << vertex.Normal.z << ")" << std::endl;
+          std::cout << "   纹理坐标: (" << vertex.TexCoords.x << ", " << vertex.TexCoords.y << ")" << std::endl;
+          std::cout << "   切线: (" << vertex.Tangent.x << ", " << vertex.Tangent.y << ", " << vertex.Tangent.z << ")" << std::endl;
+          std::cout << "   副切线: (" << vertex.Bitangent.x << ", " << vertex.Bitangent.y << ", " << vertex.Bitangent.z << ")" << std::endl;
+          std::cout << "   骨骼数据: ";
+          for (int j = 0; j < 4; j++) {
+              std::cout << "{" << vertex.BoneIDs[j] << ", " << vertex.Weights[j] << "} ";
+          }
+          std::cout << std::endl;
+      }
+  }
+  std::cout << "------------------------------" << std::endl;
+}
+
+
+void Game::MakeTxture()
 {
     GLuint defaultTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\default.bmp");
+    GLuint defaultW = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\defaultW.jpg");
     GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\1.png");
     GLuint lightTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\light.bmp");
     GLuint skyboxTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\front.jpg");
@@ -567,60 +620,263 @@ void MakeTxture()
     GLuint stoneTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\stone.jpg");
     //打石头游戏树
     GLuint treeTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_texture.png");
+    GLuint treeTextureNromal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_normal.png");
     GLuint treeTextureSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_specular.png");
     //打石头游戏宝箱
     GLuint chestTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Chest_texture.png");
-    GLuint chsetextureSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Chest_specular.png");
-
+    GLuint chestTextureNormal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Chest_normal.png");
+    GLuint chseTextureSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Chest_specular.png");
+    //石头怪
+    GLuint stoneMonsterTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\stoneMonster.png");
+    
     //初始化参数
-    std::vector<GLuint> pic;
+    std::vector<GLuint> picd;
     //加载默认纹理
-    pic.push_back(defaultTexture);
-    TextureDic["default"] = pic;
+    picd.push_back(defaultTexture);//默认灰色基础图
+    picd.push_back(defaultW);//默认白色法线图
+    picd.push_back(defaultW);//默认白色高亮图
+    picd.push_back(defaultW);//默认白色环境图
+    picd.push_back(defaultW);//默认白色高度图
+    picd.push_back(defaultW);//默认白色糙度图
+    picd.push_back(defaultW);//默认白色其他图
+    TextureDic["default"][PictureTpye::BaseP] = picd[0];
+    TextureDic["default"][PictureTpye::NormalP] = picd[1];
+    TextureDic["default"][PictureTpye::SpecularP] = picd[2];
+    TextureDic["default"][PictureTpye::HightP] = picd[3];
+    TextureDic["default"][PictureTpye::RoughnessP] = picd[4];
+    TextureDic["default"][PictureTpye::OtherP] = picd[5];
+    //初始化参数       
+    std::vector<GLuint> pic;
     //加载蝴蝶纹理
     pic.clear();
     pic.push_back(picTexture);
-    TextureDic["butterfly"] = pic;
+    TextureDic["butterfly"][PictureTpye::BaseP] = pic[0];
+    TextureDic["butterfly"][PictureTpye::NormalP] = picd[1];
+    TextureDic["butterfly"][PictureTpye::SpecularP] = picd[2];
+    TextureDic["butterfly"][PictureTpye::HightP] = picd[3];
+    TextureDic["butterfly"][PictureTpye::RoughnessP] = picd[4];
+    TextureDic["butterfly"][PictureTpye::OtherP] = picd[5];
     //加载光源点渲染纹理
     pic.clear();
     pic.push_back(lightTexture);
-    TextureDic["light"] = pic;
+    TextureDic["light"][PictureTpye::BaseP] = pic[0];
     //加载天空盒
     pic.clear();
     pic.push_back(skyboxTexture);
-    TextureDic["skybox"] = pic;
+    TextureDic["skybox"][PictureTpye::BaseP] = pic[0];
     //加载草地
     pic.clear();
     pic.push_back(grassTexture);
-    TextureDic["grass"] = pic;
-    //加载石头地
+    TextureDic["grass"][PictureTpye::BaseP] = pic[0];
+    TextureDic["grass"][PictureTpye::NormalP] = picd[1];
+    TextureDic["grass"][PictureTpye::SpecularP] = picd[2];
+    TextureDic["grass"][PictureTpye::HightP] = picd[3];
+    TextureDic["grass"][PictureTpye::RoughnessP] = picd[4];
+    TextureDic["grass"][PictureTpye::OtherP] = picd[5];
+    //加载石头
     pic.clear();
     pic.push_back(stoneTexture);
-    TextureDic["stone"] = pic;
+    TextureDic["stone"][PictureTpye::BaseP] = pic[0];
+    TextureDic["stone"][PictureTpye::NormalP] = picd[1];
+    TextureDic["stone"][PictureTpye::SpecularP] = picd[2];
+    TextureDic["stone"][PictureTpye::HightP] = picd[3];
+    TextureDic["stone"][PictureTpye::RoughnessP] = picd[4];
+    TextureDic["stone"][PictureTpye::OtherP] = picd[5];
+
 #pragma region 打石头游戏区域
     //树
     pic.clear();
     pic.push_back(treeTexture);
-    pic.push_back(treeTextureSpecular);// 这里加载了两张图片
-    TextureDic["tree"] = pic;
+    pic.push_back(treeTextureNromal);
+    pic.push_back(treeTextureSpecular);
+    TextureDic["tree"][PictureTpye::BaseP] = pic[0];
+    TextureDic["tree"][PictureTpye::NormalP] = pic[1];
+    TextureDic["tree"][PictureTpye::SpecularP] = pic[2];
+    TextureDic["tree"][PictureTpye::HightP] = picd[3];
+    TextureDic["tree"][PictureTpye::RoughnessP] = picd[4];
+    TextureDic["tree"][PictureTpye::OtherP] = picd[5];
 
     //宝箱
     pic.clear();
     pic.push_back(chestTexture);
-    pic.push_back(chsetextureSpecular);// 这里加载了两张图片
-    TextureDic["chest"] = pic;
+    pic.push_back(chestTextureNormal);
+    pic.push_back(chseTextureSpecular);// 
+    TextureDic["chest"][PictureTpye::BaseP] = pic[0];
+    TextureDic["chest"][PictureTpye::HightP] = pic[1];
+    TextureDic["chest"][PictureTpye::SpecularP] = pic[2];
+    TextureDic["chest"][PictureTpye::HightP] = picd[3];
+    TextureDic["chest"][PictureTpye::RoughnessP] = picd[4];
+    TextureDic["chest"][PictureTpye::OtherP] = picd[5];
+
+    //石头怪
+    pic.clear();
+    pic.push_back(stoneMonsterTexture);
+    TextureDic["stoneMonster"][PictureTpye::BaseP] = pic[0];
+    TextureDic["stoneMonster"][PictureTpye::NormalP] = picd[1];
+    TextureDic["stoneMonster"][PictureTpye::SpecularP] = picd[2];
+    TextureDic["stoneMonster"][PictureTpye::HightP] = picd[3];
+    TextureDic["stoneMonster"][PictureTpye::RoughnessP] = picd[4];
+    TextureDic["stoneMonster"][PictureTpye::OtherP] = picd[5];
 #pragma endregion
 
 
 
 }
 
-void MakeFronts()
+void Game::MakeFronts()
 {
     TextRender* textRender = TextRender::GetInstance();
     textRender->MakeFronts();
     
 }
+// 辅助函数：为单个顶点添加骨骼数据（最多 4 个影响）
+void AddBoneData(MeshVertex& vertex, int boneID, float weight) {
+    for (int i = 0; i < 4; i++) {
+        if (vertex.Weights[i] == 0.0f) {
+            vertex.BoneIDs[i] = boneID;
+            vertex.Weights[i] = weight;
+            break;
+        }
+    }
+}
+
+// 处理单个网格，提取顶点、索引、切线、Bitangent 以及骨骼数据
+Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene) {
+    Mesh result;
+    // 预先分配顶点空间
+    result.vertices.resize(mesh->mNumVertices);
+
+    // 处理顶点数据
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        MeshVertex vertex;
+        // 顶点位置
+        vertex.Position = glm::vec3(
+            mesh->mVertices[i].x,
+            mesh->mVertices[i].y,
+            mesh->mVertices[i].z
+        );
+
+        // 法线
+        if (mesh->HasNormals()) {
+            vertex.Normal = glm::vec3(
+                mesh->mNormals[i].x,
+                mesh->mNormals[i].y,
+                mesh->mNormals[i].z
+            );
+        }
+        else {
+            vertex.Normal = glm::vec3(0.0f, 0.0f, 0.0f);
+        }
+
+        // 纹理坐标（只读取第一组纹理坐标）
+        if (mesh->mTextureCoords[0]) {
+            vertex.TexCoords = glm::vec2(
+                mesh->mTextureCoords[0][i].x,
+                mesh->mTextureCoords[0][i].y
+            );
+        }
+        else {
+            vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+        }
+
+        // 切线与副切线
+        if (mesh->HasTangentsAndBitangents()) {
+            vertex.Tangent = glm::vec3(
+                mesh->mTangents[i].x,
+                mesh->mTangents[i].y,
+                mesh->mTangents[i].z
+            );
+            vertex.Bitangent = glm::vec3(
+                mesh->mBitangents[i].x,
+                mesh->mBitangents[i].y,
+                mesh->mBitangents[i].z
+            );
+        }
+        else {
+            vertex.Tangent = glm::vec3(0.0f, 0.0f, 0.0f);
+            vertex.Bitangent = glm::vec3(0.0f, 0.0f, 0.0f);
+        }
+
+        result.vertices[i] = vertex;
+    }
+
+    // 处理索引（假设每个面都是三角形）
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+        aiFace face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++) {
+            result.indices.push_back(face.mIndices[j]);
+        }
+    }
+
+    // 处理骨骼数据（如果存在）
+    if (mesh->HasBones()) {
+        for (unsigned int i = 0; i < mesh->mNumBones; i++) {
+            aiBone* bone = mesh->mBones[i];
+            int boneID = i; // 简单示例：直接使用当前骨骼在 mBones 数组中的索引作为骨骼 ID
+            for (unsigned int j = 0; j < bone->mNumWeights; j++) {
+                unsigned int vertexID = bone->mWeights[j].mVertexId;
+                float weight = bone->mWeights[j].mWeight;
+                AddBoneData(result.vertices[vertexID], boneID, weight);
+            }
+        }
+    }
+
+    return result;
+}
+
+// 递归处理节点，遍历场景图并提取所有网格
+void ProcessNode(aiNode* node, const aiScene* scene, Model& model) {
+    // 处理当前节点中的所有网格
+    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        model.meshes.push_back(ProcessMesh(mesh, scene));
+    }
+
+    // 递归处理所有子节点
+    for (unsigned int i = 0; i < node->mNumChildren; i++) {
+        ProcessNode(node->mChildren[i], scene, model);
+    }
+}
+
+// 加载 FBX 文件并存储到全局模型字典 ModelDesignDic 中
+bool Game:: LoadFBX(const std::string& name, const std::string& path) {
+    // 如果模型已加载，则跳过重复加载
+    if (ModelDesignDic.find(name) != ModelDesignDic.end()) {
+        std::cout << "模型 " << name << " 已经加载过，跳过重复加载。" << std::endl;
+        return true;
+    }
+
+    // 创建 Assimp 导入器并加载文件
+    Assimp::Importer importer;
+    /*unsigned int count = importer.GetImporterCount();
+    std::cout << "Assimp 支持的文件格式：" << std::endl;
+    for (unsigned int i = 0; i < count; i++) {
+        const aiImporterDesc* desc = importer.GetImporterInfo(i);
+        if (desc) {
+            std::cout << "Importer: " << desc->mName << std::endl;
+            std::cout << "支持扩展名: " << desc->mFileExtensions << std::endl;
+        }
+    }*/
+
+    const aiScene* scene = importer.ReadFile(path,
+        aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+        std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+        return false;
+    }
+
+    // 处理场景，从根节点开始递归提取网格数据
+    Model model;
+    ProcessNode(scene->mRootNode, scene, model);
+
+    // 将加载的模型保存到全局字典中
+    ModelDesignDic[name] = model;
+
+    std::cout << "模型 " << name << " 加载成功！" << std::endl;
+    return true;
+}
+
 
 
 

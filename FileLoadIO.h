@@ -11,21 +11,21 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+namespace Game {
 
 #pragma region 结构体区域
+    struct Vertex {
+        glm::vec3 Position;   // 顶点位置
+        glm::vec2 TexCoords;  // 纹理坐标
+        glm::vec3 Normal;     // 法线
 
-struct Vertex {
-    glm::vec3 Position;   // 顶点位置
-    glm::vec2 TexCoords;  // 纹理坐标
-    glm::vec3 Normal;     // 法线
-
-    // 用于 unordered_map 查重，需要 == 运算符
-    bool operator==(const Vertex& other) const {
-        return Position == other.Position
-            && TexCoords == other.TexCoords
-            && Normal == other.Normal;
-    }//运算符重载，定义类的自定比比较，功能类似于运算符宏
-};
+        // 用于 unordered_map 查重，需要 == 运算符
+        bool operator==(const Vertex& other) const {
+            return Position == other.Position
+                && TexCoords == other.TexCoords
+                && Normal == other.Normal;
+        }//运算符重载，定义类的自定比比较，功能类似于运算符宏
+    };
 
     struct AnimationData {
         std::vector<float> keyFrameTimes;
@@ -41,6 +41,36 @@ struct Vertex {
         std::vector<unsigned int> indices;
 
     };
+
+    // FBX结构体
+    struct MeshVertex {
+        glm::vec3 Position;    // 顶点位置
+        glm::vec3 Normal;      // 法线
+        glm::vec2 TexCoords;   // 纹理坐标
+        glm::vec3 Tangent;     // 切线
+        glm::vec3 Bitangent;   // 副切线
+        int BoneIDs[4];        // 骨骼索引（最多支持 4 个骨骼影响）
+        float Weights[4];      // 每个骨骼对应的权重
+
+        MeshVertex() {
+            // 初始化骨骼数据
+            for (int i = 0; i < 4; i++) {
+                BoneIDs[i] = 0;
+                Weights[i] = 0.0f;
+            }
+        }
+    };
+    // 网格结构体--用于加载FBX文件
+    struct Mesh {
+        std::vector<MeshVertex> vertices;       // 顶点数据
+        std::vector<unsigned int> indices;  // 索引数据
+    };
+
+    // 模型结构体--用于加载FBX文件
+    struct Model {
+        std::vector<Mesh> meshes;           // 模型的所有网格
+    };
+
     struct VertexHash {
         size_t operator()(const Vertex& vertex) const {
             // 简单哈希组合示例（Xors、shifts等）
@@ -69,9 +99,15 @@ struct Vertex {
     //静态或者蒙皮模型列表，使用不同的构造函数构造不同属性的模型
     extern std::unordered_map<std::string, ModelData> ModelDic;
     //物体表面贴图，1基础 2法线 3 高度 4 光照 5 其他 6.。
-    extern std::unordered_map<std::string, std::vector<GLuint>> TextureDic;
+    extern std::unordered_map<std::string, std::unordered_map<PictureTpye,GLuint>> TextureDic;
+    //设计模型加载，后期常用这个结构
+    extern std::unordered_map<std::string, Model> ModelDesignDic;
 
 #pragma endregion
+
+#pragma region 传统加载方法
+
+
 
     bool LoadOBJ(
         const char* path,
@@ -96,15 +132,29 @@ struct Vertex {
 
     void MakeModel();
 
+    void MakeModelFbx();
+
     void MakeTxture();
-#pragma region 文字渲染方法集合
-    void MakeFronts();  
+
+    void MakeFronts();
+
+
+
+
+#pragma endregion
+
+
+#pragma region 基于Assimp库的加载方法
+
+    // 加载 FBX 文件并存储到 ModelDesignDic 中
+    bool LoadFBX(const std::string& name, const std::string& path);
+
+
 
 
 #pragma endregion
 
 
 
-
-
+}
 #endif

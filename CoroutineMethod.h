@@ -24,7 +24,6 @@ namespace Game {
     public:
         static CoroutineMethod* GetInstance();
 
-        void StartSpawnButterfliesAsync(LifecycleManager<CustomModel>* manager);
 
         // 添加定时任务
         void AddTimerTask(float intervalSeconds, int repeatCount, std::function<void()> callback);
@@ -64,7 +63,7 @@ namespace Game {
             bool ifShadow,
             const ModelData& modelData,
             const AnimationData& animationData,
-            GLuint textureName = TextureDic["default"][0],
+            std::unordered_map<PictureTpye,GLuint> textures = TextureDic["default"],
             int order = 0,
             glm::vec2 section=glm::vec2(1,1),
             ModelClass modelEnum = ModelClass::OriginalE,
@@ -88,7 +87,7 @@ namespace Game {
             AddTimerTask(interval, count,
                 [manager, name, modelData, animationData,
                 modelEnum,  ifPhysical, ifCollider, stepVector3,
-                position, rotation, scale, counterPtr,ifLight,textureName,order, ifShadow,section]()
+                position, rotation, scale, counterPtr,ifLight,textures,order, ifShadow,section]()
                 {
                     // 自增计数
                     (*counterPtr)++;
@@ -117,7 +116,7 @@ namespace Game {
                     );
 
                    
-                    model->AttachTexture(textureName,order,section);
+                    model->AttachTexture(textures,order,section);
                     model->AttachAnimationController(animationData);
 
                     if (ifPhysical) {
@@ -141,7 +140,7 @@ namespace Game {
             bool ifLight,
             bool ifShadow,
             const ModelData& modelData,
-            GLuint textureName = TextureDic["default"][0],
+            std::unordered_map<PictureTpye, GLuint> textures = TextureDic["default"],
             int order=0,
             glm::vec2 section = glm::vec2(1, 1),
             ModelClass modelEnum = ModelClass::OriginalE,
@@ -162,7 +161,7 @@ namespace Game {
             AddTimerTask(interval, count,
                 [manager, modelData, modelEnum,
                  ifPhysical, ifCollider, stepVector3,
-                position, rotation, scale, counterPtr, ifLight, textureName,order,name,ifShadow, section]()
+                position, rotation, scale, counterPtr, ifLight, textures,order,name,ifShadow, section]()
                 {
                     // 自增计数
                     (*counterPtr)++;
@@ -188,7 +187,7 @@ namespace Game {
                     );
 
      
-                    model->AttachTexture(textureName,order,section);
+                    model->AttachTexture(textures,order,section);
                 
                     if (ifPhysical) {
                         model->AttachPhysicalEngine();

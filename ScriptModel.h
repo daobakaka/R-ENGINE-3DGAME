@@ -213,7 +213,6 @@ namespace Game
 		LifecycleManager<CustomModel>* _manager;
 		Controller* _controller;
 
-		void PlayerController(GLFWwindow* window );
 
 
 	};
@@ -235,7 +234,7 @@ namespace Game
 		using CustomModelShader::CustomModelShader;
 		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
 
-
+		void  UniformParametersInput();//重写通用shader的传参，改变状态
 
 	};
 #pragma endregion
