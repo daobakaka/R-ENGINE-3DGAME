@@ -942,7 +942,8 @@ CustomModel::~CustomModel()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
-    glDeleteShader(shaderProgram);
+    //glDeleteShader(shaderProgram);//删除创建的对象,这里由于是外部赋值，所以不需要删
+    //glDeleteProgram(shaderProgram);//删除链接好的对象,但是这是删除全局的
     //主对象析构之后，指针貌似已经被释放了
    // delete verticesTras;//释放内存即释放栈上的引用，引用丢失，内存无意义，告诉编译器指向地址可以重新分配
    // verticesTras = nullptr;//避免内存污染，解决潜在问题

@@ -61,10 +61,14 @@ void LightGlobalCalculate()
 
     //为渲染阴影设置阴影光源矩阵
     shaderManager->SetMat4("commonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
-    //激活阴影纹理单元
-    shaderManager->SetTexture("commonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 1);
+    shaderManager->SetMat4("commonNoneLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
+    //激活阴影纹理单元,这里设置纹理单元9避免冲突
+    shaderManager->SetTexture("commonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 9);
+    shaderManager->SetTexture("commonNoneLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 9);
     //平行光强度渲染,平行光的参数是一致的
     shaderManager->SetVec3("commonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
+    shaderManager->SetVec3("commonNoneLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
+    //以上两个通用着色器，采用同样的参数传入
     shaderManager->SetVec3("commonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
     shaderManager->SetFloat("commonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
 
@@ -113,12 +117,15 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
         }
         else if (item.second->GetVariant() == ModelClass::TsetButterfly)
         {
-            item.second->PlayAnimation(0, 0.1f);
-           // std::cout << item.second->GetID() << "ID" << item.second->_ifShadow << std::endl;
+            item.second->PlayAnimation(0, 0.1f);//播放简易顶点动画
+            if (item.second->_timeAccumulator>=120)
+            {
+                toDestory.push_back(item.second);//测试蝴蝶超过120秒消失，不用重新加载的对象，放入销毁列表
+            }
         }
         else if (item.second->GetVariant() == ModelClass::TestPhysics)
         {
-            //设置生命值小于0时，物体消失
+            //设置生命值小于0时，物体消失，需要重复加载的对象，放入对象池以复用
             if(item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health<=0)
             toActiveFalse .push_back(item.second);
         }
@@ -142,6 +149,8 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
         }
 
     }
+
+
     // 临时存取失活对象
     for (auto* obj : toActiveFalse) {
         manager->SetActive(obj,false);
@@ -151,6 +160,10 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
         obj->position += glm::vec3(0, 50, 0);
         obj->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0));
         manager->SetActive(obj, true);
+    }
+    //临时销毁对象
+    for (auto* obj : toDestory) {
+        manager->DestroyObject(obj);
     }
 #pragma region 恢复逻辑
 

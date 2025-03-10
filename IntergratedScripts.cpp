@@ -150,6 +150,7 @@ void Game::IntergratedScripts::PlayerControl(GLFWwindow* window, CustomModel* ot
             _shootPrepare = 0;
         }
     }
+    //这里的内存通过生命周期管理器进行管理
 }
 
 

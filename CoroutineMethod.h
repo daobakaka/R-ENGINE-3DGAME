@@ -99,6 +99,7 @@ namespace Game {
                         ifLight,
                         ifShadow
                     );
+                    model->SelfIns();//在这里调用初始化函数
                     model->SetVariant(modelEnum);
                     manager->RegisterObject(model);
 
@@ -173,6 +174,7 @@ namespace Game {
                         ifLight,
                         ifShadow
                     );
+                    model->SelfIns();
                     model->SetVariant(modelEnum);
                     manager->RegisterObject(model);
 

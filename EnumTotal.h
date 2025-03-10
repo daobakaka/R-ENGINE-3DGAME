@@ -22,6 +22,7 @@ namespace Game {
 		InstanceCube,
 		InstanceCircle,
 		InstanceSphere,
+		InstanceRound,
 		//特殊模块
 		Ray,//射线
 		AxisWidget,//坐标轴模型

@@ -563,6 +563,22 @@ void Game::MakeModel()
 
     ModelDic["stoneMonster"] = modelData;
 
+    //碎石1
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\stone1.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["stone1"] = modelData;
+
+    //碎石2
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\stone2.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["stone2"] = modelData;
+
 #pragma endregion
 
 
@@ -575,9 +591,9 @@ void Game::MakeModelFbx()
 {
   // LoadFBX("chest", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\Chest.obj");
   
-    LoadFBX("stoneMonster", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\stoneMonster.obj");
+    LoadFBX("stoneMonster", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\rock.fbx");
   // 通过名称获取模型
-  auto& model = Game::ModelDesignDic["stoneMonster"];
+  auto& model = Game::ModelDesignDic["rock"];
 
   // 打印模型信息
   std::cout << "----- 模型信息 -----" << std::endl;
@@ -620,6 +636,7 @@ void Game::MakeTxture()
     GLuint stoneTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\stone.jpg");
     //打石头游戏树
     GLuint treeTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_texture.png");
+    //GLuint treeTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\treePaint.png");
     GLuint treeTextureNromal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_normal.png");
     GLuint treeTextureSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_specular.png");
     //打石头游戏宝箱
@@ -628,6 +645,10 @@ void Game::MakeTxture()
     GLuint chseTextureSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Chest_specular.png");
     //石头怪
     GLuint stoneMonsterTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\stoneMonster.png");
+    //碎石纹理
+    GLuint stone = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Rocks_3_4_texture.png");
+    GLuint stoneNormal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Rocks_3_4_nromal.png");
+    GLuint stoneSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Rocks_3_4_specular.png");
     
     //初始化参数
     std::vector<GLuint> picd;
@@ -717,6 +738,18 @@ void Game::MakeTxture()
     TextureDic["stoneMonster"][PictureTpye::HightP] = picd[3];
     TextureDic["stoneMonster"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["stoneMonster"][PictureTpye::OtherP] = picd[5];
+
+    //碎石实例化
+    pic.clear();
+    pic.push_back(stone);
+    pic.push_back(stoneNormal);
+    pic.push_back(stoneSpecular);// 
+    TextureDic["stoneInstance"][PictureTpye::BaseP] = pic[0];
+    TextureDic["stoneInstance"][PictureTpye::HightP] = pic[1];
+    TextureDic["stoneInstance"][PictureTpye::SpecularP] = pic[2];
+    TextureDic["stoneInstance"][PictureTpye::HightP] = picd[3];
+    TextureDic["stoneInstance"][PictureTpye::RoughnessP] = picd[4];
+    TextureDic["stoneInstance"][PictureTpye::OtherP] = picd[5];
 #pragma endregion
 
 
@@ -845,19 +878,8 @@ bool Game:: LoadFBX(const std::string& name, const std::string& path) {
         std::cout << "模型 " << name << " 已经加载过，跳过重复加载。" << std::endl;
         return true;
     }
-
     // 创建 Assimp 导入器并加载文件
     Assimp::Importer importer;
-    /*unsigned int count = importer.GetImporterCount();
-    std::cout << "Assimp 支持的文件格式：" << std::endl;
-    for (unsigned int i = 0; i < count; i++) {
-        const aiImporterDesc* desc = importer.GetImporterInfo(i);
-        if (desc) {
-            std::cout << "Importer: " << desc->mName << std::endl;
-            std::cout << "支持扩展名: " << desc->mFileExtensions << std::endl;
-        }
-    }*/
-
     const aiScene* scene = importer.ReadFile(path,
         aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 

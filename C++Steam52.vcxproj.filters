@@ -5,46 +5,17 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="头文件">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="资源文件">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="头文件\Model">
-      <UniqueIdentifier>{a116ead0-b50d-4477-8fc2-cc9e44db27b6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="源文件\Model">
       <UniqueIdentifier>{ae0d0146-3d5d-4607-bd2b-bddcbdb51486}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="头文件\GameObjectLogic">
-      <UniqueIdentifier>{3148aacc-e1a6-4a03-8d15-d6bb7611d976}</UniqueIdentifier>
     </Filter>
     <Filter Include="源文件\GameObjectLogic">
       <UniqueIdentifier>{db8bfbbe-83b3-441a-8955-06e4a2914aa5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\ItergratedClass">
-      <UniqueIdentifier>{d99b7378-e2a5-4a81-a7b1-200a15e3d0de}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="头文件\Render">
-      <UniqueIdentifier>{00c15e78-ccae-4559-ab15-18a8448ac788}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="头文件\File">
-      <UniqueIdentifier>{73219730-022a-43b6-a603-8fd03d28870f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="源文件\File">
       <UniqueIdentifier>{3a86a49f-2323-4d83-9466-c3525a244200}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\ComponentController">
-      <UniqueIdentifier>{3636c699-4149-4bca-b659-ca95d944b6cc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="源文件\ComponentController">
       <UniqueIdentifier>{a8d214ce-4f22-4758-bd9f-58025b381880}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="头文件\GLBaseController">
-      <UniqueIdentifier>{6fba9097-af91-413f-8b43-17b8e6a83d0e}</UniqueIdentifier>
     </Filter>
     <Filter Include="源文件\GLBaseController">
       <UniqueIdentifier>{e56af760-a64f-40af-9aa3-ab64bf21badf}</UniqueIdentifier>
@@ -55,11 +26,40 @@
     <Filter Include="源文件\ZGameLogic">
       <UniqueIdentifier>{78d769b0-e026-460d-89d5-9875fbbdfa17}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\Test">
+      <UniqueIdentifier>{94201278-b5de-4ac4-b177-19032304465b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="头文件\Model">
+      <UniqueIdentifier>{a116ead0-b50d-4477-8fc2-cc9e44db27b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\GameObjectLogic">
+      <UniqueIdentifier>{3148aacc-e1a6-4a03-8d15-d6bb7611d976}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\ItergratedClass">
+      <UniqueIdentifier>{d99b7378-e2a5-4a81-a7b1-200a15e3d0de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Render">
+      <UniqueIdentifier>{00c15e78-ccae-4559-ab15-18a8448ac788}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\File">
+      <UniqueIdentifier>{73219730-022a-43b6-a603-8fd03d28870f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\ComponentController">
+      <UniqueIdentifier>{3636c699-4149-4bca-b659-ca95d944b6cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\GLBaseController">
+      <UniqueIdentifier>{6fba9097-af91-413f-8b43-17b8e6a83d0e}</UniqueIdentifier>
+    </Filter>
     <Filter Include="头文件\Test">
       <UniqueIdentifier>{6ffe0c8a-f38c-4330-8d18-7470a061fa5b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="源文件\Test">
-      <UniqueIdentifier>{94201278-b5de-4ac4-b177-19032304465b}</UniqueIdentifier>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>

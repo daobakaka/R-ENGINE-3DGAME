@@ -116,7 +116,9 @@ int GLins() {
         //传入无光照着色器
         shaderManager->SetMat4("noneLight", "view", view);
         shaderManager->SetMat4("noneLight", "projection", projection);
-
+        //传入无光照通用着色器
+        shaderManager->SetMat4("commonNoneLight", "view", view);
+        shaderManager->SetMat4("commonNoneLight", "projection", projection);
        
 #pragma endregion
         //阴影渲染

@@ -189,9 +189,9 @@ CustomModel* GameStartT()
     //测试树
     for (int i = 0; i < 1; i++)
     {
-        auto* tree = new CustomModelShader("commonLight", ModelDic["tree"], false, false, true);
+        auto* tree = new NoneLightModel("commonNoneLight", ModelDic["tree"], false, false, true);
         tree->SetVariant(ModelClass::CubeE);
-        tree->Initialize(glm::vec3(60,0,20), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(15));
+        tree->Initialize(glm::vec3(60,0,-20), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(15));
         manager->RegisterObject(tree);
         tree->AttachTexture(TextureDic["tree"], 0,glm::vec2(4, 4));
 
@@ -199,8 +199,8 @@ CustomModel* GameStartT()
     //测试宝箱
     for (int i = 0; i < 1; i++)
     {
-        auto* chest = new CustomModelShader("commonNoneLight", ModelDic["chest"], false, false, true);
-        chest->SetVariant(ModelClass::OriginalE);
+        auto* chest = new CustomModelShader("noneLight", ModelDic["chest"], false, false, true);
+        chest->SetVariant(ModelClass::CubeE);
         chest->Initialize(glm::vec3(20, 0, 0), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(10));
         manager->RegisterObject(chest);
         chest->AttachTexture(TextureDic["chest"], 0);
@@ -244,9 +244,23 @@ CustomModel* GameStartT()
     treeInstance->SetVariant(ModelClass::InstanceCircle);
     treeInstance->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(5));
     manager->RegisterObject(treeInstance);
-    treeInstance->AttachTexture(TextureDic["tree"], 0, glm::vec2(2, 2));
+    treeInstance->AttachTexture(TextureDic["tree"], 0, glm::vec2(1, 1));
 
+    //碎石实例化
+    auto* stone1Instance = new  CustomModelInstance("noneLightInstancer", ModelDic["stone1"], false, false, false, 500, glm::vec3(2), glm::vec3(0, 0.4F, 0),
+        ModelClass::InstanceRound);
+    stone1Instance->SetVariant(ModelClass::InstanceRound);
+    stone1Instance->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(2));
+    manager->RegisterObject(stone1Instance);
+    stone1Instance->AttachTexture(TextureDic["stoneInstance"], 0, glm::vec2(1, 1));
 
+    //碎石实例化
+    auto* stone2Instance = new  CustomModelInstance("noneLightInstancer", ModelDic["stone2"], false, false, false, 500, glm::vec3(2), glm::vec3(0, 0.3F, 0),
+        ModelClass::InstanceRound);
+    stone2Instance->SetVariant(ModelClass::InstanceRound);
+    stone2Instance->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(2));
+    manager->RegisterObject(stone2Instance);
+    stone2Instance->AttachTexture(TextureDic["stoneInstance"], 0, glm::vec2(2, 2));
 
     StepVector3 step;
     step.position = glm::vec3(2, -0.5f, 0);
@@ -264,8 +278,8 @@ CustomModel* GameStartT()
         ModelClass::TsetButterfly,
         10, 20,
         step,
-        glm::vec3(0.0f, 0.0f, 0.0f),//赋默认值
-        {},
+        glm::vec3(0.0f, 0, 0.0f),//赋默认值
+        glm::vec3(0.0f, 0, 0.0f),//赋默认值
         glm::vec3(1.1f)
     );
 

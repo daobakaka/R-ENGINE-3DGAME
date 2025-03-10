@@ -121,9 +121,10 @@ namespace Game
 		virtual void RenderingTextureAdditional() override;//重写附件纹理方法;
 
 		virtual void RenderingLight();//通过着色器的光照渲染
-
+		virtual void SelfIns();
 	protected:
 		LightSpawner* lightSpawner;
+
 
 
 	};
@@ -184,10 +185,20 @@ namespace Game
 		//这里直接继承基类的构造函数
 		using CustomModelShader::CustomModelShader;
 		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
-
+		void SelfIns() override;
 	private:
+		// 内部飞行参数
+		float _circleRadius;    // 水平圆周运动半径（随机范围：[5,15]）
+		float _horizontalSpeed; // 水平线速度（单位/秒，随机范围例如 [3,6]）
+		float _xzStartAngle;    // 初始角度（弧度）
+		float _verticalSpeed;   // 垂直上升速度（单位/秒，随机范围：[0.5,2.0]）
+		float _baseY;           // 基准 Y 坐标（通常为 0）
 
-
+		// 振荡参数（用于垂直方向的波动）
+		float _oscStartTime;           // 振荡开始时间（秒，随机范围：[10,20]）
+		float _oscillationAmplitude;   // 振荡振幅（随机范围：[0.5,2.0]）
+		float _oscillationFrequency;   // 振荡频率（弧度/秒，随机范围：[1,3]）
+		float _dt;
 	};
 
 #pragma endregion
@@ -207,7 +218,7 @@ namespace Game
 
 		void Start() override;//重写初始化代码
 
-		void  UniformParametersInput();//玩家类在这里重写传参
+		void  UniformParametersInput() override;//玩家类在这里重写传参
 		
 	private:
 		LifecycleManager<CustomModel>* _manager;
@@ -217,7 +228,20 @@ namespace Game
 
 	};
 
+	class NoneLightModel :public CustomModelShader
+	{
 
+	public :
+		using CustomModelShader::CustomModelShader;
+		void   UniformParametersInput() override;//玩家类在这里重写传参
+
+
+
+
+
+
+
+	};
 
 
 #pragma endregion

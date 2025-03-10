@@ -1,7 +1,7 @@
 # Blender 4.3.0 MTL File: 'tree.blend'
 # www.blender.org
 
-newmtl StoneMonster.006
+newmtl StoneMonster
 Ns 20.000006
 Ka 1.000000 1.000000 1.000000
 Ks 0.000000 0.000000 0.000000

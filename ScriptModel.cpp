@@ -163,6 +163,8 @@ CustomModelShader::CustomModelShader(const std::string& name, const ModelData& m
     lightSpawner = LightSpawner::GetInstance();
     // 获取着色器程序
     shaderProgram = ShaderManager::GetInstance()->GetShader(name);
+    //用于子类C++中不能采用此种方式进行构造，因为派生类的初始化还未构造完毕
+    SelfIns();
 
     // 生成 VAO, VBO, EBO
     glGenVertexArrays(1, &VAO);
@@ -443,6 +445,10 @@ void Game::CustomModelShader::RenderingLight()
 
     }
 }
+void Game::CustomModelShader::SelfIns()
+{
+   
+}
 #pragma endregion
 #pragma region 实例化模型
 CustomModelInstance::CustomModelInstance()
@@ -629,6 +635,47 @@ void Game::CustomModelInstance::GenerateInstanceMatrices(ModelClass type)
         }
         break;
     }
+    case Game::InstanceRound:
+    {
+        // 定义圆形区域的最大半径
+        float maxRadius = 300.0f; // 根据需求调整圆形区域的半径
+        // 全部实例数由 _instanceCount 决定
+        for (int i = 0; i < _instanceCount; i++) {
+            glm::mat4 model = glm::mat4(1.0f);
+
+            // 随机生成一个均匀分布在圆形内的点
+            // 为了均匀分布，使用 sqrt(random) 得到半径 r
+            float r = sqrt(static_cast<float>(rand()) / RAND_MAX) * maxRadius;
+            float theta = static_cast<float>(rand()) / RAND_MAX * 2.0f * glm::pi<float>();
+            float x = r * cos(theta);
+            float z = r * sin(theta);
+
+            // 计算基于半径的额外随机偏移
+            // 当 r 较大（靠近边缘）时，偏移幅度更大
+            float factor = r / maxRadius; // 范围 [0, 1]
+            float randomOffsetX = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * _positionOffset.x * (1.0f + factor);
+            float randomOffsetZ = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * _positionOffset.z * (1.0f + factor);
+
+            // 平移：将实例放置到圆内随机位置，并应用随机偏移
+            model = glm::translate(model, glm::vec3(x + randomOffsetX, 0.0f, z + randomOffsetZ));
+
+            // 添加随机缩放（例如树的大小随机化）
+            float randomScale = 0.5f + static_cast<float>(rand()) / RAND_MAX * 1.5f; // 缩放范围：0.5 到 2.0
+            model = glm::scale(model, glm::vec3(randomScale));
+
+            // 旋转：使实例面向离圆心的方向，再加上额外的随机旋转
+            float baseRotation = glm::degrees(theta) + 90.0f; // 使对象朝外
+            model = glm::rotate(model, glm::radians(baseRotation * _rotationAxis.y), glm::vec3(0.0f, 1.0f, 0.0f));
+            // 这里也可以添加绕 X/Z 轴的额外旋转
+            model = glm::rotate(model, glm::radians(i * _rotationAxis.x), glm::vec3(1.0f, 0.0f, 0.0f));
+            model = glm::rotate(model, glm::radians(i * _rotationAxis.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+            _modelMatrices.push_back(model);
+        }
+        break;
+    }
+
+
 
     default:
         break;
@@ -724,9 +771,89 @@ void Game::CustomModelInstance::RenderingTexture()
 #pragma endregion
 #pragma region 蝴蝶测试新动画模型
 
+void ButterflyScriptShader::SelfIns()
+{
+    // 生成随机数，范围 [0,1]
+    float r0 = static_cast<float>(rand()) / RAND_MAX;
+    float r1 = static_cast<float>(rand()) / RAND_MAX;
+    float r2 = static_cast<float>(rand()) / RAND_MAX;
+    float r3 = static_cast<float>(rand()) / RAND_MAX;
+    float r4 = static_cast<float>(rand()) / RAND_MAX;
+    float r5 = static_cast<float>(rand()) / RAND_MAX;
+    float r6 = static_cast<float>(rand()) / RAND_MAX;
+    _dt = 0.0167f;
+    // 随机生成水平圆周运动参数：
+    // _circleRadius 在 [5,15]
+    _circleRadius = 5.0f + r0 * 10.0f;
+    // _horizontalSpeed 在 [3,6]
+    float sign = (rand() % 2 == 0) ? 1.0f : -1.0f;//给一个随机正复值
+    _horizontalSpeed = sign * (3.0f + r1 * 3.0f);
+    // 起始角度在 [0, 2π)
+    _xzStartAngle = r2 * 2.0f * glm::pi<float>();
+
+    // 随机生成垂直上升参数：
+    // _verticalSpeed 在 [0.5, 2.0]
+    _verticalSpeed = 0.5f + r3 * 1.5f;
+    _baseY = 0.0f; // 基准 Y 坐标
+
+    // 随机生成振荡参数：
+    // 振荡开始时间在 [10, 20] 秒
+    _oscStartTime = 10.0f + r4 * 10.0f;
+    // 振荡振幅在 [0.5, 2.0]
+    _oscillationAmplitude = 0.5f + r5 * 1.5f;
+    // 振荡频率在 [1, 3] 弧度/秒
+    _oscillationFrequency = 1.0f + r6 * 2.0f;
+
+    _timeAccumulator = 0.0f;
+
+    // 初始化位置：根据初始角度确定在 XZ 平面的初始位置，Y 取基准值
+    position = glm::vec3(_circleRadius * cos(_xzStartAngle),
+        _baseY,
+        _circleRadius * sin(_xzStartAngle));
+    // 初始化旋转为默认（假定默认朝向为正 Z 轴）
+    rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    std::cout << "初始化蝴蝶参数" << std::endl;
+}
+
 void ButterflyScriptShader::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
-    position += glm::vec3(0.0f, 0.01f, 0.00f);
+  
+    _timeAccumulator += _dt;
+
+    // 为保持水平线速度固定：
+    // 水平线速度 = _horizontalSpeed (单位/秒)
+    // 圆周运动的角速度 = _horizontalSpeed / _circleRadius
+    float angle = _xzStartAngle + (_horizontalSpeed / _circleRadius) * _timeAccumulator;
+    angle = fmod(angle, 2.0f * glm::pi<float>()); // 保证在 [0,2π) 内
+
+    // 更新位置：
+    // XZ 平面：沿圆周运动
+    float x = _circleRadius * cos(angle);
+    float z = _circleRadius * sin(angle);
+    // Y 轴：均匀上升 + 振荡（当时间超过振荡开始时间后）
+    float y = _baseY + _verticalSpeed * _timeAccumulator;
+    if (_timeAccumulator > _oscStartTime)
+    {
+        float oscTime = _timeAccumulator - _oscStartTime;
+        y += _oscillationAmplitude * sin(_oscillationFrequency * oscTime);
+    }
+    position = glm::vec3(x, y, z);
+
+    // 更新旋转：使蝴蝶始终面向水平运动的切线方向（仅绕 Y 轴旋转）
+    // 对于圆周轨迹 P(angle) = (R*cos(angle), y, R*sin(angle))
+    // 水平切线 T = (-sin(angle), 0, cos(angle))
+    glm::vec3 tangent = glm::vec3(-sin(angle), 0.0f, cos(angle));
+    tangent = glm::normalize(tangent);
+
+    // 计算目标 yaw 角：使用 atan2 得到水平切线方向的角度
+    float desiredYaw = atan2(tangent.x, tangent.z);
+
+    // 由于当前计算得到的方向实际上与切线相反（导致物体朝向圆心），
+    // 加上 π 补偿，使其朝向切线方向
+    desiredYaw -= glm::pi<float>()/2;
+
+    // 构造仅绕 Y 轴旋转的四元数
+    rotation = glm::angleAxis(desiredYaw, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 #pragma endregion
@@ -824,3 +951,32 @@ void Game::GameBullet::UniformParametersInput()
 }
 #pragma endregion
 
+void Game::NoneLightModel::UniformParametersInput()
+{
+    //金属度
+    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
+    glUniform1f(metallicLoc, 0.0f);
+
+    //糙度
+    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
+    glUniform1f(roughnessLoc, 1.0f);
+    //透明度
+    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
+    glUniform1f(opacityLoc, 1.0f);
+    //折射率
+    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
+    glUniform1f(IORLoc, 1.330f);
+    //环境光贡献率
+    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
+    glUniform1f(aoLoc, 1.0f);
+
+
+    // 自发光
+    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
+    glUniform3f(emissionLoc, .05f, .05f, .05f); // 传入自发光颜色
+
+    // 基本色
+    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
+    glUniform3f(baseColorLoc, 0.9f, 0.9f, 0.9f); // 传入基本色（暗色）
+
+}

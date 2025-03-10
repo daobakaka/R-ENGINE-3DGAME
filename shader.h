@@ -387,8 +387,8 @@ void main() {
 
     // 采样高度纹理并调整纹理坐标
     float height = texture(heightTexture, TexCoord).r;
-    vec2 parallaxOffset = viewDir.xy * (height * 0.1);  // 简单的视差偏移
-    vec2 adjustedTexCoord = TexCoord + parallaxOffset;
+    vec2 parallaxOffset = viewDir.xy * (height * 0.01f);  // 简单的视差偏移,这是针对高度图来进行计算的，如果没有则设置为0
+    vec2 adjustedTexCoord = TexCoord + parallaxOffset;//这里就调整了纹理坐标的偏移量
 
     // 采样粗糙度纹理并调整粗糙度
     float roughnessValue = texture(roughnessTexture, adjustedTexCoord).r * roughness;
@@ -434,35 +434,55 @@ void main() {
             }
         }
     }
+// --- 平行光（方向光）部分 ---
+if (parallelLightIntensity > 0.0001) {
+    ambientTotal += 0.2f * parallelLightColor;
+    vec3 lightDir = normalize(-parallelLightDirection);
+    vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, parallelLightColor, parallelLightIntensity, metallic, roughnessValue);
+    diffuseTotal += pbrLighting;
 
-    // --- 平行光（方向光）部分 ---
-    if (parallelLightIntensity > 0.0001) {
-        ambientTotal += 0.2f * parallelLightColor;
-        vec3 lightDir = normalize(-parallelLightDirection);
-        vec3 pbrLighting = calculatePBR(lightDir, viewDir, norm, parallelLightColor, parallelLightIntensity, metallic, roughnessValue);
-        diffuseTotal += pbrLighting;
+    // 阴影计算
+    vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
 
-        // 阴影计算
-        vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
-        vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-        projCoords = projCoords * 0.5 + 0.5;
+    // 定义边缘阈值
+    const float edgeThreshold = 0.01; // 边缘阈值，可以根据需要调整
 
-        float closestDepth = texture(autoParallelShadowMap, projCoords.xy).r;
-        float currentDepth = projCoords.z;
-        float bias = max(0.005 * (1.0 - dot(norm, lightDir)), 0.001);
-        float shadow = currentDepth > (closestDepth + bias) ? 1.0 : 0.0;
+    // 判断是否临近阴影贴图边缘
+    bool isNearEdge = (projCoords.x < edgeThreshold || projCoords.x > 1.0 - edgeThreshold ||
+                       projCoords.y < edgeThreshold || projCoords.y > 1.0 - edgeThreshold);
 
-        float shadowPCF = 0.0f;
-        vec2 texelSize = 1.0 / textureSize(autoParallelShadowMap, 0);
-        for(int x = -1; x <= 1; ++x) {
-            for(int y = -1; y <= 1; ++y) {
-                float pcf = texture(autoParallelShadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
-                shadowPCF += (currentDepth - bias > pcf) ? 1.0 : 0.0;
-            }
+    // 从阴影贴图中获取深度值
+    float closestDepth = texture(autoParallelShadowMap, projCoords.xy).r;
+    float currentDepth = projCoords.z;
+
+    // 动态调整阴影偏差
+    float bias = max(0.005 * (1.0 - dot(norm, lightDir)), 0.001);
+
+    // 阴影判断：比较当前片段的深度与从阴影贴图中取出的深度
+    float shadow = currentDepth > (closestDepth + bias) ? 1.0 : 0.0;
+
+    // 使用 PCF 平滑阴影边缘
+    float shadowPCF = 0.0f;
+    vec2 texelSize = 1.0 / textureSize(autoParallelShadowMap, 0);
+    for(int x = -1; x <= 1; ++x) {
+        for(int y = -1; y <= 1; ++y) {
+            float pcf = texture(autoParallelShadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            shadowPCF += (currentDepth - bias > pcf) ? 1.0 : 0.0;
         }
-        shadowPCF /= 9.0f;
+    }
+    shadowPCF /= 9.0f;  // 平均结果
+
+    // 如果在阴影中，漫反射和镜面反射会变暗
+    if (isNearEdge) {
+        // 临近边缘时，禁用阴影计算
+        diffuseTotal *= 1.0;
+    } else {
+        // 正常应用阴影
         diffuseTotal *= (1.0 - shadowPCF);
     }
+}
 
     // 最终光照
     vec3 lighting = ambientTotal * aoValue + diffuseTotal + specularColor * metallic;
@@ -526,6 +546,8 @@ void main()
 
     // 无需把 baseColor 加到纹理颜色，可改为乘法叠加
     FragColor = (texture(baseTexture, TexCoord) + vec4(colorToUse, 1.0)) ;
+  // FragColor = vec4(1,1,1,1);
+
 } 
 )";
 /// <summary>
@@ -565,6 +587,9 @@ void main()
 
     // 计算最终屏幕坐标
     gl_Position = projection * view * worldPos;
+
+
+
 }
 )";
 
@@ -625,28 +650,40 @@ void main()
     float aoVal = texture(aoTexture, adjustedTexCoord).r * ao;
     vec3 finalBaseColor = baseColor * texColor.rgb * aoVal;
 
-    // ---- 阴影计算（方向光阴影） ----
-    vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    projCoords = projCoords * 0.5 + 0.5; // 将坐标映射到 [0, 1]
+ // ---- 阴影计算（方向光阴影） ----
+vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
+vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+projCoords = projCoords * 0.5 + 0.5; // 将坐标映射到 [0, 1]
 
-    // 使用平行光方向计算阴影偏置（保留原逻辑）
-    vec3 lightDir = normalize(-parallelLightDirection);
-    float bias = max(0.005 * (1.0 - dot(norm, lightDir)), 0.005);//保留bias值 最小0.005f
-    float currentDepth = projCoords.z;
-    float shadow = 0.0;
+// 定义边缘阈值
+const float edgeThreshold = 0.01; // 边缘阈值，可以根据需要调整
+
+// 判断是否临近阴影贴图边缘
+bool isNearEdge = (projCoords.x < edgeThreshold || projCoords.x > 1.0 - edgeThreshold ||
+                   projCoords.y < edgeThreshold || projCoords.y > 1.0 - edgeThreshold);
+
+// 使用平行光方向计算阴影偏置
+vec3 lightDir = normalize(-parallelLightDirection);
+float bias = max(0.005 * (1.0 - dot(norm, lightDir)), 0.005); // 保留 bias 值，最小 0.005
+float currentDepth = projCoords.z;
+
+// 阴影判断：比较当前片段的深度与从阴影贴图中取出的深度
+float shadow = 0.0;
+if (!isNearEdge) {
+    // 使用 PCF 软阴影采样（3x3 邻域）
     vec2 texelSize = 1.0 / textureSize(autoParallelShadowMap, 0);
-    // PCF 软阴影采样（3x3 邻域）
     for (int x = -1; x <= 1; ++x) {
         for (int y = -1; y <= 1; ++y) {
             float pcfDepth = texture(autoParallelShadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
             shadow += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
         }
     }
-    shadow /= 9.0;
-    // 将阴影因子应用到基础颜色
-    finalBaseColor *= (1.0 - shadow);
-    // ---- 阴影计算结束 ----
+    shadow /= 9.0; // 平均结果
+}
+
+// 将阴影因子应用到基础颜色
+finalBaseColor *= (1.0 - shadow);
+// ---- 阴影计算结束 ----
 
     // 最终输出颜色：基础调制结果加上自发光
     vec3 result = finalBaseColor + emission;

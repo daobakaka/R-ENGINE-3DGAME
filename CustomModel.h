@@ -82,7 +82,8 @@ namespace Game {
 
         //获取状态
         bool GetActiveState()const ;
-
+        //额外游戏参数
+        float _timeAccumulator;//独立的时间计数器
 
     protected:
 #pragma region   数组初始化原则：{}只能在声明时进行初始化
