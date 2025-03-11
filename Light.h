@@ -123,6 +123,21 @@ namespace Game {
         void RenderShadowTexture(CustomModel* obj,glm::mat4 crossView);
         //渲染阴影图，重载,这里需要使用NDC（标准设备坐标空间，来进行正交投影）
         void RenderShadowTexture(GLuint shader);
+        /// <summary>
+        /// 创建深度缓冲区后处理比较贴图
+        /// </summary>
+        /// <returns></returns>
+        GLuint CreateDepthMapForTest();
+
+        //渲染深度测试图
+        void BindDepthTestBuffer();
+
+        void UnbindDepthTestBuffer();
+
+        void RenderDopthTestTexture(GLuint shader);
+
+
+
 
         
     private:
@@ -134,9 +149,11 @@ namespace Game {
         static LightRender* instance;
 
     public:
-        GLuint _depthMapParallelFBO;
+        GLuint _depthMapParallelFBO;//阴影深度1
+        GLuint _depthMapTestFBO;//深度测试1
     protected:
-        GLuint _depthMapParallel;
+        GLuint _depthMapParallel;//阴影深度2
+        GLuint _depthMapTest;//深度测试2
         GLuint _depthShaderProgram;
         GLuint _depthTestShader;
         GLuint _depthVisualShader;

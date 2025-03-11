@@ -54,27 +54,54 @@ void GameUpdateShadowRenderT(const glm::mat4 &view,CustomModel* player,glm::vec3
 
 
 }
+/// <summary>
+/// 渲染视口深度图，为获取深度进行后处理，这里针对非实例化对象
+/// </summary>
+/// <param name="view"></param>
+/// <param name="projection"></param>
+
+void ShderTestT(const glm::mat4& view, const glm::mat4& projection)
+{
+ 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
+    lightRender->BindDepthTestBuffer();
+    shaderManager->SetMat4("depthViewPortCal", "view", view);
+    shaderManager->SetMat4("depthViewPortCal", "projection", projection);
+    manager->UpdateDepthViewPortPic(view, projection, shaderManager->GetShader("depthViewPortCal"));
+    lightRender->UnbindDepthTestBuffer();//绘制完成之后，解除绑定深度测试的视口贴图
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
+    shaderManager->UseShader("depthVisual");
+    lightRender->RenderDopthTestTexture(shaderManager->GetShader("depthVisual"));//计算视口的深度图
 
 
+
+}
+
+
+//平行光统一参数传入和阴影传入部分
 void LightGlobalCalculate()
 {
 
     //为渲染阴影设置阴影光源矩阵
     shaderManager->SetMat4("commonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
     shaderManager->SetMat4("commonNoneLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
+    shaderManager->SetMat4("waveShader", "lightSpaceMatrix", lightRender->GetLightMatrix());
     //激活阴影纹理单元,这里设置纹理单元9避免冲突
     shaderManager->SetTexture("commonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 9);
     shaderManager->SetTexture("commonNoneLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 9);
+    shaderManager->SetTexture("waveShader", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 9);
     //平行光强度渲染,平行光的参数是一致的
     shaderManager->SetVec3("commonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
     shaderManager->SetVec3("commonNoneLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
+    shaderManager->SetVec3("waveShader", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
     //以上两个通用着色器，采用同样的参数传入
     shaderManager->SetVec3("commonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
     shaderManager->SetFloat("commonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
-
+    shaderManager->SetVec3("waveShader", "parallelLightColor", lightSpawner->GetParallelLight().color);
+    shaderManager->SetFloat("waveShader", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
 }
 
-void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window)
+void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window, CustomModel* player)
 {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
@@ -107,13 +134,11 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
             scripts->TParallelLightRotation(item.second);
 
         }
-        else if (item.second->GetVariant() == ModelClass::ActorButterfly)
+        else if (item.second->GetVariant() == ModelClass::StoneMonser)
         {
-            //目前这种统一脚本的方式，并不能完全独立于对象脚本，只能在一定程度上进行独立
-            scripts->ActorButtfly(item.second);
+           
+            // 播放动画
             item.second->PlayAnimation(0, 0.1f);
-
-
         }
         else if (item.second->GetVariant() == ModelClass::TsetButterfly)
         {
@@ -134,10 +159,9 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
             //玩家按键生成子弹
             scripts->PlayerControl(window, item.second);
         }
-
-
        
     }
+
 
     //遍历缓存池
     for (auto& item : manager->GetCacheObjects())
@@ -170,9 +194,23 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
 
 #pragma endregion
 
-  
-   
 
 }
+/// <summary>
+/// 执行测试的特殊结构
+/// </summary>
+/// <param name="view"></param>
+/// <param name="projection"></param>
+/// <param name="window"></param>
+/// <param name="player"></param>
+void GameUpdateBufferTestT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window, CustomModel* player)
+{
 
+
+    //测试执行区域
+    manager->GetspecialObjects()["treeInstance"]->Update(view, projection);
+
+
+
+}
 

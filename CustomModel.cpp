@@ -675,23 +675,6 @@ void CustomModel::DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
     justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
-    // 打印 lightSpaceMatrix
-    //std::cout << "LightSpaceMatrix: \n";
-    //for (int i = 0; i < 4; i++) {
-    //    std::cout << lightSpaceMatrix[i][0] << " "
-    //        << lightSpaceMatrix[i][1] << " "
-    //        << lightSpaceMatrix[i][2] << " "
-    //        << lightSpaceMatrix[i][3] << std::endl;
-    //}
-    //// 打印 transform（模型矩阵）
-    //std::cout << "Transform (Model Matrix): \n";
-    //for (int i = 0; i < 4; i++) {
-    //    std::cout << transform[i][0] << " "
-    //        << transform[i][1] << " "
-    //        << transform[i][2] << " "
-    //        << transform[i][3] << std::endl;
-    //}
-
 
 }
 void CustomModel::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shader)
@@ -712,7 +695,6 @@ void CustomModel::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shade
     glBindVertexArray(0);
     //集成纹理渲染方法
 
-
 }
 void Game::CustomModel::UpdateDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader)
 {
@@ -722,6 +704,24 @@ void Game::CustomModel::UpdateDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader
         IsSkinnedMesh == true ? DrawDepthPicDynamical(lightSpaceMatrix,shader) : DrawDepthPic(lightSpaceMatrix,shader);
        // std::cout << ID << "render shadow:" << _ifShadow << std::endl;
     }
+}
+void Game::CustomModel::DrawDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader)
+{
+
+
+
+}
+void Game::CustomModel::DrawDepthViewPortPicDynamical(glm::mat4 view, glm::mat4 projection, GLuint shader)
+{
+
+
+}
+void Game::CustomModel::UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader)
+{
+   
+     //这里的视图参数由外部直接传入，这里只需要计算模型本身位置即可，并且取消阴影判断，实例化类中重写空方法
+    IsSkinnedMesh == true ? DrawDepthPicDynamical(view, shader) : DrawDepthPic(view, shader);
+
 }
 void Game::CustomModel::UpdatePhysics()
 {

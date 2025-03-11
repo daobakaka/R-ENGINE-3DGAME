@@ -75,11 +75,20 @@ using namespace Game;
 
     void Game::ShaderManager::IntegratedShaderCompile()
     {
-
+        //基础shader
         ShaderCompile(noneLightVertexShaderSource, noneLightFragmentShaderSource, "noneLight");
+        //功能全面的通用光照shader
         ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "commonLight");
+        //无光照的基础实例化shader
         ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "noneLightInstancer");
+        //无光照的基础实例化shader,可进行深度图进行后处理
+        ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingForViewPortDepthMapFragmentShaderSource, "noneLightDepthCalInstancer");
+        //无光照的通用shader(可生成阴影)
         ShaderCompile(CustomNoLightShadowShaderVertexSource, CustomNoLightShadowShaderFragmentSource, "commonNoneLight");
+        //独立shader,构建玩家飞行道具
+        ShaderCompile(waveVertexShaderSource, colorlightsArraySourceFragmentShaderSource,"waveShader");
+
+        
        
         
         
@@ -88,7 +97,8 @@ using namespace Game;
         ShaderCompile(depthShaderVertexShaderSource, depthShaderFragmentShaderSource,"depthCal");
         ShaderCompile(depthVisualShaderVertexShaderSource, depthVisualShaderFragmentShaderSource,"depthVisual");
         ShaderCompile(depthTestShaderVertexShaderSource, depthTestShaderFragmentShaderSource,"depthTest");
-
+        //普通深度图计算
+        ShaderCompile(depthViewPortShaderVertexShaderSource, depthViewPortShaderFragmentShaderSource, "depthViewPortCal");
     }
 
     // Set methods for various uniform types

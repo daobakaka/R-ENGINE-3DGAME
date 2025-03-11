@@ -221,6 +221,14 @@ LightRender* LightRender::GetInstance() {
 GLuint Game::LightRender::CreateShadowMapForParallelLight()
 {
 
+    //---3个shader一起编译
+//创建阴影或者深度贴图渲染shader，然后编译深度着色器，这里必须在Oepngl 上下文中进行，因此不能放在构造
+    _depthShaderProgram = CompileShader(depthShaderVertexShaderSource, depthShaderFragmentShaderSource);
+    _depthVisualShader = CompileShader(depthVisualShaderVertexShaderSource, depthVisualShaderFragmentShaderSource);
+    _depthTestShader = CompileShader(depthTestShaderVertexShaderSource, depthTestShaderFragmentShaderSource);
+    //-------------------------------------------------------   
+
+
     // 创建深度贴图
     glGenFramebuffers(1, &_depthMapParallelFBO);//基于深度贴图的帧缓冲贴图对象GLuint
     glGenTextures(1, &_depthMapParallel);//深度贴图
@@ -236,13 +244,6 @@ GLuint Game::LightRender::CreateShadowMapForParallelLight()
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-//---3个shader一起编译
-    //创建阴影贴图，然后编译深度着色器
-    _depthShaderProgram = CompileShader(depthShaderVertexShaderSource, depthShaderFragmentShaderSource);
-    _depthVisualShader = CompileShader(depthVisualShaderVertexShaderSource, depthVisualShaderFragmentShaderSource);
-    _depthTestShader = CompileShader(depthTestShaderVertexShaderSource, depthTestShaderFragmentShaderSource);
-    //-------------------------------------------------------
    
     return _depthMapParallelFBO;  // 返回生成的深度贴图FBO
 }
@@ -310,6 +311,8 @@ GLuint Game::LightRender::GetDepthShaderProgram(ShaderClass shader)
         return _depthTestShader;
     case ShaderClass::DepthMapParallel://获取渲染完成之后的平行光深度阴影贴图
         return _depthMapParallel;
+    case ShaderClass::DepthMapTest:
+        return _depthMapTest;
 
     default:
         // 如果 num 的值不在 1, 2, 3 之内，返回一个默认值或处理错误
@@ -406,11 +409,86 @@ void Game::LightRender::RenderShadowTexture(GLuint shader)
     glBindVertexArray(0);
 }
 
+GLuint Game::LightRender::CreateDepthMapForTest()
+{
+
+    // 创建深度贴图
+    glGenFramebuffers(1, &_depthMapTestFBO);//基于深度贴图的帧缓冲贴图对象GLuint
+    glGenTextures(1, &_depthMapTest);//深度贴图
+    glBindTexture(GL_TEXTURE_2D, _depthMapTest);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 4800, 2400, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    //这里同样设置几种纹理参数 近线性
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindFramebuffer(GL_FRAMEBUFFER, _depthMapTestFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,_depthMapTest, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return _depthMapTestFBO;  // 返回生成的深度贴图FBO
+}
+
+void Game::LightRender::BindDepthTestBuffer()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, _depthMapTestFBO);
+    glViewport(0, 0, 4800, 2400);//调整视口以适应阴影贴图分辨率
+    glClear(GL_DEPTH_BUFFER_BIT);  // 清空深度缓冲
+}
+
+void Game::LightRender::UnbindDepthTestBuffer()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);//解除绑定
+    glViewport(0, 0, 2400, 1200);//阴影贴图渲染完成之后，解绑缓冲区，恢复本来的视口
+}
+
+void Game::LightRender::RenderDopthTestTexture(GLuint shader)
+{
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _depthMapTest);
+
+    GLuint depthMapLoc = glGetUniformLocation(shader, "depthMap");
+    glUniform1i(depthMapLoc, 0);  // 将纹理单元0传递给着色器
+
+
+    if (quadVAO == 0)
+    {
+        float quadVertices[] = {
+            // positions        // texture Coords
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+
+}
+
 
 LightRender::LightRender() {
-    // 构造函数为空
+    
+
+    
     controller = Controller::GetInstance();
     lightSpawner = LightSpawner::GetInstance();
+
+
+
 }
 
 LightRender::~LightRender() {

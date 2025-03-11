@@ -130,7 +130,8 @@ void Game::IntergratedScripts::PlayerControl(GLFWwindow* window, CustomModel* ot
             std::cout << "press F" << std::endl;
 
             // 生成一发子弹
-            auto* bullet = new GameBullet("commonLight", ModelDic["baseSphere"], false, false, true);
+            auto* bullet = new GameBullet("waveShader", ModelDic["baseSphere"], false, false, true);
+            bullet->SelfIns();//初始化道具随机变量
             bullet->SetVariant(ModelClass::PlayerBullet);
             bullet->Initialize(other->position + glm::vec3(0, 8, 0), glm::quat(glm::vec3(0)), glm::vec3(3.0f));
             manager->RegisterObject(bullet);

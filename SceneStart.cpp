@@ -4,7 +4,6 @@
 #include <GL/glew.h>//加载Opengl扩展，
 #include <GLFW/glfw3.h>//创建Opengl扩展，以及管理Opengl上下文
 #include "Cube.h"
-//#include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
 #include "Controller.h"
 #include "LifecycleManager.h"
 #include "IntergratedScripts.h"
@@ -19,6 +18,7 @@
 #include <chrono>
 #include <thread>
 #include "ShaderManager.h"
+#include "DesignModel.h"
 #define PI 3.1415926  //定义PI宏
 
 using namespace Game;
@@ -71,9 +71,9 @@ GLFWwindow* GLinitializeT()
     glEnable(GL_DEPTH_TEST);//深度测试
     glEnable(GL_ALPHA_TEST);//alpha测试
     glEnable(GL_STENCIL_TEST);//模板测试
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthFunc(GL_LESS); // 设置深度函数，通常使用GL_LESS
+    glEnable(GL_BLEND);// 设置深度函数，通常使用GL_LESS
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //启用混合
    // glEnable(GL_BLEND);
    // glDisable(GL_BLEND);  // 禁用混合
@@ -132,6 +132,8 @@ void LightInitialization()
 //但通过灯光渲染逻辑，现在实现了类似游戏引擎的光线渲染逻辑判断
 //初始化用于渲染阴影的平行光深度图，可以在类中直接构造，编译阴影着色器
     lightRender->CreateShadowMapForParallelLight();
+    //初始化用于渲染视口深度图的缓冲区，用于渲染视口深度图,用于后处理
+    lightRender->CreateDepthMapForTest();
     //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
     auto pointLight2 = lightSpawner->SpawPointLight(glm::vec3(60, 5, 20), glm::vec3(1, 1, 1), 10);
     auto pointLight = lightSpawner->SpawPointLight(glm::vec3(30, 5, 0), glm::vec3(0, 1, 1), 10);
@@ -146,7 +148,7 @@ void LightInitialization()
 }
 CustomModel* GameStartT()
 {
-    //生成基础面 默认第一，ID 为0
+    //生成基础面 默认第一，ID 为1
     auto* basePlane = new  CustomModelShader("commonLight", ModelDic["basePlane"], false, true, false);
     basePlane->SetVariant(ModelClass::StaticPlane);
     basePlane->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(1000.0f, 0.1f, 1000.0f));
@@ -193,27 +195,30 @@ CustomModel* GameStartT()
         tree->SetVariant(ModelClass::CubeE);
         tree->Initialize(glm::vec3(60,0,-20), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(15));
         manager->RegisterObject(tree);
-        tree->AttachTexture(TextureDic["tree"], 0,glm::vec2(4, 4));
+        tree->AttachTexture(TextureDic["tree"], 0,glm::vec2(1, 1));
 
     }
+
     //测试宝箱
     for (int i = 0; i < 1; i++)
     {
-        auto* chest = new CustomModelShader("noneLight", ModelDic["chest"], false, false, true);
+        auto* chest = new CustomModelShader("commonLight", ModelDic["chest"], false, true, true);
         chest->SetVariant(ModelClass::CubeE);
         chest->Initialize(glm::vec3(20, 0, 0), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(10));
         manager->RegisterObject(chest);
         chest->AttachTexture(TextureDic["chest"], 0);
 
     }
+
     //测试石头怪
     for (int i = 0; i < 1; i++)
-    {
-        auto* stoneMonster = new CustomModelShader("commonLight", ModelDic["stoneMonster"], false, true, true);
-        stoneMonster->SetVariant(ModelClass::CubeE);
-        stoneMonster->Initialize(glm::vec3(-40, 20, 30), glm::quat(glm::vec3(0, 0.0f, 0.0f)), glm::vec3(0.3F));
+    {//这里添加了动画要声明未蒙皮网格，在动态绘制区进行绘制
+        auto* stoneMonster = new CustomModelShader("commonLight", ModelDic["stoneMonster"], true, true, true);
+        stoneMonster->SetVariant(ModelClass::StoneMonser);
+        stoneMonster->Initialize(glm::vec3(-40, 20, 30), glm::quat(glm::vec3(0, PI, 0.0f)), glm::vec3(0.1F));
         manager->RegisterObject(stoneMonster);
         stoneMonster->AttachTexture(TextureDic["stoneMonster"], 0,glm::vec2(1,1));
+        stoneMonster->AttachAnimationController(AnimationDic["stoneMonster"]["fly"]);
 
 
     }
@@ -238,12 +243,14 @@ CustomModel* GameStartT()
     manager->RegisterObject(butterflyInstance);
     butterflyInstance->AttachTexture(TextureDic["butterfly"], 0, glm::vec2(1, 1));
 
-    //树实例化
-    auto* treeInstance = new  CustomModelInstance("noneLightInstancer", ModelDic["tree"], false, false, false, 20000, glm::vec3(10),glm::vec3(0,1,0),
+    //树实例化,使用视口深度图
+    auto* treeInstance = new  CustomModelInstance("noneLightDepthCalInstancer", ModelDic["tree"], false, false, false, 20000, glm::vec3(10),glm::vec3(0,1,0),
         ModelClass::InstanceCircle);
+    treeInstance->EnableDepthcal();//允许使用视口深度图进行计算
     treeInstance->SetVariant(ModelClass::InstanceCircle);
     treeInstance->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(5));
-    manager->RegisterObject(treeInstance);
+    manager->RegisterSpecialObjects(treeInstance,"treeInstance");//这里的树作为特殊容器对象注入，以便之后进行深度测试调整alpha值
+    //manager->RegisterObject(treeInstance);//取消注入，放到最后渲染
     treeInstance->AttachTexture(TextureDic["tree"], 0, glm::vec2(1, 1));
 
     //碎石实例化

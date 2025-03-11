@@ -455,6 +455,14 @@ CustomModelInstance::CustomModelInstance()
 {
 }
 
+Game::CustomModelInstance::~CustomModelInstance()
+{
+    if (_lightRender!=nullptr)
+    {
+          //单例不可访问？  
+    }
+}
+
 CustomModelInstance::CustomModelInstance(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow, int instanceCount, glm::vec3 positionOffset,
     glm::vec3 rotationAxis,ModelClass type)
 {
@@ -470,6 +478,7 @@ CustomModelInstance::CustomModelInstance(const std::string& name, const ModelDat
     ifLight = ifLightIn;
     _ifShadow = ifShadow;
     shaderProgram = ShaderManager::GetInstance()->GetShader(name);
+    _lightRender = LightRender::GetInstance();
 
     GLuint useageBuffer = isSkinnedMesh ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
@@ -682,6 +691,18 @@ void Game::CustomModelInstance::GenerateInstanceMatrices(ModelClass type)
     }
 }
 
+void Game::CustomModelInstance::UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader)
+{
+
+    //空方法 实例化物体不参于计算
+}
+
+void Game::CustomModelInstance::EnableDepthcal()
+{
+
+    _useViewPortDepthMap = true;
+}
+
 
 // 需要保留原有的方法签名
 bool Game::CustomModelInstance::Draw(glm::mat4 view, glm::mat4 projection)
@@ -765,7 +786,19 @@ void Game::CustomModelInstance::RenderingTexture()
         glActiveTexture(GL_TEXTURE0 + _textureOrder); // 激活纹理单元 0+order
         glBindTexture(GL_TEXTURE_2D, _textures[PictureTpye::BaseP]);      // 绑定纹理对象到纹理单元 0+order
         glUniform1i(picData, _textureOrder);         // 将纹理单元绑定到着色器的“baseTexture” uniform
+               
     }
+    //这里通过enable方法激活,使用视口深度图进行处理
+    if (_useViewPortDepthMap)
+    {
+        //传入深度纹理
+        GLuint picDataDepth = glGetUniformLocation(shaderProgram, "depthTexture");
+        glActiveTexture(GL_TEXTURE0 + _textureOrder + 1); // 激活纹理单元 0+order
+        glBindTexture(GL_TEXTURE_2D, _lightRender->GetDepthShaderProgram(ShaderClass::DepthMapTest));      // 绑定纹理对象到纹理单元 0+order
+        glUniform1i(picDataDepth, _textureOrder + 1);         // 将纹理单元绑定到着色器的“baseTexture” uniform
+
+    }
+
 }
 
 #pragma endregion
@@ -881,6 +914,9 @@ void Game::GamePlayer::Start()
 
 void Game::GamePlayer::UniformParametersInput()
 {
+    
+ 
+    
     //金属度
     GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
     glUniform1f(metallicLoc,0.9f);
@@ -918,26 +954,41 @@ void Game::GameBullet::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
     //给予子弹10 速度
    // this->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));
+    _waveTime += 0.0167f;
 
 }
 void Game::GameBullet::UniformParametersInput()
 {
+
+    // 获取 uniform 变量的位置
+    GLuint timeLoc = glGetUniformLocation(shaderProgram, "waveTime");
+    GLuint waveAmplitudeLoc = glGetUniformLocation(shaderProgram, "waveAmplitude");
+    GLuint waveFrequencyLoc = glGetUniformLocation(shaderProgram, "waveFrequency");
+    GLuint waveSpeedLoc = glGetUniformLocation(shaderProgram, "waveSpeed");
+
+    glUniform1f(timeLoc, _waveTime);
+    glUniform1f(waveAmplitudeLoc, _waveAmplitude);
+    glUniform1f(waveFrequencyLoc, _waveFrequency);
+    glUniform1f(waveSpeedLoc, _waveSpeed);
+
+
     //金属度
     GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
-    glUniform1f(metallicLoc, 0.1f);
+    glUniform1f(metallicLoc, 0.3f);
 
     //糙度
     GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
-    glUniform1f(roughnessLoc, .5f);
+    glUniform1f(roughnessLoc, .1f);
     //透明度
     GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
-    glUniform1f(opacityLoc, 0.3f);
+    glUniform1f(opacityLoc, 0.4f);
     //折射率
     GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
     glUniform1f(IORLoc, 1.330f);
     //环境光贡献率
     GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
     glUniform1f(aoLoc, 1.5f);
+
 
 
     // 自发光
@@ -948,6 +999,23 @@ void Game::GameBullet::UniformParametersInput()
     GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
     glUniform3f(baseColorLoc, 0.9f, 0.9f, 0.9f); // 传入基本色（暗色）
 
+}
+void Game::GameBullet::SelfIns()
+{
+
+    // 生成随机数，范围 [0,1]
+    float r0 = static_cast<float>(rand()) / RAND_MAX;
+    float r1 = static_cast<float>(rand()) / RAND_MAX;
+    float r2 = static_cast<float>(rand()) / RAND_MAX;
+
+    // 随机生成波浪幅度 _waveAmplitude，范围 [0.1, 0.5]
+    _waveAmplitude = 0.1f + r0 * 0.4f;
+
+    // 随机生成波浪频率 _waveFrequency，范围 [1.0, 3.0]
+    _waveFrequency = 1.0f + r1 * 2.0f;
+
+    // 随机生成波浪速度 _waveSpeed，范围 [0.5, 2.0]
+    _waveSpeed = 0.5f + r2 * 1.5f;
 }
 #pragma endregion
 
@@ -968,7 +1036,7 @@ void Game::NoneLightModel::UniformParametersInput()
     glUniform1f(IORLoc, 1.330f);
     //环境光贡献率
     GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
-    glUniform1f(aoLoc, 1.0f);
+    glUniform1f(aoLoc, 2.0f);
 
 
     // 自发光

@@ -6,7 +6,7 @@
 namespace Game
 {
 
-
+	class LightRender;
 #pragma region 特殊模型
 	//全局唯一标识
 	//extern int TGUID;
@@ -142,7 +142,7 @@ namespace Game
 	{
 	public:
 		CustomModelInstance();
-
+		~CustomModelInstance();
 		CustomModelInstance(const std::string& name,
 			const ModelData& modelData,
 			bool isSkinnedMesh,
@@ -164,12 +164,19 @@ namespace Game
 		virtual void RenderingTexture()override;
 		virtual void GenerateInstanceMatrices(ModelClass type=ModelClass::InstanceCube);
 
+		//视口深度图绘制
+		virtual void UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader) override;
+
+		void EnableDepthcal();
+
 	protected:
 		int _instanceCount;  // 存储实例数量
 		glm::vec3 _positionOffset;  // 存储平移偏移
 		glm::vec3 _rotationAxis;  // 存储旋转增量（每个轴的旋转增量）
 		GLuint _instanceBuffer;
 		std::vector<glm::mat4> _modelMatrices;  // 使用 std::vector 存储动态数量的实例矩阵
+		LightRender* _lightRender;
+		bool _useViewPortDepthMap;
 
 	};
 
@@ -233,7 +240,7 @@ namespace Game
 
 	public :
 		using CustomModelShader::CustomModelShader;
-		void   UniformParametersInput() override;//玩家类在这里重写传参
+		void  UniformParametersInput() override;//玩家类在这里重写传参
 
 
 
@@ -259,6 +266,14 @@ namespace Game
 		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
 
 		void  UniformParametersInput();//重写通用shader的传参，改变状态
+		void SelfIns() override;//初始化随机参数
+	protected:
+
+		float _waveTime ; // 获取当前时间
+		float _waveAmplitude ; // 波浪幅度
+		float _waveFrequency; // 波浪频率
+		float _waveSpeed ;     // 波浪速度
+
 
 	};
 #pragma endregion

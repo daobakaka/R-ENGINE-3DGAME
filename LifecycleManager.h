@@ -33,7 +33,7 @@ namespace Game {
         std::unordered_map<int, T*>& GetVariantObjects();
         //这里的对象采取遍历的方法进行处理，针对同种变体的对象，进行复原，必须要对setActiveFalse的结构才使用
         std::unordered_map<int, T*>& GetCacheObjects();
-
+        //特殊对象容器，比如玩家或者其他的比如需要进行深度 alpha 模板测试的特殊实例
         std::unordered_map<const char*, T*>& GetspecialObjects();
 
         void StartAll();
@@ -41,6 +41,7 @@ namespace Game {
         void DestroyAll();
         void UpdateAllVariant(glm::mat4 view, glm::mat4 projection);
         void UpdateDepthPic(glm::mat4 projection, GLuint shader);
+        void UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection,GLuint shader);
 
     private:
         LifecycleManager() : GUID(0) {} // 初始化GUID
@@ -209,6 +210,21 @@ namespace Game {
         for (auto& kv : variantObjects) {
             T* object = kv.second;
             object->UpdateDepthPic(projection, shader);
+        }
+    }
+    /// <summary>
+    /// 变体的视口深度图绘制
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="view"></param>
+    /// <param name="projectionm"></param>
+    /// <param name="shader"></param>
+    template<typename T>
+    inline void LifecycleManager<T>::UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader)
+    {
+        for (auto& kv : variantObjects) {
+            T* object = kv.second;
+            object->UpdateDepthViewPortPic(view,projection, shader);
         }
     }
 

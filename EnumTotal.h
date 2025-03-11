@@ -34,6 +34,8 @@ namespace Game {
 		//独立模块
 		Player,//游戏主角
 		PlayerBullet,//主角子弹
+
+		StoneMonser,//石头怪
 		
 	};
 
@@ -63,7 +65,9 @@ namespace Game {
 		DepthCalculate,
 		DepthRender,
 		DepthTest,
-		DepthMapParallel,//深度贴图ID
+		DepthMapParallel,//深度平行光阴影贴图ID
+		DepthMapTest,//深度测试后处理贴图ID
+		KAKATK,
 	};
 	enum CollisionType
 	{

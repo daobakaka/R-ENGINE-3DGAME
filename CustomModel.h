@@ -40,6 +40,12 @@ namespace Game {
         virtual void DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader) override; //静态绘制深度图，可重写
         virtual void DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix,GLuint shader) override;//动态绘制深度图，可重写
         virtual void UpdateDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader) override;//深度图更新方法，可重写
+
+        //视口深度图模块，用于读取视口深度值
+        virtual void DrawDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader) ; //静态绘制深度图，可重写
+        virtual void DrawDepthViewPortPicDynamical(glm::mat4 view, glm::mat4 projection, GLuint shader) ;//动态绘制深度图，可重写
+        virtual void UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader) ;//深度图更新方法，可重写
+
         //物理引擎模块
         virtual void UpdatePhysics();
         //检查碰撞

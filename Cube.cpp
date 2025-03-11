@@ -160,7 +160,7 @@ Game::Cube::Cube()
         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/front.jpg",  // 前面
         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/back.jpg",    // 后面
     };
-
+    stbi_set_flip_vertically_on_load(false);
     LoadCubemap(faces);//天空盒的CUBEMAP 采用 专有的加载方式
 
 }

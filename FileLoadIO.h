@@ -131,7 +131,7 @@ namespace Game {
     void MakeAnimation();
 
     void MakeModel();
-
+    //多模型的加载方法
     void MakeModelFbx();
 
     void MakeTxture();

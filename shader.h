@@ -631,24 +631,30 @@ uniform vec3 parallelLightDirection;     // 平行光方向，用于计算阴影偏置
 
 void main()
 {
-    // 计算视图方向
-    vec3 viewDir = normalize(ViewPos - FragPos);
-
-    // 采样法线纹理并映射到[-1, 1]，与原始法线结合
+      vec3 viewDir = normalize(ViewPos - FragPos);
+    // 采样法线纹理并调整法线
     vec3 normalMap = texture(normalTexture, TexCoord).rgb;
-    normalMap = normalMap * 2.0 - 1.0;
-    vec3 norm = normalize(Normal + normalMap);
+    normalMap = normalMap * 2.0 - 1.0;  // 映射到 [-1, 1]
+    vec3 norm = normalize(Normal + normalMap);  // 结合原始法线
 
-    // 视差映射：使用高度贴图计算偏移
-    float heightVal = texture(heightTexture, TexCoord).r;
-    vec2 parallaxOffset = viewDir.xy * (heightVal * 0.1);
-    vec2 adjustedTexCoord = TexCoord + parallaxOffset;
+    // 采样高度纹理并调整纹理坐标
+    float height = texture(heightTexture, TexCoord).r;
+    vec2 parallaxOffset = viewDir.xy * (height * 0.01f);  // 简单的视差偏移,这是针对高度图来进行计算的，如果没有则设置为0
+    vec2 adjustedTexCoord = TexCoord + parallaxOffset;//这里就调整了纹理坐标的偏移量
 
-    // 采样基础纹理
+    // 采样粗糙度纹理并调整粗糙度
+    float roughnessValue = texture(roughnessTexture, adjustedTexCoord).r * roughness;
+
+    // 采样环境光遮蔽纹理并调整 AO
+    float aoValue = texture(aoTexture, adjustedTexCoord).r * ao;
+
+    // 采样高光反射纹理
+    vec3 reflectionDir = reflect(-viewDir, norm);
+    vec3 specularColor = texture(specularTexture, reflectionDir).rgb;
+
+    // 采样基础纹理并调整基础颜色
     vec4 texColor = texture(baseTexture, adjustedTexCoord);
-    // 采样 AO 贴图并调制
-    float aoVal = texture(aoTexture, adjustedTexCoord).r * ao;
-    vec3 finalBaseColor = baseColor * texColor.rgb * aoVal;
+    vec3 finalBaseColor = baseColor * texColor.rgb;
 
  // ---- 阴影计算（方向光阴影） ----
 vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
@@ -686,9 +692,11 @@ finalBaseColor *= (1.0 - shadow);
 // ---- 阴影计算结束 ----
 
     // 最终输出颜色：基础调制结果加上自发光
-    vec3 result = finalBaseColor + emission;
-     FragColor = vec4(result, opacity * texColor.a);
-    // FragColor = vec4(1,1,1,1); 
+     vec3 result = finalBaseColor*aoValue*roughnessValue  +specularColor*metallic+ emission;
+     FragColor = vec4(result, opacity) * texColor;
+      // FragColor = texColor;   
+
+
 }
 )";
 
@@ -851,7 +859,7 @@ void main() {
 )";
 
 /// <summary>
-/// 深度图使用着色器
+/// 深度图平行光阴影使用着色器
 /// </summary>
 const char* depthShaderVertexShaderSource = R"(
 #version 450 core
@@ -877,7 +885,33 @@ void main() {
 
 }
 )";
+/// <summary>
+/// 深度图视口后处理使用着色器
+/// </summary>
+const char* depthViewPortShaderVertexShaderSource = R"(
+#version 450 core
+layout(location = 0) in vec3 aPos;   // 顶点位置
 
+uniform mat4 model;                  // 物体模型矩阵
+uniform mat4 view;       // 视口
+uniform mat4 projection; //透视
+
+void main() {
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+}
+)";
+/// <summary>
+/// 可以不渲染
+/// </summary>
+const char* depthViewPortShaderFragmentShaderSource = R"(
+#version 450 core
+
+out vec4 FragColor;
+
+void main() {
+
+}
+)";
 /// <summary>
 /// 深度图可视化着色器
 /// </summary>
@@ -948,22 +982,31 @@ layout(location = 3) in mat4 instanceMatrix;
 out vec2 TexCoord;                          // 传递纹理坐标到片段着色器
 out vec3 FragPos;                           // 传递片段位置到片段着色器
 out vec3 Normal;                            // 传递法线到片段着色器
+out vec4 FragPosClip;                       // 传递裁剪空间坐标到片段着色器
 
 uniform mat4 projection;                    // 投影矩阵
 uniform mat4 view;                          // 视图矩阵
-uniform mat4 transform;
-
+uniform mat4 transform;                     // 模型变换矩阵
 
 void main()
 {
     // 计算片段位置和纹理坐标
     FragPos = vec3(instanceMatrix * vec4(aPos, 1.0)); // 使用实例矩阵进行变换
     TexCoord = aTexCoord;
+    Normal = mat3(transpose(inverse(instanceMatrix))) * aNormal; // 法线变换
+
+    // 计算裁剪空间坐标
+    FragPosClip = projection * view * transform * instanceMatrix * vec4(aPos, 1.0);
+
     // 计算最终位置
-    gl_Position = projection * view * transform*instanceMatrix * vec4(aPos, 1.0); 
+    gl_Position = FragPosClip;
 }
 )";
 
+
+/// <summary>
+///实例化着色器基础版
+/// </summary>
 const char* instanceNoLightingFragmentShaderSource = R"(
 #version 450 core
 
@@ -976,6 +1019,7 @@ out vec4 FragColor; // 输出颜色
 uniform vec3 baseColor;      // 模型固有色
 uniform vec3 emission;      //自发光
 uniform sampler2D baseTexture;  // 基础纹理采样器
+uniform sampler2D depthTexture;  // 深度纹理,用于实例化树木实现遮挡半透明
 
 void main()
 {
@@ -992,10 +1036,105 @@ void main()
     // 使用基础颜色与纹理进行混合
     vec3 color = colorToUse * texColor.rgb;
 
-    // 最终片段颜色
-    FragColor = vec4(color, 1.0f);
+     FragColor = vec4(color, 1.0f);
+
 }
 )";
 
+/// <summary>
+///实例化着色器用于使用视口深度图进行后处理测试的片元部分
+/// </summary>
+const char* instanceNoLightingForViewPortDepthMapFragmentShaderSource = R"(
+#version 450 core
+
+in vec3 FragPos;    // 传入片段位置
+in vec3 Normal;     // 传入法线
+in vec2 TexCoord;   // 传入纹理坐标
+in vec4 FragPosClip; // 传入裁剪空间坐标
+
+out vec4 FragColor; // 输出颜色
+
+uniform vec3 baseColor;      // 模型固有色
+uniform vec3 emission;      // 自发光
+uniform sampler2D baseTexture;  // 基础纹理采样器
+uniform sampler2D depthTexture;  // 深度纹理,用于实例化树木实现遮挡半透明
+
+void main()
+{
+    // 自发光默认值(可选逻辑)
+    vec3 emissionDefault = (emission == vec3(0.0)) ? vec3(0.3) : emission;
+
+    // 如果 baseColor 没设置，默认给一个大概颜色
+    vec3 colorToUse = (baseColor == vec3(0.0)) ? vec3(0.5, 0.5, 0.5) : baseColor;
+
+    // 纹理采样
+    vec4 texColor = texture(baseTexture, TexCoord);
+
+    // 使用基础颜色与纹理进行混合
+    vec3 color = colorToUse * texColor.rgb;
+
+    // 将裁剪空间坐标转换为屏幕空间坐标
+    vec3 fragPosScreen = FragPosClip.xyz / FragPosClip.w;  // 透视除法
+    fragPosScreen = fragPosScreen * 0.5 + 0.5;  // 转换到 [0, 1] 范围
+
+    // 采样深度图
+    float depthFromTexture = texture(depthTexture, fragPosScreen.xy).r;
+
+    // 比较深度值
+    if (fragPosScreen.z < depthFromTexture) {
+        FragColor = vec4(color, 0.3f);  // 如果当前片段在前面，设置为半透明
+    } else {
+        FragColor = vec4(color, 1.0);  // 否则不透明
+    }
+}
+)";
+/// <summary>
+/// 波浪顶点着色器，用于制造波浪效果
+/// </summary>
+const char* waveVertexShaderSource = R"(
+
+#version 450 core
+layout(location = 0) in vec3 aPos;       // 顶点位置
+layout(location = 1) in vec2 aTexCoord;  // 纹理坐标
+layout(location = 2) in vec3 aNormal;    // 顶点法线
+
+// 输出到片段着色器
+out vec2 TexCoord;   // 传递纹理坐标
+out vec3 FragPos;    // 世界空间中的片段位置
+out vec3 Normal;     // 世界空间中的法线
+out vec3 ViewPos;    // 相机位置
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+uniform vec2 textureScale; // 纹理缩放因子
+uniform float waveTime;        // 时间变量，用于波浪效果
+uniform float waveAmplitude; // 波浪幅度
+uniform float waveFrequency; // 波浪频率
+uniform float waveSpeed;     // 波浪速度
+
+void main()
+{
+    // 计算波浪效果
+    vec3 waveOffset = vec3(0.0, sin(aPos.x * waveFrequency + waveTime * waveSpeed) * waveAmplitude, 0.0);
+    vec4 worldPos = model * vec4(aPos + waveOffset, 1.0);
+    FragPos = worldPos.xyz;
+
+    // 对纹理坐标应用波浪效果
+    vec2 texWaveOffset = vec2(0.0, sin(aTexCoord.x * waveFrequency + waveTime * waveSpeed) * waveAmplitude * 0.1);
+    TexCoord = (aTexCoord + texWaveOffset) * textureScale;
+
+    // 正确变换法线，防止非均匀缩放问题
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+
+    // 计算相机位置 (viewPos)，视图矩阵是从世界空间转换到相机空间的
+    ViewPos = -mat3(view) * vec3(view[3]);
+
+    // 计算最终屏幕坐标
+    gl_Position = projection * view * worldPos;
+}
+
+
+)";
 
 #endif

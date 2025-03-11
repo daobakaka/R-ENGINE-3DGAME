@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClCompile Include="AnimationIntergrated.cpp" />
     <ClCompile Include="CollisionBody.cpp" />
+    <ClCompile Include="DesignModel.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="ObsoleteTest.cpp" />
     <ClCompile Include="Octree.cpp" />
@@ -170,6 +171,7 @@
   <ItemGroup>
     <ClInclude Include="AnimationIntergrated.h" />
     <ClInclude Include="CollisionBody.h" />
+    <ClInclude Include="DesignModel.h" />
     <ClInclude Include="IComponent.h" />
     <ClInclude Include="Controller.h" />
     <ClInclude Include="Cube.h" />

@@ -464,6 +464,26 @@ void Game::MakeAnimation()
 
     AnimationDic["butterfly"]["fly"] = animaitonData;
 
+    //加载石头怪顶点动画
+    keyFrames.clear();
+
+    // 添加关键帧数据1,2,3
+    keyFrames.push_back(LoadVerticesFromFile("stoneMonster.obj"));
+    keyFrames.push_back(LoadVerticesFromFile("stoneMonster2.obj"));
+    keyFrames.push_back(LoadVerticesFromFile("stoneMonster.obj"));
+    //keyFrames.push_back(LoadVerticesFromFile("butterfly2.obj"));
+
+    animaitonData.keyFrames = keyFrames;
+    animaitonData.keyFrameTimes = keyFrameTimes;
+    animaitonData.loop = true;
+    animaitonData.speed = 0.2f;
+
+    AnimationDic["stoneMonster"]["fly"] = animaitonData;
+
+
+
+
+
 #pragma endregion
 
 
@@ -579,6 +599,15 @@ void Game::MakeModel()
 
     ModelDic["stone2"] = modelData;
 
+
+    //背包
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\backpack.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["backpack"] = modelData;
+
 #pragma endregion
 
 
@@ -590,10 +619,12 @@ void Game::MakeModel()
 void Game::MakeModelFbx()
 {
   // LoadFBX("chest", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\Chest.obj");
-  
-    LoadFBX("stoneMonster", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\rock.fbx");
+  //加载宝箱模型
+    //LoadFBX("chest", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\Chest.obj");
+
+   // LoadFBX("backpack", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\backpack.obj");
   // 通过名称获取模型
-  auto& model = Game::ModelDesignDic["rock"];
+  auto& model = Game::ModelDesignDic["chest"];
 
   // 打印模型信息
   std::cout << "----- 模型信息 -----" << std::endl;
@@ -625,7 +656,11 @@ void Game::MakeModelFbx()
 
 
 void Game::MakeTxture()
+
 {
+    //纹理坐标翻转，原生的图像格式纹理坐标与opengl不一致，这里非常重要
+    stbi_set_flip_vertically_on_load(true);
+
     GLuint defaultTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\default.bmp");
     GLuint defaultW = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\defaultW.jpg");
     GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\1.png");
@@ -647,9 +682,14 @@ void Game::MakeTxture()
     GLuint stoneMonsterTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\stoneMonster.png");
     //碎石纹理
     GLuint stone = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Rocks_3_4_texture.png");
-    GLuint stoneNormal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Rocks_3_4_nromal.png");
+    GLuint stoneNormal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Rocks_3_4_normal.png");
     GLuint stoneSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Rocks_3_4_specular.png");
-    
+    //高清背包
+    GLuint backpage = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\diffuse.jpg");
+    GLuint backpageNormal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\normal.png");
+    GLuint backpageSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\specular.jpg");
+    GLuint backpageRoughnees = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\roughness.jpg");
+    GLuint backpageAO = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\ao.jpg");
     //初始化参数
     std::vector<GLuint> picd;
     //加载默认纹理
@@ -665,7 +705,8 @@ void Game::MakeTxture()
     TextureDic["default"][PictureTpye::SpecularP] = picd[2];
     TextureDic["default"][PictureTpye::HightP] = picd[3];
     TextureDic["default"][PictureTpye::RoughnessP] = picd[4];
-    TextureDic["default"][PictureTpye::OtherP] = picd[5];
+    TextureDic["default"][PictureTpye::AOP]= picd[5];
+    TextureDic["default"][PictureTpye::OtherP] = picd[6];
     //初始化参数       
     std::vector<GLuint> pic;
     //加载蝴蝶纹理
@@ -676,7 +717,8 @@ void Game::MakeTxture()
     TextureDic["butterfly"][PictureTpye::SpecularP] = picd[2];
     TextureDic["butterfly"][PictureTpye::HightP] = picd[3];
     TextureDic["butterfly"][PictureTpye::RoughnessP] = picd[4];
-    TextureDic["butterfly"][PictureTpye::OtherP] = picd[5];
+    TextureDic["butterfly"][PictureTpye::AOP] = picd[5];
+    TextureDic["butterfly"][PictureTpye::OtherP] = picd[6];
     //加载光源点渲染纹理
     pic.clear();
     pic.push_back(lightTexture);
@@ -693,7 +735,8 @@ void Game::MakeTxture()
     TextureDic["grass"][PictureTpye::SpecularP] = picd[2];
     TextureDic["grass"][PictureTpye::HightP] = picd[3];
     TextureDic["grass"][PictureTpye::RoughnessP] = picd[4];
-    TextureDic["grass"][PictureTpye::OtherP] = picd[5];
+    TextureDic["grass"][PictureTpye::AOP] = picd[5];
+    TextureDic["grass"][PictureTpye::OtherP] = picd[6];
     //加载石头
     pic.clear();
     pic.push_back(stoneTexture);
@@ -702,7 +745,8 @@ void Game::MakeTxture()
     TextureDic["stone"][PictureTpye::SpecularP] = picd[2];
     TextureDic["stone"][PictureTpye::HightP] = picd[3];
     TextureDic["stone"][PictureTpye::RoughnessP] = picd[4];
-    TextureDic["stone"][PictureTpye::OtherP] = picd[5];
+    TextureDic["stone"][PictureTpye::AOP] = picd[5];
+    TextureDic["stone"][PictureTpye::OtherP] = picd[6];
 
 #pragma region 打石头游戏区域
     //树
@@ -715,7 +759,8 @@ void Game::MakeTxture()
     TextureDic["tree"][PictureTpye::SpecularP] = pic[2];
     TextureDic["tree"][PictureTpye::HightP] = picd[3];
     TextureDic["tree"][PictureTpye::RoughnessP] = picd[4];
-    TextureDic["tree"][PictureTpye::OtherP] = picd[5];
+    TextureDic["tree"][PictureTpye::AOP] = picd[5];
+    TextureDic["tree"][PictureTpye::OtherP] = picd[6];
 
     //宝箱
     pic.clear();
@@ -727,7 +772,8 @@ void Game::MakeTxture()
     TextureDic["chest"][PictureTpye::SpecularP] = pic[2];
     TextureDic["chest"][PictureTpye::HightP] = picd[3];
     TextureDic["chest"][PictureTpye::RoughnessP] = picd[4];
-    TextureDic["chest"][PictureTpye::OtherP] = picd[5];
+    TextureDic["chest"][PictureTpye::AOP] = picd[5];
+    TextureDic["chest"][PictureTpye::OtherP] = picd[6];
 
     //石头怪
     pic.clear();
@@ -737,7 +783,8 @@ void Game::MakeTxture()
     TextureDic["stoneMonster"][PictureTpye::SpecularP] = picd[2];
     TextureDic["stoneMonster"][PictureTpye::HightP] = picd[3];
     TextureDic["stoneMonster"][PictureTpye::RoughnessP] = picd[4];
-    TextureDic["stoneMonster"][PictureTpye::OtherP] = picd[5];
+    TextureDic["stoneMonster"][PictureTpye::AOP] = picd[5];
+    TextureDic["stoneMonster"][PictureTpye::OtherP] = picd[6];
 
     //碎石实例化
     pic.clear();
@@ -749,7 +796,25 @@ void Game::MakeTxture()
     TextureDic["stoneInstance"][PictureTpye::SpecularP] = pic[2];
     TextureDic["stoneInstance"][PictureTpye::HightP] = picd[3];
     TextureDic["stoneInstance"][PictureTpye::RoughnessP] = picd[4];
-    TextureDic["stoneInstance"][PictureTpye::OtherP] = picd[5];
+    TextureDic["stoneInstance"][PictureTpye::AOP] = picd[5];
+    TextureDic["stoneInstance"][PictureTpye::OtherP] = picd[6];
+    //高清背包
+    pic.clear();
+    pic.push_back(backpage);
+    pic.push_back(backpageNormal);
+    pic.push_back(backpageSpecular);
+    pic.push_back(backpageRoughnees);
+    pic.push_back(backpageAO);
+    TextureDic["backpack"][PictureTpye::BaseP] = pic[0];
+    TextureDic["backpack"][PictureTpye::NormalP] = pic[1];
+    TextureDic["backpack"][PictureTpye::SpecularP] = pic[2];
+    TextureDic["backpack"][PictureTpye::HightP] = picd[3];
+    TextureDic["backpack"][PictureTpye::RoughnessP] = pic[3];
+    TextureDic["backpack"][PictureTpye::AOP] = pic[4];
+    TextureDic["backpack"][PictureTpye::OtherP] = picd[6];
+
+
+
 #pragma endregion
 
 

@@ -560,6 +560,19 @@ if (found)
         // 根据 yaw 角度生成绕 Y 轴旋转的四元数，使玩家直接面向目标
         rotation = glm::angleAxis(yaw, glm::vec3(0, 1, 0));
     }
+
+}
+
+
+//测试宝箱集成加载
+for (int i = 0; i < 1; i++)
+{
+    auto* chest = new DesignModel("noneLight", ModelDesignDic["chest"], false, true, true);
+    chest->SetVariant(ModelClass::CubeE);
+    chest->Initialize(glm::vec3(20, 0, 10), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(10));
+    manager->RegisterObject(chest);
+    chest->AttachTexture(TextureDic["chest"], 0);
+
 }
 
 /
