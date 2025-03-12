@@ -416,7 +416,7 @@ GLuint Game::LightRender::CreateDepthMapForTest()
     glGenFramebuffers(1, &_depthMapTestFBO);//基于深度贴图的帧缓冲贴图对象GLuint
     glGenTextures(1, &_depthMapTest);//深度贴图
     glBindTexture(GL_TEXTURE_2D, _depthMapTest);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 4800, 2400, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 2400, 1200, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     //这里同样设置几种纹理参数 近线性
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -434,7 +434,7 @@ GLuint Game::LightRender::CreateDepthMapForTest()
 void Game::LightRender::BindDepthTestBuffer()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, _depthMapTestFBO);
-    glViewport(0, 0, 4800, 2400);//调整视口以适应阴影贴图分辨率
+    glViewport(0, 0, 2400, 1200);//调整视口以适应阴影贴图分辨率
     glClear(GL_DEPTH_BUFFER_BIT);  // 清空深度缓冲
 }
 
@@ -453,7 +453,7 @@ void Game::LightRender::RenderDopthTestTexture(GLuint shader)
     glUniform1i(depthMapLoc, 0);  // 将纹理单元0传递给着色器
 
 
-    if (quadVAO == 0)
+    if (quadVAO1 == 0)
     {
         float quadVertices[] = {
             // positions        // texture Coords
@@ -463,20 +463,33 @@ void Game::LightRender::RenderDopthTestTexture(GLuint shader)
              1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
         };
         // setup plane VAO
-        glGenVertexArrays(1, &quadVAO);
-        glGenBuffers(1, &quadVBO);
-        glBindVertexArray(quadVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glGenVertexArrays(1, &quadVAO1);
+        glGenBuffers(1, &quadVBO1);
+        glBindVertexArray(quadVAO1);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO1);
         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     }
-    glBindVertexArray(quadVAO);
+    glBindVertexArray(quadVAO1);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
 
+}
+
+ glm::mat4 Game::LightRender::GetDepthMapCrossView(const glm::mat4& camerView, CustomModel* player, glm::vec3 offset)
+{
+    // 固定正交投影矩阵的范围
+    glm::mat4 corssProjection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, 0.10f, 1000.0f);
+
+
+    glm::mat4 crosstView = glm::lookAt(player->position+offset, player->position, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // 计算视口正交矩阵
+    return corssProjection *crosstView;
+    
 }
 
 

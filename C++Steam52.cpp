@@ -45,7 +45,7 @@ extern void SourceInitialize();
 extern void GameUpdateShadowRenderT(const glm::mat4& view, CustomModel* player, glm::vec3 offset);
 extern void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window, CustomModel* player);
 extern void GameUpdateBufferTestT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window, CustomModel* player);
-extern void ShderTestT(const glm::mat4& view, const glm::mat4& projection);
+extern void ShderViewPortRenderingT(const glm::mat4& view, const glm::mat4& projection,  CustomModel* player);
 //控制组件标识
 extern Controller* controller;
 extern LifecycleManager<CustomModel>* manager;
@@ -56,14 +56,7 @@ extern CoroutineMethod* coroutine;
 extern LightSpawner* lightSpawner;
 extern LightRender* lightRender;
 extern ShaderManager* shaderManager;
-// 脚本全局变量
-bool iftest = false;
-bool gameStart = true;
-bool gameEnd = true;
-float zRotation;
-//裸指针
-std::vector<GameObject*> nativeObjects;
-std::vector<GameObject*> variantObjects;
+
 #pragma endregion
 
 
@@ -127,23 +120,24 @@ int GLins() {
         //传入波浪通用光照着色器(构建类似泡泡的飞行道具)
         shaderManager->SetMat4("waveShader", "view", view);
         shaderManager->SetMat4("waveShader", "projection", projection);
+        //传入玩家模板测试
+        shaderManager->SetMat4("stencilTestShader", "view", view);
+        shaderManager->SetMat4("stencilTestShader", "projection", projection);
        
 #pragma endregion
-        //阴影渲染
+        //这里渲染平行光阴影正交深度图
         if (true)
         {
             GameUpdateShadowRenderT(view,gamePlayer, glm::vec3(0, 30, 100));
         }
-        //后处理渲染
+        //后处理渲染,这里渲染视口投影矩阵深度图
         if (true)
         {
-            ShderTestT(view, projection);
+             ShderViewPortRenderingT(view, projection,gamePlayer);
         }
         //主逻辑
         if (true)
         {
-
-
             GameUpdateMainLogicT(view, projection,window,gamePlayer);
             //保持天空盒在其他物体之前渲染,渲染天空盒
             skybox->Draw(view, projection);

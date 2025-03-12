@@ -149,7 +149,7 @@ void LightInitialization()
 CustomModel* GameStartT()
 {
     //生成基础面 默认第一，ID 为1
-    auto* basePlane = new  CustomModelShader("commonLight", ModelDic["basePlane"], false, true, false);
+    auto* basePlane = new  CustomModelShader("commonLight", ModelDic["basePlane"], false, true, false,false);
     basePlane->SetVariant(ModelClass::StaticPlane);
     basePlane->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(1000.0f, 0.1f, 1000.0f));
     manager->RegisterObject(basePlane);
@@ -161,7 +161,6 @@ CustomModel* GameStartT()
     auto* gamePlayer = new  GamePlayer("commonLight", ModelDic["testMonkey"], true, true, true);
     gamePlayer->SetVariant(ModelClass::Player);
     gamePlayer->Initialize(glm::vec3(0.0f, 5.0f, 0.0f), glm::quat(glm::vec3(0.0f,0, 0.0f)), glm::vec3(3));
-    manager->RegisterObject(gamePlayer);
     manager->RegisterSpecialObjects(gamePlayer, "player");//注册入特殊对象储存器，方便在在玩家类内部使用，且在更新方法中引用
     gamePlayer->AttachTexture(TextureDic["butterfly"], 0, glm::vec2(1, 1));
     gamePlayer->AttachPhysicalEngine();
@@ -176,12 +175,13 @@ CustomModel* GameStartT()
 
     
     //测试小球
-    for (int i = 0; i <3; i++)
+    for (int i = 0; i <1; i++)
     {
-        auto* baseSphere = new CustomModelShader("commonLight", ModelDic["baseSphere"], false, true, true);
+        auto* baseSphere = new CustomModelShader("stencilTestShader", ModelDic["baseSphere"], false, true, true);
         baseSphere->SetVariant(ModelClass::TestPhysics);
-        baseSphere->Initialize(glm::vec3(-70+3.0f+3.5f*i, 10.0f+i, -50.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+        baseSphere->Initialize(glm::vec3(-70+3.0f+3.5f*i, 10.0f+i, 50.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(3));
         manager->RegisterObject(baseSphere);
+       // manager->RegisterSpecialObjects(baseSphere, "testSphere");
         baseSphere->AttachTexture(TextureDic["butterfly"], 0);
         baseSphere->AttachPhysicalEngine(false, 10);
         baseSphere->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));  
@@ -268,7 +268,7 @@ CustomModel* GameStartT()
     stone2Instance->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(2));
     manager->RegisterObject(stone2Instance);
     stone2Instance->AttachTexture(TextureDic["stoneInstance"], 0, glm::vec2(2, 2));
-
+    //类异步生成蝴蝶对象
     StepVector3 step;
     step.position = glm::vec3(2, -0.5f, 0);
     step.scale = glm::vec3(1.0f);

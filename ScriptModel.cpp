@@ -150,7 +150,7 @@ void ShadowTexture::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint sha
 #pragma endregion
 #pragma region 通用shader模型 
 
-CustomModelShader::CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow)
+CustomModelShader::CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow,bool enableDepth)
 {
    
     vertexCount = modelData.verticesStruct.size();
@@ -159,6 +159,7 @@ CustomModelShader::CustomModelShader(const std::string& name, const ModelData& m
     IsSkinnedMesh = isSkinnedMesh;
     ifLight = ifLightIn;
     _ifShadow = ifShadow;
+    _enableDepth = enableDepth;
     
     lightSpawner = LightSpawner::GetInstance();
     // 获取着色器程序
@@ -942,6 +943,39 @@ void Game::GamePlayer::UniformParametersInput()
     // 基本色
     GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
     glUniform3f(baseColorLoc, 0.9f, 0.9f, 0.9f); // 传入基本色（暗色）
+}
+
+void Game::GamePlayer::RenderingStencilTest()
+{
+
+    //这里根据skinmesh的情况选择动态或者静态绘制
+    if(IsSkinnedMesh)
+    { 
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER,
+            verticesTras.size() * sizeof(Vertex),
+            verticesTras.data(),
+            GL_DYNAMIC_DRAW);
+        justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+    
+    }
+    else
+    {
+        glBindVertexArray(VAO);
+        justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+    }
+   
+}
+
+void Game::GamePlayer::SpecicalMethod()
+{
+    
+    RenderingStencilTest();
 }
 
 

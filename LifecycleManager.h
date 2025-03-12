@@ -211,6 +211,11 @@ namespace Game {
             T* object = kv.second;
             object->UpdateDepthPic(projection, shader);
         }
+        //增加特殊对象的阴影渲染调用
+        for (auto& kv : specialObjects) {
+            T* object = kv.second;
+            object->UpdateDepthPic(projection, shader);
+        }
     }
     /// <summary>
     /// 变体的视口深度图绘制

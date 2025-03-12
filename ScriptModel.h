@@ -106,7 +106,7 @@ namespace Game
 		/// <param name="isSkinnedMesh"></param>
 		/// <param name="ifLight"></param>
 		/// <param name="ifShadow"></param>
-		CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLight = false, bool ifShadow = false);
+		CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLight = false, bool ifShadow = false,bool enableDepth=false);
 
 		CustomModelShader();
 
@@ -226,6 +226,10 @@ namespace Game
 		void Start() override;//重写初始化代码
 
 		void  UniformParametersInput() override;//玩家类在这里重写传参
+
+		void RenderingStencilTest();
+
+		void SpecicalMethod() override;
 		
 	private:
 		LifecycleManager<CustomModel>* _manager;

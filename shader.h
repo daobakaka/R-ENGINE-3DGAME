@@ -897,7 +897,8 @@ uniform mat4 view;       // 视口
 uniform mat4 projection; //透视
 
 void main() {
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    //  gl_Position = projection *  model * vec4(aPos, 1.0);
+       gl_Position = projection * view* model * vec4(aPos, 1.0);
 }
 )";
 /// <summary>
@@ -913,7 +914,7 @@ void main() {
 }
 )";
 /// <summary>
-/// 深度图可视化着色器
+/// 深度图可视化顶点着色器
 /// </summary>
 const char* depthVisualShaderVertexShaderSource = R"(
 #version 450 core
@@ -928,7 +929,9 @@ void main()
     gl_Position = vec4(aPos, 1.0);
 }
 )";
-
+/// <summary>
+/// 深度图正交可视化片元着色器
+/// </summary>
 const char* depthVisualShaderFragmentShaderSource = R"(
 #version 450 core
 
@@ -940,6 +943,27 @@ uniform sampler2D depthMap;   // 深度贴图
 const float near_plane=0.1f;      // 近裁剪面
 const float far_plane=100.0f;       // 远裁剪面
 
+void main()
+{             
+
+    float depthValue = texture(depthMap, TexCoords).r;
+    FragColor = vec4(vec3(depthValue), 1.0); // orthographic
+}
+)";
+/// <summary>
+/// 投影深度图线性可视化片元着色器
+/// </summary>
+const char* depthLinerVisualShaderFragmentShaderSource = R"(
+#version 450 core
+
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D depthMap;   // 深度贴图
+const float near_plane=0.1f;      // 近裁剪面
+const float far_plane=1000.0f;       // 远裁剪面
+
 // 线性化深度值
 float LinearizeDepth(float depth)
 {
@@ -949,20 +973,14 @@ float LinearizeDepth(float depth)
 
 void main()
 {             
-    //// 获取当前纹理中的深度值
-    //float depthValue = texture(depthMap, TexCoords).r;
-
-    //// 线性化深度值
-    //float linearDepth = LinearizeDepth(depthValue);
-
-    //// 将线性化深度值映射到[0,1]范围进行可视化
-    //FragColor = vec4(vec3(linearDepth / far_plane), 1.0);  // 使用线性深度值来显示深度
-
+    // 获取当前纹理中的深度值
     float depthValue = texture(depthMap, TexCoords).r;
-    // FragColor = vec4(vec3(LinearizeDepth(depthValue) / far_plane), 1.0); // perspective
-    FragColor = vec4(vec3(depthValue), 1.0); // orthographic
 
+    // 线性化深度值
+    float linearDepth = LinearizeDepth(depthValue);
 
+    // 将线性化深度值映射到[0,1]范围进行可视化
+    FragColor = vec4(vec3(linearDepth / far_plane), 1.0);  // 使用线性深度值来显示深度
 
 
 }
@@ -1080,9 +1098,9 @@ void main()
     // 采样深度图
     float depthFromTexture = texture(depthTexture, fragPosScreen.xy).r;
 
-    // 比较深度值
-    if (fragPosScreen.z < depthFromTexture) {
-        FragColor = vec4(color, 0.3f);  // 如果当前片段在前面，设置为半透明
+    // 比较深度值,只要有采集到深度
+    if (fragPosScreen.z < depthFromTexture&&depthFromTexture<1.0f) {
+        FragColor = vec4(color, 0.1f);  // 如果当前片段在前面，设置为半透明
     } else {
         FragColor = vec4(color, 1.0);  // 否则不透明
     }
@@ -1137,4 +1155,34 @@ void main()
 
 )";
 
+/// <summary>
+/// 模板测试纯色着色器
+/// </summary>
+const char* stencilTestVertexShaderSource = R"(
+#version 450 core
+layout(location = 0) in vec3 aPos;   // 顶点位置
+layout(location = 1) in vec2 aTexCoord;   // 纹理坐标 
+layout(location = 2) in vec3 aNormal;   // 法线
+
+//这里对应初始化时，设置的顶点属性
+out vec3 FragPos;   // 传递给片段着色器的片段位置
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main() {
+    FragPos = vec3(model * vec4(aPos, 1.0));
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+}
+)";
+
+const char* stencilTestFragmentShaderSource = R"(
+    #version 450 core
+    out vec4 FragColor;  // 输出颜色
+    
+    void main() {
+        FragColor = vec4(1,1,1,0.5F);  // 白色着色器
+    }
+)";
 #endif

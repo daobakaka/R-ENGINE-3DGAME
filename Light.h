@@ -135,8 +135,8 @@ namespace Game {
         void UnbindDepthTestBuffer();
 
         void RenderDopthTestTexture(GLuint shader);
-
-
+        
+        glm::mat4 GetDepthMapCrossView(const glm::mat4& camerView, CustomModel* player, glm::vec3 offset);
 
 
         
@@ -163,6 +163,9 @@ namespace Game {
     private:
         GLuint quadVAO = 0;
         GLuint quadVBO;
+
+        GLuint quadVAO1 = 0;
+        GLuint quadVBO1;
     };
 
 

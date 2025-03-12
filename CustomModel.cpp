@@ -718,7 +718,7 @@ void Game::CustomModel::DrawDepthViewPortPicDynamical(glm::mat4 view, glm::mat4 
 }
 void Game::CustomModel::UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader)
 {
-   
+   if(_enableDepth)
      //这里的视图参数由外部直接传入，这里只需要计算模型本身位置即可，并且取消阴影判断，实例化类中重写空方法
     IsSkinnedMesh == true ? DrawDepthPicDynamical(view, shader) : DrawDepthPic(view, shader);
 
@@ -1001,6 +1001,11 @@ void Game::CustomModel::Start()
 {
 
     std::cout << ID << ":" << _ifShadow << std::endl;
+}
+
+void Game::CustomModel::SpecicalMethod()
+{
+
 }
 
 //// GetComponent 方法

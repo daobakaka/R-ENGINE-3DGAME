@@ -54,26 +54,35 @@ void GameUpdateShadowRenderT(const glm::mat4 &view,CustomModel* player,glm::vec3
 
 
 }
+
+
+void GameUpdateShadowRenderSpecial()
+{
+
+
+    manager->GetspecialObjects()["player"]->UpdateDepthPic(lightRender->GetLightMatrix(), shaderManager->GetShader("depthCal"));
+
+}
+
+
 /// <summary>
 /// 渲染视口深度图，为获取深度进行后处理，这里针对非实例化对象
 /// </summary>
 /// <param name="view"></param>
 /// <param name="projection"></param>
-
-void ShderTestT(const glm::mat4& view, const glm::mat4& projection)
+void ShderViewPortRenderingT(const glm::mat4& view, const glm::mat4& projection,CustomModel* player)
 {
  
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
     lightRender->BindDepthTestBuffer();
     shaderManager->SetMat4("depthViewPortCal", "view", view);
+   // shaderManager->SetMat4("depthViewPortCal", "projection", lightRender->GetDepthMapCrossView(view,player,glm::vec3(0,0,100)));
     shaderManager->SetMat4("depthViewPortCal", "projection", projection);
     manager->UpdateDepthViewPortPic(view, projection, shaderManager->GetShader("depthViewPortCal"));
     lightRender->UnbindDepthTestBuffer();//绘制完成之后，解除绑定深度测试的视口贴图
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
-    shaderManager->UseShader("depthVisual");
-    lightRender->RenderDopthTestTexture(shaderManager->GetShader("depthVisual"));//计算视口的深度图
-
-
+    shaderManager->UseShader("depthLinerVisual");
+    lightRender->RenderDopthTestTexture(shaderManager->GetShader("depthLinerVisual"));//计算视口的深度图
 
 }
 
@@ -154,11 +163,6 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
             if(item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health<=0)
             toActiveFalse .push_back(item.second);
         }
-        else if (item.second->GetVariant()==ModelClass::Player)
-        { 
-            //玩家按键生成子弹
-            scripts->PlayerControl(window, item.second);
-        }
        
     }
 
@@ -173,7 +177,6 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
         }
 
     }
-
 
     // 临时存取失活对象
     for (auto* obj : toActiveFalse) {
@@ -206,11 +209,28 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
 void GameUpdateBufferTestT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window, CustomModel* player)
 {
 
-
+    //玩家综合性脚本操控
+    scripts->PlayerControl(window, manager->GetspecialObjects()["player"]);
     //测试执行区域
     manager->GetspecialObjects()["treeInstance"]->Update(view, projection);
-
-
-
+    //玩家模板测试
+    glClear(GL_STENCIL_BUFFER_BIT);
+    // 启用模板测试
+    glEnable(GL_STENCIL_TEST);
+    // 清除模板缓冲区
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    manager->GetspecialObjects()["player"]->Update(view, projection);
+    manager->GetspecialObjects()["player"]->UpdateVariant(view, projection);
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glDepthFunc(GL_GREATER); // 仅在当前片段深度值大于深度缓冲区中的值时通过测试
+   // glBlendFunc(GL_ONE, GL_ONE);//
+   // glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    shaderManager->SetMat4("stencilTestShader", "model", manager->GetspecialObjects()["player"]->transform);
+    manager->GetspecialObjects()["player"]->SpecicalMethod();
+    glDepthFunc(GL_LESS); // 恢复默认深度测试函数
+    glDisable(GL_STENCIL_TEST);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 

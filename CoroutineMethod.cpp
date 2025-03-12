@@ -17,7 +17,6 @@ using namespace Game;
     CoroutineMethod::CoroutineMethod() { }
 
     CoroutineMethod::~CoroutineMethod() { }
-    //原生的方法，但是目前渲染会出问题---
     //一个新增的添加任务的方法
     void CoroutineMethod::AddTimerTask(float intervalSeconds, int repeatCount, std::function<void()> callback) {
         float currentTime = static_cast<float>(glfwGetTime());

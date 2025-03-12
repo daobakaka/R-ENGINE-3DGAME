@@ -87,7 +87,8 @@ using namespace Game;
         ShaderCompile(CustomNoLightShadowShaderVertexSource, CustomNoLightShadowShaderFragmentSource, "commonNoneLight");
         //独立shader,构建玩家飞行道具
         ShaderCompile(waveVertexShaderSource, colorlightsArraySourceFragmentShaderSource,"waveShader");
-
+        //独立shader,玩家模板测试
+        ShaderCompile(stencilTestVertexShaderSource, stencilTestFragmentShaderSource, "stencilTestShader");
         
        
         
@@ -97,8 +98,9 @@ using namespace Game;
         ShaderCompile(depthShaderVertexShaderSource, depthShaderFragmentShaderSource,"depthCal");
         ShaderCompile(depthVisualShaderVertexShaderSource, depthVisualShaderFragmentShaderSource,"depthVisual");
         ShaderCompile(depthTestShaderVertexShaderSource, depthTestShaderFragmentShaderSource,"depthTest");
-        //普通深度图计算
+        //投影深度图计算,投影深度图可视化
         ShaderCompile(depthViewPortShaderVertexShaderSource, depthViewPortShaderFragmentShaderSource, "depthViewPortCal");
+        ShaderCompile(depthVisualShaderVertexShaderSource, depthLinerVisualShaderFragmentShaderSource, "depthLinerVisual");
     }
 
     // Set methods for various uniform types
