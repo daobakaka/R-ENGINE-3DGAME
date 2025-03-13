@@ -600,13 +600,35 @@ void Game::MakeModel()
     ModelDic["stone2"] = modelData;
 
 
-    //背包
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\backpack.obj", verticesStruct, indices);
+    ////背包
+    //LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\backpack.obj", verticesStruct, indices);
+
+    //modelData.verticesStruct = verticesStruct;
+    //modelData.indices = indices;
+
+    //ModelDic["backpack"] = modelData;
+    //草
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\grass.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
 
-    ModelDic["backpack"] = modelData;
+    ModelDic["grass1"] = modelData;
+    //草2
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\grass2.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["grass2"] = modelData;
+    //黑洞
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\blackHole.obj", verticesStruct, indices);
+
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["blackHole"] = modelData;
+
 
 #pragma endregion
 
@@ -663,9 +685,11 @@ void Game::MakeTxture()
 
     GLuint defaultTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\default.bmp");
     GLuint defaultW = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\defaultW.jpg");
-    GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\1.png");
+    GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\butterfly.png");
     GLuint lightTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\light.bmp");
     GLuint skyboxTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\front.jpg");
+    GLuint nosie1Texture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\noise1.png");
+    GLuint nosie2Texture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\noise3.png");
     //--地形
     GLuint grassTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\grass.jpg");
     GLuint stoneTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\stone.jpg");
@@ -690,6 +714,9 @@ void Game::MakeTxture()
     GLuint backpageSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\specular.jpg");
     GLuint backpageRoughnees = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\roughness.jpg");
     GLuint backpageAO = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\ao.jpg");
+    //两种草
+    GLuint grass1Texture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\grass1.png");
+    GLuint grass2Texture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\grass2.png");
     //初始化参数
     std::vector<GLuint> picd;
     //加载默认纹理
@@ -700,6 +727,8 @@ void Game::MakeTxture()
     picd.push_back(defaultW);//默认白色高度图
     picd.push_back(defaultW);//默认白色糙度图
     picd.push_back(defaultW);//默认白色其他图
+    picd.push_back(nosie1Texture);//噪声纹理1
+    picd.push_back(nosie2Texture);//噪声纹理2
     TextureDic["default"][PictureTpye::BaseP] = picd[0];
     TextureDic["default"][PictureTpye::NormalP] = picd[1];
     TextureDic["default"][PictureTpye::SpecularP] = picd[2];
@@ -707,6 +736,8 @@ void Game::MakeTxture()
     TextureDic["default"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["default"][PictureTpye::AOP]= picd[5];
     TextureDic["default"][PictureTpye::OtherP] = picd[6];
+    TextureDic["default"][PictureTpye::Noise1P] = picd[7];
+    TextureDic["default"][PictureTpye::Noise2P] = picd[8];
     //初始化参数       
     std::vector<GLuint> pic;
     //加载蝴蝶纹理
@@ -812,9 +843,22 @@ void Game::MakeTxture()
     TextureDic["backpack"][PictureTpye::RoughnessP] = pic[3];
     TextureDic["backpack"][PictureTpye::AOP] = pic[4];
     TextureDic["backpack"][PictureTpye::OtherP] = picd[6];
-
-
-
+    //黑洞，暂时用其他图像生成
+    TextureDic["blackHole"][PictureTpye::BaseP] = picd[7];//黑噪图1
+    TextureDic["blackHole"][PictureTpye::NormalP] = pic[1];
+    TextureDic["blackHole"][PictureTpye::SpecularP] = pic[2];
+    TextureDic["blackHole"][PictureTpye::HightP] = picd[3];
+    TextureDic["blackHole"][PictureTpye::RoughnessP] = pic[3];
+    TextureDic["blackHole"][PictureTpye::AOP] = pic[4];
+    TextureDic["blackHole"][PictureTpye::OtherP] = picd[6];
+    //实例化草1
+    pic.clear();
+    pic.push_back(grass1Texture);
+    TextureDic["grass1"][PictureTpye::BaseP] = pic[0];
+    //实例化草2
+    pic.clear();
+    pic.push_back(grass2Texture);
+    TextureDic["grass2"][PictureTpye::BaseP] = pic[0];
 #pragma endregion
 
 

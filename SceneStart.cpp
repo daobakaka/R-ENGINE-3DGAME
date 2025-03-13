@@ -141,7 +141,7 @@ void LightInitialization()
     auto pointLight4 = lightSpawner->SpawPointLight(glm::vec3(-30, 5, -30), glm::vec3(0, 0, 1), 10);
 
     //平行光使用灯光生成器生成，默认一个
-    auto parallelLight = lightSpawner->SpawParallelLight(glm::vec3(-1,-1,-1), glm::vec3(1, 1, 1), 1);//使用默认值 强度10
+    auto parallelLight = lightSpawner->SpawParallelLight(glm::vec3(1,-1,1), glm::vec3(1, 1, 1), 1);//使用默认值 强度10
     //手电筒光使用灯光生成器生成，默认支持4个
     auto splashLight = lightSpawner->SpawFlashLight(glm::vec3(0, 7, 20), glm::vec3(0, -1, 0),glm::vec3(1,0,0),20);//使用默认值 强度10
 
@@ -174,19 +174,16 @@ CustomModel* GameStartT()
 
 
     
-    //测试小球
+    //测试黑洞
     for (int i = 0; i <1; i++)
     {
-        auto* baseSphere = new CustomModelShader("stencilTestShader", ModelDic["baseSphere"], false, true, true);
-        baseSphere->SetVariant(ModelClass::TestPhysics);
-        baseSphere->Initialize(glm::vec3(-70+3.0f+3.5f*i, 10.0f+i, 50.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(3));
+        auto* baseSphere = new BlackHole("commonNoneLight", ModelDic["blackHole"], false, false, false);
+        baseSphere->SetVariant(ModelClass::BlackHoleE);
+        baseSphere->Initialize(glm::vec3(-500,500,-900), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(300));
         manager->RegisterObject(baseSphere);
-       // manager->RegisterSpecialObjects(baseSphere, "testSphere");
-        baseSphere->AttachTexture(TextureDic["butterfly"], 0);
-        baseSphere->AttachPhysicalEngine(false, 10);
-        baseSphere->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));  
-        baseSphere->AttachCollider();
-        baseSphere->GetComponent<CollisionBody>()->SetRadius(1);
+        // manager->RegisterSpecialObjects(baseSphere, "testSphere");
+        baseSphere->AttachTexture(TextureDic["blackHole"], 0,glm::vec3(10));
+
     }
     //测试树
     for (int i = 0; i < 1; i++)
@@ -236,24 +233,26 @@ CustomModel* GameStartT()
         baseCube->AttachCollider();
     }
 
-    //测试蝴蝶实例化
-    auto* butterflyInstance = new  CustomModelInstance("noneLightInstancer", ModelDic["butterfly"], false, false, false, 10000, glm::vec3(100, 100, -100));
-    butterflyInstance->SetVariant(ModelClass::InstanceCube);
-    butterflyInstance->Initialize(glm::vec3(0.0f, 5.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(0.3f, 0.3f, 0.30f));
-    manager->RegisterObject(butterflyInstance);
-    butterflyInstance->AttachTexture(TextureDic["butterfly"], 0, glm::vec2(1, 1));
+    //动态萤火虫
+    auto* fireflyInstance = new  FireflyInstance("fireflyInstanceShader", ModelDic["baseSphere"], false, false, false, 25, glm::vec3(3,1.0F,3), glm::vec3(0, 0.3f, 0), 
+        ModelClass::InstanceSphere);
+    fireflyInstance->SetVariant(ModelClass::InstanceSphere);
+    fireflyInstance->SelfIns();//派生类特殊初始化
+    manager->RegisterObject(fireflyInstance);
+    fireflyInstance->Initialize(glm::vec3(-40.0f, 5.0f, 30.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(0.10F));
+    fireflyInstance->AttachTexture(TextureDic["butterfly"], 0, glm::vec2(1, 1));
 
     //树实例化,使用视口深度图
     auto* treeInstance = new  CustomModelInstance("noneLightDepthCalInstancer", ModelDic["tree"], false, false, false, 20000, glm::vec3(10),glm::vec3(0,1,0),
         ModelClass::InstanceCircle);
     treeInstance->EnableDepthcal();//允许使用视口深度图进行计算
     treeInstance->SetVariant(ModelClass::InstanceCircle);
-    treeInstance->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(5));
+    treeInstance->Initialize(glm::vec3(0.0f, -0.5f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(5));
     manager->RegisterSpecialObjects(treeInstance,"treeInstance");//这里的树作为特殊容器对象注入，以便之后进行深度测试调整alpha值
     //manager->RegisterObject(treeInstance);//取消注入，放到最后渲染
     treeInstance->AttachTexture(TextureDic["tree"], 0, glm::vec2(1, 1));
 
-    //碎石实例化
+    //碎石1实例化
     auto* stone1Instance = new  CustomModelInstance("noneLightInstancer", ModelDic["stone1"], false, false, false, 500, glm::vec3(2), glm::vec3(0, 0.4F, 0),
         ModelClass::InstanceRound);
     stone1Instance->SetVariant(ModelClass::InstanceRound);
@@ -261,13 +260,22 @@ CustomModel* GameStartT()
     manager->RegisterObject(stone1Instance);
     stone1Instance->AttachTexture(TextureDic["stoneInstance"], 0, glm::vec2(1, 1));
 
-    //碎石实例化
+    //碎石2实例化
     auto* stone2Instance = new  CustomModelInstance("noneLightInstancer", ModelDic["stone2"], false, false, false, 500, glm::vec3(2), glm::vec3(0, 0.3F, 0),
         ModelClass::InstanceRound);
     stone2Instance->SetVariant(ModelClass::InstanceRound);
     stone2Instance->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(2));
     manager->RegisterObject(stone2Instance);
     stone2Instance->AttachTexture(TextureDic["stoneInstance"], 0, glm::vec2(2, 2));
+
+    //草1实例化
+    auto* grass1Instance = new  CustomModelInstance("noneLightInstancer", ModelDic["grass2"], false, false, false, 1000, glm::vec3(1,1,1), glm::vec3(0, 0.9F, 0),
+        ModelClass::InstanceRound);
+    grass1Instance->SetVariant(ModelClass::InstanceRound);
+    grass1Instance->Initialize(glm::vec3(0.0f,-0.01f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(3));
+    manager->RegisterObject(grass1Instance);
+    grass1Instance->AttachTexture(TextureDic["grass2"], 0, glm::vec2(3));
+
     //类异步生成蝴蝶对象
     StepVector3 step;
     step.position = glm::vec3(2, -0.5f, 0);
@@ -281,13 +289,13 @@ CustomModel* GameStartT()
         AnimationDic["butterfly"]["fly"],
         TextureDic["butterfly"],
         0,
-        glm::vec2(10, 10),
+        glm::vec2(1, 1),
         ModelClass::TsetButterfly,
         10, 20,
         step,
         glm::vec3(0.0f, 0, 0.0f),//赋默认值
         glm::vec3(0.0f, 0, 0.0f),//赋默认值
-        glm::vec3(1.1f)
+        glm::vec3(0.5F)
     );
 
     return gamePlayer;

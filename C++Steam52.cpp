@@ -123,7 +123,9 @@ int GLins() {
         //传入玩家模板测试
         shaderManager->SetMat4("stencilTestShader", "view", view);
         shaderManager->SetMat4("stencilTestShader", "projection", projection);
-       
+        //传入实例化荧光着色器
+        shaderManager->SetMat4("fireflyInstanceShader", "view", view);
+        shaderManager->SetMat4("fireflyInstanceShader", "projection", projection);
 #pragma endregion
         //这里渲染平行光阴影正交深度图
         if (true)

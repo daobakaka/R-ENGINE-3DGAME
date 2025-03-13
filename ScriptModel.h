@@ -121,7 +121,7 @@ namespace Game
 		virtual void RenderingTextureAdditional() override;//重写附件纹理方法;
 
 		virtual void RenderingLight();//通过着色器的光照渲染
-		virtual void SelfIns();
+		virtual void SelfIns() override;
 	protected:
 		LightSpawner* lightSpawner;
 
@@ -160,10 +160,12 @@ namespace Game
 
 		virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;//动态绘制可重写，与IntergtatedAnimatior联动
 
-
+		virtual void  UniformParametersInput() override;
 		virtual void RenderingTexture()override;
 		virtual void GenerateInstanceMatrices(ModelClass type=ModelClass::InstanceCube);
-
+		virtual void SpecialMethod()override;
+		//实例化变换
+		virtual void UpadeInstanceMatrices();
 		//视口深度图绘制
 		virtual void UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader) override;
 
@@ -177,6 +179,25 @@ namespace Game
 		std::vector<glm::mat4> _modelMatrices;  // 使用 std::vector 存储动态数量的实例矩阵
 		LightRender* _lightRender;
 		bool _useViewPortDepthMap;
+
+	};
+
+	
+	/// <summary>
+	/// 实例化继承 萤火虫
+	/// </summary>
+
+	class FireflyInstance :public CustomModelInstance
+	{
+	public:
+		using CustomModelInstance :: CustomModelInstance;
+		void SelfIns() override;
+		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;//重写变体更新方法，构建萤火虫自身运动
+		//萤火虫动态发光
+		virtual void  UniformParametersInput() override;
+	protected:
+		std::vector<InstanceData> _instanceData; // 存储每个实例的随机扰动值
+		void InitializeInstanceData(); // 初始化每个实例的随机扰动值
 
 	};
 
@@ -209,7 +230,21 @@ namespace Game
 	};
 
 #pragma endregion
+#pragma region  黑洞
+	/// <summary>
+	/// 用于测试的蝴蝶，后期可更改
+	/// </summary>
+	class BlackHole :public CustomModelShader
+	{
+	public:
+		//这里直接继承基类的构造函数
+		using CustomModelShader::CustomModelShader;
+		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
+		void  UniformParametersInput() override;//黑洞类在这里重写传参
+	private:
+	};
 
+#pragma endregion
 
 #pragma region 玩家模型
 	/// <summary>
@@ -229,7 +264,7 @@ namespace Game
 
 		void RenderingStencilTest();
 
-		void SpecicalMethod() override;
+		void SpecialMethod() override;
 		
 	private:
 		LifecycleManager<CustomModel>* _manager;
@@ -245,10 +280,6 @@ namespace Game
 	public :
 		using CustomModelShader::CustomModelShader;
 		void  UniformParametersInput() override;//玩家类在这里重写传参
-
-
-
-
 
 
 

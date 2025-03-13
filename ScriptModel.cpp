@@ -2,6 +2,7 @@
 #include "ShaderManager.h"
 #include "LifecycleManager.h"
 #include "light.h"
+#include <random>
 using namespace Game;
 #pragma region 测试蝴蝶
 //extern LifecycleManager<CustomModel>* manager;//获取管理器控制器
@@ -614,24 +615,41 @@ void Game::CustomModelInstance::GenerateInstanceMatrices(ModelClass type)
 
     case Game::InstanceSphere:
     {
-        // 球形实例化
-        float radius = 5.0f; // 球体半径
-        int rows = static_cast<int>(std::sqrt(_instanceCount)); // 球体的行数
-        int cols = rows; // 球体的列数
+        // 半球形实例化
+        float radius = 250.0f; // 球体半径
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> disPhi(0.0f, glm::pi<float>() / 2.0f); // 极角范围 (0 到 π/2)
+        std::uniform_real_distribution<float> disTheta(0.0f, 2.0f * glm::pi<float>()); // 方位角范围 (0 到 2π)
+        std::uniform_real_distribution<float> disOffset(-5.0f, 5.0f); // 随机偏移范围 (-5 到 5)
 
         for (GLuint i = 0; i < _modelMatrices.size(); i++) {
-            glm::mat4 model = glm::mat4(1.0f);
+           glm::mat4 model = glm::mat4(1.0f);
+
+            // 随机生成极角和方位角
+            float phi = disPhi(gen); // 随机极角
+            float theta = disTheta(gen); // 随机方位角
 
             // 计算球体上的位置（基于极坐标）
-            float phi = static_cast<float>(i / cols) / rows * glm::pi<float>(); // 极角 (0 到 π)
-            float theta = static_cast<float>(i % cols) / cols * 2.0f * glm::pi<float>(); // 方位角 (0 到 2π)
-
             float x = radius * sin(phi) * cos(theta); // X 坐标
             float y = radius * cos(phi);             // Y 坐标
             float z = radius * sin(phi) * sin(theta); // Z 坐标
 
-            // 平移：将实例放置在球体上，并应用 _positionOffset
-            model = glm::translate(model, glm::vec3(x * _positionOffset.x, y * _positionOffset.y, z * _positionOffset.z));
+            // 确保 Y 方向上不超过半径的一半
+            if (y > radius / 2.0f) {
+                y = radius / 4.0f+disOffset(gen); // 将 Y 坐标限制为半径的一半
+            }
+
+            // 添加随机偏移（允许对象略微超出半球体边界）
+            float xOffset = disOffset(gen); // X 方向随机偏移
+            float zOffset = disOffset(gen); // Z 方向随机偏移
+
+            // 平移：将实例放置在球体上，并应用 _positionOffset 和随机偏移
+            model = glm::translate(model, glm::vec3(
+                (x + xOffset) * _positionOffset.x,
+                y * _positionOffset.y,
+                (z + zOffset) * _positionOffset.z
+            ));
 
             // 旋转：使实例朝向球体中心，并应用 _rotationAxis
             float rotationAngleX = glm::degrees(phi) * _rotationAxis.x; // 绕 X 轴旋转
@@ -675,7 +693,7 @@ void Game::CustomModelInstance::GenerateInstanceMatrices(ModelClass type)
 
             // 旋转：使实例面向离圆心的方向，再加上额外的随机旋转
             float baseRotation = glm::degrees(theta) + 90.0f; // 使对象朝外
-            model = glm::rotate(model, glm::radians(baseRotation * _rotationAxis.y), glm::vec3(0.0f, 1.0f, 0.0f));
+            model = glm::rotate(model, glm::radians(baseRotation * _rotationAxis.y*i), glm::vec3(0.0f, 1.0f, 0.0f));
             // 这里也可以添加绕 X/Z 轴的额外旋转
             model = glm::rotate(model, glm::radians(i * _rotationAxis.x), glm::vec3(1.0f, 0.0f, 0.0f));
             model = glm::rotate(model, glm::radians(i * _rotationAxis.z), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -690,6 +708,43 @@ void Game::CustomModelInstance::GenerateInstanceMatrices(ModelClass type)
     default:
         break;
     }
+}
+
+void Game::CustomModelInstance::SpecialMethod()
+{
+    UpadeInstanceMatrices();
+}
+
+void Game::CustomModelInstance::UpadeInstanceMatrices()
+{
+    for (int i = 0; i < _instanceCount; ++i) {
+        // 获取当前实例的变换矩阵
+        glm::mat4& model = _modelMatrices[i];
+
+        float r0 = static_cast<float>(rand()) / RAND_MAX;
+        float r1 = static_cast<float>(rand()) / RAND_MAX;
+        // 平移：每个实例沿Z轴移动，速度不同
+        float speed = -1.0f + r0 * 2.0f; // 每个实例的速度不同
+        float zOffset = sin(glfwGetTime() * speed) * 2.0f; // 使用正弦函数实现来回移动
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, zOffset));
+
+        // 旋转：每个实例绕Y轴旋转，速度不同
+        float rotationSpeed = -0.005f + r1 * .010f; // 每个实例的旋转速度不同
+        float angle = glm::radians(glfwGetTime() * rotationSpeed * 50.0f); // 计算旋转角度
+        model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f)); // 绕Y轴旋转
+
+        //// 缩放：每个实例的缩放比例不同
+        //float scale = 1.0f + sin(glfwGetTime() * speed) * 0.5f; // 使用正弦函数实现缩放动画
+        //model = glm::scale(model, glm::vec3(scale));
+    }
+
+    GLuint useageBuffer = IsSkinnedMesh ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
+    // 将实例数据传递给 GPU
+    glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * _modelMatrices.size(), _modelMatrices.data(), useageBuffer);
+    // 解绑 VAO
+    glBindVertexArray(0);
+
 }
 
 void Game::CustomModelInstance::UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader)
@@ -710,7 +765,7 @@ bool Game::CustomModelInstance::Draw(glm::mat4 view, glm::mat4 projection)
 {
     // 直接调用渲染纹理方法，渲染纹理数据
     RenderingTexture();
-
+    UniformParametersInput();//传入shader 参数
     // 绑定VAO
     glBindVertexArray(VAO);
 
@@ -735,7 +790,7 @@ bool Game::CustomModelInstance::DrawDynamical(glm::mat4 view, glm::mat4 projecti
 {
     // 直接调用渲染纹理方法，渲染纹理数据
     RenderingTexture();
-
+    UniformParametersInput();//传入shader 参数
     // 获取模型矩阵的uniform位置
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
 
@@ -769,6 +824,12 @@ bool Game::CustomModelInstance::DrawDynamical(glm::mat4 view, glm::mat4 projecti
     glBindVertexArray(0);
 
     return true;
+}
+
+void Game::CustomModelInstance::UniformParametersInput()
+{
+//空方法用于引用
+
 }
 
 // RenderingTexture方法
@@ -972,7 +1033,7 @@ void Game::GamePlayer::RenderingStencilTest()
    
 }
 
-void Game::GamePlayer::SpecicalMethod()
+void Game::GamePlayer::SpecialMethod()
 {
     
     RenderingStencilTest();
@@ -1080,5 +1141,135 @@ void Game::NoneLightModel::UniformParametersInput()
     // 基本色
     GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
     glUniform3f(baseColorLoc, 0.9f, 0.9f, 0.9f); // 传入基本色（暗色）
+
+}
+
+void Game::FireflyInstance::SelfIns()
+{
+    InitializeInstanceData();
+
+}
+
+void Game::FireflyInstance::UpdateVariant(glm::mat4 view, glm::mat4 projection) {
+    float time = glfwGetTime();
+
+    for (int i = 0; i < _instanceCount; ++i) {
+        // 获取当前实例的随机扰动值
+        const InstanceData& data = _instanceData[i];
+
+        // 基于初始变换矩阵进行扰动
+        auto model = _modelMatrices[i];
+
+        // 平移：基于初始矩阵添加随机扰动
+        float xOffset = sin(time * data.translationOffset.x) * 0.1f;
+        float yOffset = sin(time * data.translationOffset.y) * 0.1f;
+        float zOffset = sin(time * data.translationOffset.z) * 0.1f;
+        model = glm::translate(model, glm::vec3(xOffset, yOffset, zOffset));
+
+        // 旋转：基于初始矩阵添加随机扰动
+        float angle = glm::radians( data.rotationSpeed * 25.0f);
+        model = glm::rotate(model, angle, data.rotationAxis);
+
+        // 更新当前实例的变换矩阵
+        _modelMatrices[i] = model;
+    }
+
+    // 将更新后的矩阵数据传递给 GPU
+    GLuint usageBuffer = IsSkinnedMesh ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
+    glBindBuffer(GL_ARRAY_BUFFER, _instanceBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * _modelMatrices.size(), _modelMatrices.data(), usageBuffer);
+}
+
+void Game::FireflyInstance::UniformParametersInput()
+{
+
+    // 获取当前时间
+    float time = glfwGetTime();
+
+    // 动态计算自发光颜色（使用 sin 函数生成周期性变化）
+    float emissionIntensity = (sin(time * 2.0f) + 1.0f) * 0.5f; // 在 [0, 1] 之间变化
+    glm::vec3 emissionColor = glm::vec3(emissionIntensity * 1.0f); // 自发光颜色（基于强度
+    // 将自发光颜色传递给着色器
+    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
+    glUniform3f(emissionLoc, emissionColor.r, emissionColor.g, emissionColor.b);
+
+    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
+    glUniform3f(emissionLoc,1-emissionColor.r,1-emissionColor.g,1-emissionColor.b);
+
+
+
+
+}
+
+void Game::FireflyInstance::InitializeInstanceData()
+{
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
+
+    _instanceData.resize(_instanceCount);
+
+    for (int i = 0; i < _instanceCount; ++i) {
+        // 随机平移偏移（范围缩小）
+        _instanceData[i].translationOffset = glm::vec3(dis(gen), dis(gen), dis(gen)) * 1.1f;
+
+        // 随机旋转轴
+        _instanceData[i].rotationAxis = glm::normalize(glm::vec3(dis(gen), dis(gen), dis(gen)));
+
+        // 随机旋转速度（范围缩小）
+        _instanceData[i].rotationSpeed = dis(gen) * 0.01f;
+
+        // 随机缩放偏移（范围缩小）
+        _instanceData[i].scaleOffset = glm::vec3(dis(gen))*0.2F;
+    }
+
+
+}
+
+void Game::BlackHole::UpdateVariant(glm::mat4 view, glm::mat4 projection)
+{
+    //黑洞旋转
+   // rotation *= glm::quat(glm::vec3(0.01F, 0.01f  , 0.01f)) * 0.1f;
+
+
+    _timeAccumulator += 0.0167f;  // 固定 dt = 0.0167 秒
+
+    // 将角度从初始角度 -2.078 rad 开始，每帧减去 0.2088 rad/s * dt 累计的角度
+    float theta = -2.078f - 0.2088f * _timeAccumulator / 90;
+
+    position.x = 1029.56f * cos(theta);
+    position.z = 1029.56f * sin(theta);
+   // position.y = 0;
+}
+
+void Game::BlackHole::UniformParametersInput()
+{
+    //金属度
+    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
+    glUniform1f(metallicLoc, 0.9f);
+
+    //糙度
+    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
+    glUniform1f(roughnessLoc, 0.3f);
+    //透明度
+    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
+    glUniform1f(opacityLoc, 0.95f);
+    //折射率
+    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
+    glUniform1f(IORLoc, 0.330f);
+    //环境光贡献率
+    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
+    glUniform1f(aoLoc, 0.9f);
+
+
+    // 自发光
+    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
+    glUniform3f(emissionLoc, .15f, .05f, .05f); // 传入自发光颜色
+
+    // 基本色
+    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
+    glUniform3f(baseColorLoc, 0.1f, 0.3f, 0.3f); // 传入基本色（暗色）
+
 
 }

@@ -1001,6 +1001,8 @@ out vec2 TexCoord;                          // 传递纹理坐标到片段着色器
 out vec3 FragPos;                           // 传递片段位置到片段着色器
 out vec3 Normal;                            // 传递法线到片段着色器
 out vec4 FragPosClip;                       // 传递裁剪空间坐标到片段着色器
+// 传递实例ID，GL 中内置的
+flat out int instanceID;
 
 uniform mat4 projection;                    // 投影矩阵
 uniform mat4 view;                          // 视图矩阵
@@ -1015,6 +1017,8 @@ void main()
 
     // 计算裁剪空间坐标
     FragPosClip = projection * view * transform * instanceMatrix * vec4(aPos, 1.0);
+    
+    instanceID = gl_InstanceID;
 
     // 计算最终位置
     gl_Position = FragPosClip;
@@ -1037,7 +1041,6 @@ out vec4 FragColor; // 输出颜色
 uniform vec3 baseColor;      // 模型固有色
 uniform vec3 emission;      //自发光
 uniform sampler2D baseTexture;  // 基础纹理采样器
-uniform sampler2D depthTexture;  // 深度纹理,用于实例化树木实现遮挡半透明
 
 void main()
 {
@@ -1052,13 +1055,98 @@ void main()
     vec4 texColor = texture(baseTexture, TexCoord);
 
     // 使用基础颜色与纹理进行混合
-    vec3 color = colorToUse * texColor.rgb;
+    vec3 color = colorToUse * texColor.rgb+emission;
 
      FragColor = vec4(color, 1.0f);
 
 }
 )";
+/// <summary>
+///实例化片元萤光版
+/// </summary>
+const char* instanceNoLightingFireFlyFragmentShaderSource = R"(
+#version 450 core
 
+in vec3 FragPos;    // 传入片段位置
+in vec3 Normal;     // 传入法线
+in vec2 TexCoord;   // 传入纹理坐标
+flat in int instanceID; // 传递的实例ID
+
+out vec4 FragColor; // 输出颜色
+
+uniform vec3 baseColor;         // 模型固有色（取值范围 0~1）
+uniform vec3 emission;          // 自发光参数（取值范围 0~1，所有实例传入相同）
+uniform sampler2D baseTexture;  // 基础纹理采样器
+
+void main()
+{
+    // 采样基础纹理
+    vec4 texColor = texture(baseTexture, TexCoord);
+
+    // 利用 instanceID 生成一个随机偏移量
+    // 这里采用经典的哈希函数方式：sin(instanceID * 常数) 再乘上一个大数，然后取小数部分
+    float instanceOffset = fract(sin(float(instanceID) * 12.9898) * 43758.5453);
+
+    // 使用正弦函数实现全周期映射，确保结果始终在 0～1 范围内
+    // 这样无论传入的 emission/baseColor 值如何，都能产生完整的 0～1 周期性变化
+    vec3 modulatedEmission = 0.5 + 0.5 * sin(2.0 * 3.14159 * (emission + instanceOffset));
+    vec3 modulatedBaseColor = 0.5 + 0.5 * sin(2.0 * 3.14159 * (baseColor + instanceOffset));
+
+    // 结合基础纹理采样颜色与调制后的自发光和基础颜色
+    vec3 finalColor = modulatedBaseColor * texColor.rgb + modulatedEmission;
+
+    FragColor = vec4(finalColor, finalColor.r);
+}
+
+)";
+/// <summary>
+/// 实例化片元荧光彩色版
+/// </summary>
+const char* instanceNoLightingFireFlyColorFragmentShaderSource = R"(
+
+#version 450 core
+
+in vec3 FragPos;    
+in vec3 Normal;     
+in vec2 TexCoord;   
+flat in int instanceID; 
+
+out vec4 FragColor; 
+
+uniform vec3 baseColor;         // 输入的基础颜色（0~1），这里用 R 分量作为相位输入
+uniform vec3 emission;          // 输入的自发光参数（0~1），这里用 R 分量作为相位输入
+uniform sampler2D baseTexture;  // 基础纹理采样器
+
+// 辅助函数：将 HSV 转换为 RGB
+vec3 hsv2rgb(vec3 c) {
+    vec3 rgb = clamp(abs(mod(c.x * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+    rgb = rgb * c.y + (1.0 - c.y);
+    return rgb * c.z;
+}
+
+void main()
+{
+    // 采样基础纹理
+    vec4 texColor = texture(baseTexture, TexCoord);
+    
+    // 利用 instanceID 生成 0～1 之间的随机偏移量
+    float instanceOffset = fract(sin(float(instanceID) * 12.9898) * 43758.5453);
+    
+    // 计算多彩的自发光颜色：将 emission.r 与 instanceOffset 相加作为 hue（色相），饱和度与亮度均设为 1
+    float emissionHue = fract(emission.r + instanceOffset);
+    vec3 modulatedEmission = hsv2rgb(vec3(emissionHue, 1.0, 1.0));
+    
+    // 计算多彩的基础颜色：将 baseColor.r 与 instanceOffset 相加作为 hue，同样使用饱和度和亮度为 1
+    float baseHue = fract(baseColor.r + instanceOffset);
+    vec3 modulatedBaseColor = hsv2rgb(vec3(baseHue, 1.0, 1.0));
+    
+    // 结合基础纹理采样的颜色与调制后的颜色产生最终颜色
+    vec3 finalColor = modulatedBaseColor * texColor.rgb + modulatedEmission;
+    
+    FragColor = vec4(finalColor, finalColor.r);
+}
+
+)";
 /// <summary>
 ///实例化着色器用于使用视口深度图进行后处理测试的片元部分
 /// </summary>

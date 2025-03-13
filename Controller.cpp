@@ -289,27 +289,33 @@ void Game::Controller::ProcessInputPhysics(GLFWwindow* window, CustomModel* play
     // 前进和后退，保持水平分量
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         // 前进：在水平面内移动（仅改变X和Z坐标）
+        if (player->position.z>-100)
+                
         player->GetComponent<PhysicalEngine>()->GetVelocity() += glm::vec3(front.x, 0.0f, front.z) * moveSpeed;
     }
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         // 后退：在水平面内移动（仅改变X和Z坐标）
+        if (player->position.z < 100)
         player->GetComponent<PhysicalEngine>()->GetVelocity() -= glm::vec3(front.x, 0.0f, front.z) * moveSpeed;
     }
 
     // 左右移动，始终保持在水平面内
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
         // 左移：沿右向向量的方向移动（仅改变X和Z坐标）
+        if (player->position.x > -100)
         player->GetComponent<PhysicalEngine>()->GetVelocity() -= glm::vec3(right.x, 0.0f, right.z) * moveSpeed;
     }
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         // 右移：沿右向向量的方向移动（仅改变X和Z坐标）
+        if (player->position.x < 100)
         player->GetComponent<PhysicalEngine>()->GetVelocity() += glm::vec3(right.x, 0.0f, right.z) * moveSpeed;
     }
 
     // 空格键：竖直方向的移动
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        if (player->position.y < 20)
         player->GetComponent<PhysicalEngine>()->GetVelocity() += up * moveSpeed;  // 上移
     }
 

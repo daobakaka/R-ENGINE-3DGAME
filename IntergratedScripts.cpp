@@ -62,7 +62,7 @@ void IntergratedScripts::TestUpdateFun(GameObject* gameObject)
 {
 
     //gameObject->position += glm::vec3(-0.01 + randomFloat, 0, -0.01f + randomFloat);
-    gameObject->rotation *= glm::quat(glm::vec3(0, 0.01f + 0.1f*randomFloat, 0.0f));
+    gameObject->rotation *= glm::quat(glm::vec3(0, 0.01f + 0.01f*randomFloat, 0.0f))*0.1F;
    // gameObject->position += glm::vec3(0, 0.001f, 0);
 
 }
@@ -198,8 +198,8 @@ void Game::IntergratedScripts::TControlFrameRate(float targetFrameRate)
 void Game::IntergratedScripts::TParallelLightRotation(GameObject *object)
 {
 
-    object->rotation *= glm::quat(glm::vec3(0, 0.1f + 0.1f * randomFloat, 0.0f));
-
+   // object->rotation *= glm::quat(glm::vec3(0, 0.1f + 0.1f * randomFloat, 0.0f));
+    object->rotation *= glm::quat(glm::vec3(0, 0.2f , 0.0f));
    
 }
 

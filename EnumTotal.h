@@ -36,6 +36,7 @@ namespace Game {
 		PlayerBullet,//主角子弹
 
 		StoneMonser,//石头怪
+		BlackHoleE,//黑洞
 		
 	};
 
@@ -47,7 +48,9 @@ namespace Game {
 		HightP,
 		RoughnessP,
 		AOP,
-		OtherP,
+		OtherP,//其他纹理
+		Noise1P,//噪声纹理1
+		Noise2P,//噪声纹理2
 
 	};
 
@@ -89,6 +92,13 @@ namespace Game {
 		float speed = 1;
 
 
+	};
+	//实例随机化结构体
+	struct InstanceData {
+		glm::vec3 translationOffset; // 随机平移偏移
+		glm::vec3 rotationAxis;      // 随机旋转轴
+		float rotationSpeed;         // 随机旋转速度
+		glm::vec3 scaleOffset;       // 随机缩放偏移
 	};
 
 	//碰撞体结构体

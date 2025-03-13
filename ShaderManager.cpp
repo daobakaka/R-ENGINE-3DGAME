@@ -83,18 +83,19 @@ using namespace Game;
         ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "noneLightInstancer");
         //无光照的基础实例化shader,可进行深度图进行后处理
         ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingForViewPortDepthMapFragmentShaderSource, "noneLightDepthCalInstancer");
-        //无光照的通用shader(可生成阴影)
+        //功能全面的无光照的通用shader(可生成阴影)
         ShaderCompile(CustomNoLightShadowShaderVertexSource, CustomNoLightShadowShaderFragmentSource, "commonNoneLight");
+        
         //独立shader,构建玩家飞行道具
         ShaderCompile(waveVertexShaderSource, colorlightsArraySourceFragmentShaderSource,"waveShader");
         //独立shader,玩家模板测试
         ShaderCompile(stencilTestVertexShaderSource, stencilTestFragmentShaderSource, "stencilTestShader");
+        //独立实例化shader,用于生成萤光效果
+        ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFireFlyFragmentShaderSource, "fireflyInstanceShader");
         
-       
         
         
-        
-        //深度图着色器模块儿
+        //深度图着色器模块
         ShaderCompile(depthShaderVertexShaderSource, depthShaderFragmentShaderSource,"depthCal");
         ShaderCompile(depthVisualShaderVertexShaderSource, depthVisualShaderFragmentShaderSource,"depthVisual");
         ShaderCompile(depthTestShaderVertexShaderSource, depthTestShaderFragmentShaderSource,"depthTest");

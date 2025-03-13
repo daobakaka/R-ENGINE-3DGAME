@@ -1003,9 +1003,13 @@ void Game::CustomModel::Start()
     std::cout << ID << ":" << _ifShadow << std::endl;
 }
 
-void Game::CustomModel::SpecicalMethod()
+void Game::CustomModel::SpecialMethod()
 {
 
+}
+
+void Game::CustomModel::SelfIns()
+{
 }
 
 //// GetComponent ·½·¨

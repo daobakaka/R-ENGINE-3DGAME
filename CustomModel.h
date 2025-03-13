@@ -22,7 +22,8 @@ namespace Game {
         void UpdateVerticesForAnimation(size_t animationFrame);
         void UpdateVerticesForAnimation(const std::vector<Vertex>& vertex);
         virtual void Start() override;
-        virtual void SpecicalMethod();//特殊方法，用于特殊构造体重写
+        virtual void SpecialMethod();//特殊方法，用于特殊构造体重写
+        virtual void SelfIns(); //特殊初始化方法，用于派生类重写
         //--继承GameObject 的声明
         virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
         virtual bool DrawLine(glm::mat4 view, glm::mat4 projection);//绘制线条方法，在custom 类添加的新方法，针对线条绘制，可重写

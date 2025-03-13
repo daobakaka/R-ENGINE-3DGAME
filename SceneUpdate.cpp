@@ -131,11 +131,11 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
             scripts->TChangeRandom(-0.01f, 0.01f);//改变构造随机种子
             // scripts->CubeUpdateFun(item); // 使用迭代器遍历链表并调用每个,暂时理解为一个遍历语法糖
         }
-        else if (item.second->GetVariant() == ModelClass::CubeTestE)
+        else if (item.second->GetVariant() == ModelClass::BlackHoleE)
         {
             //脚本方法，执行综合方法
           scripts->TestUpdateFun(item.second);
-            //  baseSphere->AttachTexture(TextureDic["butterfly"][0], 1);        
+         
         }
         else if (item.second->GetVariant() == ModelClass::ParallelLight)//平行光旋转，后面增加其他逻辑
         {
@@ -162,6 +162,9 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
             //设置生命值小于0时，物体消失，需要重复加载的对象，放入对象池以复用
             if(item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health<=0)
             toActiveFalse .push_back(item.second);
+        }
+        else if (item.second->GetVariant() == ModelClass::InstanceSphere)
+        {
         }
        
     }
@@ -228,7 +231,7 @@ void GameUpdateBufferTestT(glm::mat4 view, glm::mat4 projection, GLFWwindow* win
    // glBlendFunc(GL_ONE, GL_ONE);//
    // glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     shaderManager->SetMat4("stencilTestShader", "model", manager->GetspecialObjects()["player"]->transform);
-    manager->GetspecialObjects()["player"]->SpecicalMethod();
+    manager->GetspecialObjects()["player"]->SpecialMethod();
     glDepthFunc(GL_LESS); // 恢复默认深度测试函数
     glDisable(GL_STENCIL_TEST);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
