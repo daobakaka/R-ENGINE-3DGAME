@@ -68,7 +68,7 @@ namespace Game {
         int ID;
         bool _lockXZAxi;
         float _rotationDamping;
-        bool &_isActive;//这个引用由外部控制,不仅仅是要控制物理组件和碰撞组件，还要控制渲染逻辑
+        bool &_isActive;//这个引用由外部控制,不仅仅是要控制物理组件和碰撞组件，还要控制渲染逻辑,！但是必须通过setActive方法在容器中取消渲染！
         bool _trigger;
         int _layer;
         float _rotationAdjust;//默认黄金分割

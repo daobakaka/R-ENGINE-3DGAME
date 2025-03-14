@@ -117,7 +117,7 @@ namespace Game
 		virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;//动态绘制可重写，与IntergtatedAnimatior联动
 
 		virtual void RenderingTexture()override;
-
+		virtual void UniformParametersInput() override;//全局shader参数输入重写
 		virtual void RenderingTextureAdditional() override;//重写附件纹理方法;
 
 		virtual void RenderingLight();//通过着色器的光照渲染
@@ -232,7 +232,7 @@ namespace Game
 #pragma endregion
 #pragma region  黑洞
 	/// <summary>
-	/// 用于测试的蝴蝶，后期可更改
+	/// 巨物天体
 	/// </summary>
 	class BlackHole :public CustomModelShader
 	{
@@ -312,6 +312,28 @@ namespace Game
 
 	};
 #pragma endregion
+
+	class GameStoneMonser :public CustomModelShader
+	{
+	public:
+		using CustomModelShader::CustomModelShader;
+	    void UpdateVariant(glm::mat4 view, glm::mat4 projection) override; //自主移动
+		void UpdateSpecial(CustomModel* player);
+		void  UniformParametersInput();//重写通用shader的传参，改变状态
+		void SelfIns() override;//初始化随机参数
+
+
+	protected:
+		CustomModel* _player;
+		float _speed;
+		bool _alive;
+		float _deathTime;
+		//动画控制参数
+		bool _isRunA;
+		bool _isAttackA;
+		bool _isDeathA;
+	};
+	
 
 	
 }

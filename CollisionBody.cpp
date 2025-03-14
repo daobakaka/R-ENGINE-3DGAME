@@ -2,6 +2,7 @@
 #include <iostream>
 #include "PhysicalEngine.h"
 #include "Octree.h"
+#include "EnumTotal.h"
 
 namespace Game {
 
@@ -43,15 +44,14 @@ namespace Game {
     // 析构函数
     CollisionBody::~CollisionBody()
     {
-        //移除八叉树中的对应结构
-        _octree->Remove(&_collisionProperties);
-
-        if (_octree != nullptr)
+        //析构逻辑，特殊碰撞体移除，普通碰撞体从八叉树中移除
+        if (_collisionProperties.sType ==! SpecialType::OriginalT)
         {
-            delete _octree;
+        
+            CollisionProps.erase(_collisionProperties.ID);
         }
-        //移除容器中的对应ID的项
-        CollisionProps.erase(_collisionProperties.ID);
+        //为满足八叉树的查询要求，所有碰撞体都必须加入八叉树中，特殊碰撞体不用更新位置
+        _octree->Remove(&_collisionProperties);
     }
 
     bool CollisionBody::Interface()
@@ -189,15 +189,17 @@ namespace Game {
     void CollisionBody::RegisterCollisionBody()
     {
         //这里静态大物体暂时采用专门的逻辑，如地面,玩儿家等， 这样可以保持持续性检测
+        //特殊碰撞体不引入八叉树
         if (_collisionProperties.sType != SpecialType::OriginalT)
         {
             CollisionProps[_collisionProperties.ID] = &_collisionProperties;
         }
-      
+        
             //获取八叉树结构单例
             _collisionProperties.currentNode = nullptr;//为碰撞体基于八叉树的指针赋空的初始值
             _octree = Octree::GetInstance();
             _octree->Insert(&_collisionProperties);
+        
         
     }
 
@@ -213,8 +215,8 @@ namespace Game {
             _collisionProperties._collisionMax.y = _collisionProperties.position.y + _collisionProperties.radius * _collisionProperties.ratio.y;
             _collisionProperties._collisionMax.z = _collisionProperties.position.z + _collisionProperties.radius * _collisionProperties.ratio.z;
       
-         //非特殊碰撞体
-            //if (_collisionProperties.sType == SpecailType::OriginalT)
+         ////非特殊碰撞体
+            if (_collisionProperties.sType==SpecialType::OriginalT)
                 _octree->Update(&_collisionProperties); // 更新八叉树中的位置
             
             break;
@@ -225,8 +227,8 @@ namespace Game {
             _collisionProperties._collisionMax.x = _collisionProperties.position.x + _collisionProperties.radius * _collisionProperties.ratio.x;
             _collisionProperties._collisionMax.y = _collisionProperties.position.y + _collisionProperties.radius * _collisionProperties.ratio.y;
             _collisionProperties._collisionMax.z = _collisionProperties.position.z + _collisionProperties.radius * _collisionProperties.ratio.z;
-         //非特殊碰撞体   
-            //if (_collisionProperties.sType == SpecailType::OriginalT)
+         ////非特殊碰撞体   
+            if (_collisionProperties.sType ==SpecialType::OriginalT)
                 _octree->Update(&_collisionProperties); // 更新八叉树中的位置
             
             break;
@@ -251,12 +253,12 @@ namespace Game {
 
 
             // 如果相对速度大于0，则发生碰撞
-            if (relativeVelocity >1.05- _collisionProperties.elasticity) {
+            if (glm::abs(relativeVelocity) >1.05- _collisionProperties.elasticity) {
                
               // std::cout << _collisionProperties.ID<<"内部计算碰撞" << std::endl;
-                //触发非静态非trigger碰撞计算
+                //碰撞参数计算
                 CalculateGameParameters(other);
-                //如果为触发器，则不参与物理计算,自身为触发器也不应该参数弹性等计算
+                //如果都不为触发器，则不参与物理计算
                 if (!other->trigger&&!_collisionProperties.trigger)
                 {    // 弹性系数（恢复系数）
                     float e = _collisionProperties.elasticity;  //从物理碰撞模块中读取弹性系数
@@ -410,9 +412,9 @@ namespace Game {
                 //防止地板穿模.添加一个新地板判断，防止脱离地板碰撞
                 if (_collisionProperties.isCollision&&_collisionProperties.isOnGround)
                 {
-                    if (_collisionProperties.velocity.y < 0 && _collisionProperties.position.y <= _collisionProperties.ratio.y)
+                    if (_collisionProperties.velocity.y < 0 && _collisionProperties.position.y <= _collisionProperties.ratio.y*_collisionProperties.radius)
                     {
-                        _collisionProperties.position.y = _collisionProperties.ratio.y;
+                        _collisionProperties.position.y = _collisionProperties.ratio.y*_collisionProperties.radius;//这里需要算上碰撞体半径
                         _collisionProperties.velocity.y = 0;
                     }
                 }
@@ -456,16 +458,11 @@ namespace Game {
 
             }
 
-
-
-
         }
 
     }
 
-
-
-    
+  
 
     // 与 AABB 碰撞检测
     bool CollisionBody::CheckCollisionWithAABB(CollisionProperties* other) {
@@ -510,17 +507,31 @@ namespace Game {
 
     void CollisionBody::CalculateGameParameters(CollisionProperties* other)
     {
-       
-        if (other->logicType==ModelClass::TestPhysics&&_collisionProperties.logicType!=ModelClass::TestPhysics)
-        {
-            _collisionProperties.gameProperties.health -= other->gameProperties.damage;
-           std::cout << _collisionProperties.ID << "生命值为：" << _collisionProperties.gameProperties.health << std::endl;
+       //子弹伤害检测，怪物被玩家子弹造成的伤害
+        if (other->logicType == ModelClass::PlayerBullet)
+        {   
+          //  std::cout << _collisionProperties.ID << "生命值为：" << _collisionProperties.gameProperties.health << std::endl;
+            if (_collisionProperties.logicType==ModelClass::StoneMonser)
+            {
+
+                _collisionProperties.gameProperties.health -= other->gameProperties.damage;
+              //  std::cout << _collisionProperties.ID << "生命值为：" << _collisionProperties.gameProperties.health << std::endl;
+            }
+            else if (_collisionProperties.logicType == ModelClass::TestPhysics)
+            {
+               _collisionProperties.gameProperties.health -= other->gameProperties.damage;
+               // std::cout << _collisionProperties.ID << "生命值为：" << _collisionProperties.gameProperties.health << std::endl;
+            }                                         
         }
-
-
-    
-
-    
+        else if (other->logicType==ModelClass::StoneMonser)
+        {
+            if (_collisionProperties.sType==SpecialType::SPlayer)
+            {
+                _collisionProperties.gameProperties.health -= other->gameProperties.damage;
+                std::cout << _collisionProperties.ID << "生命值为：" << _collisionProperties.gameProperties.health << std::endl;
+            }
+        }
+        
     }
 
 

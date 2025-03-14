@@ -141,8 +141,8 @@ void Game::IntergratedScripts::PlayerControl(GLFWwindow* window, CustomModel* ot
             bullet->GetComponent<PhysicalEngine>()->SetMass(0.3f); // 给子弹较小的质量
             bullet->GetComponent<PhysicalEngine>()->SetAcceleration(glm::vec3(0, -5.0f, 0)); // 模拟子弹受较小的重力加速度
             bullet->GetComponent<CollisionBody>()->SetTrigger(false); // 被子弹碰撞的物体不会受到物理系统的影响，子弹为触发器，只受到速度和加速度影响
-            bullet->GetComponent<CollisionBody>()->SetGameProperties(1, 1, 1); // 设置子弹的攻击力为1
-
+            bullet->GetComponent<CollisionBody>()->SetGameProperties(1, 20, 1); // 设置子弹的攻击力为1
+            bullet->GetComponent<CollisionBody>()->SetRadius(1.3);//增加子弹碰撞半径
             // 获取 other->rotation 的方向向量
             glm::vec3 forwardDirection = other->rotation * glm::vec3(0, 0,1); // 假设向前是 -Z 方向
             bullet->GetComponent<PhysicalEngine>()->SetVelocity(forwardDirection * 50.0f); // 给子弹50的前向速度

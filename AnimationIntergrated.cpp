@@ -102,12 +102,15 @@ AnimationController::AnimationController() : currentAnimationIndex(-1) {}
 // 添加动画
 void AnimationController::AddAnimation( Animation* animation) {
     animations.push_back(*animation);  // 添加一个动画对象
+
+    std::cout <<"动画长度" << animations.size() << std::endl;
+
 }
 
 // 播放指定索引的动画，记住不能同时播放两个动画
 void AnimationController::PlayAnimation(int index, float deltaTime,CustomModel* model)
 {
-        //--
+   //std::cout << "开始播放：" << index << std::endl;
         if (!ifplay)
         {
             if (index >= 0 && index < animations.size()) 
@@ -132,7 +135,7 @@ void AnimationController::PlayAnimation(int index, float deltaTime,CustomModel* 
 }
 
 // 停止当前动画
-void AnimationController::StopAnimation() {
+void AnimationController::StopAnimation(int index) {
   
     if (ifplay)
     {

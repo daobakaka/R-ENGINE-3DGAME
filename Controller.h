@@ -65,8 +65,6 @@ namespace Game {
 		void ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw, bool& rightMousePressed,bool pitchRotation=true);
 
 
-		void GetPlayerPosition(CustomModel* player,glm::vec3 offset);
-
 		//处理滚轮缩放逻辑
 		
 		//综合方法，帧率控制
@@ -74,11 +72,6 @@ namespace Game {
 
 		void ProcessMouseScrollGlobal(float yoffset);
 	
-		void SetScrollCallback(GLFWwindow* window);
-
-		//坐标选旋转角度参考
-		void RenderWidget(const char* widgetVertexShaderSource, const char* widgetFragmentShaderSource,
-			GLuint widgetVAO, int widgetSize, int widgetPosX, int widgetPosY);
 
 		// 获取摄像机视图矩阵
 		glm::mat4 GetViewMatrix();

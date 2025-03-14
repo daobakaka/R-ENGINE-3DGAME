@@ -31,8 +31,6 @@ namespace Game {
         // 更新所有定时任务
         void CoroutineUpdate();
 
-        // 示例：每隔1秒创建蝴蝶，通过定时任务
-        void StartSpawnButterfliesByTimer(LifecycleManager<CustomModel>* manager,GLuint textureName, int order);
 
     private:
         CoroutineMethod();
@@ -99,7 +97,6 @@ namespace Game {
                         ifLight,
                         ifShadow
                     );
-                    model->SelfIns();//在这里调用初始化函数
                     model->SetVariant(modelEnum);
                     manager->RegisterObject(model);
 
@@ -126,7 +123,7 @@ namespace Game {
                     if (ifCollider) {
                         model->AttachCollider();
                     }
-                    model->SetVariant(modelEnum);
+                    model->SelfIns();//在这里调用初始化函数
                 }
             );
         }
@@ -174,7 +171,6 @@ namespace Game {
                         ifLight,
                         ifShadow
                     );
-                    model->SelfIns();
                     model->SetVariant(modelEnum);
                     manager->RegisterObject(model);
 
@@ -197,7 +193,7 @@ namespace Game {
                     if (ifCollider) {
                         model->AttachCollider();
                     }
-                    model->SetVariant(modelEnum);
+                    model->SelfIns();
                 }
             );
         }

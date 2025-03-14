@@ -7,7 +7,6 @@
 #include <GL/glew.h>//加载Opengl扩展，
 #include <GLFW/glfw3.h>//创建Opengl扩展，以及管理Opengl上下文
 #include "Cube.h"
-//#include "shader.h"  // 这是一个独立的着色器文件，且只能被引用一次
 #include "Test.h"
 #include "MicroCpp.h"
 #include "Controller.h"

@@ -285,6 +285,10 @@ uniform float opacity; // 透明度
 uniform float IOR; // 折射率
 uniform float ao; // 环境光遮蔽率
 
+
+//特效参数
+uniform float dissolveThreshold; // 溶解阈值，控制溶解的进度
+
 // 颜色
 uniform vec3 baseColor;   // 模型固有色
 uniform vec3 emission;    // 自发光（可选）
@@ -492,6 +496,9 @@ if (parallelLightIntensity > 0.0001) {
 
     // 最终颜色 = (光照效果 × 物体固有色) + 自发光
     vec3 result = lighting * finalBaseColor * (1.0 - lightLoss) + emission;
+    //溶解度阈值丢弃像素
+    if(texColor.r<dissolveThreshold)
+     { discard;  }
 
     // 输出颜色
     FragColor = vec4(result, opacity) * texColor;
@@ -610,6 +617,8 @@ uniform float opacity;       // 透明度
 uniform float IOR;           // 折射率
 uniform float ao;            // 环境光遮蔽率
 
+//特效参数
+uniform float dissolveThreshold; // 溶解阈值，控制溶解的进度
 // 颜色
 uniform vec3 baseColor;      // 模型固有色
 uniform vec3 emission;       // 自发光
@@ -693,8 +702,10 @@ finalBaseColor *= (1.0 - shadow);
 
     // 最终输出颜色：基础调制结果加上自发光
      vec3 result = finalBaseColor*aoValue*roughnessValue  +specularColor*metallic+ emission;
+       //溶解度阈值丢弃像素
+    if(texColor.r<dissolveThreshold)
+     { discard;  }
      FragColor = vec4(result, opacity) * texColor;
-      // FragColor = texColor;   
 
 
 }

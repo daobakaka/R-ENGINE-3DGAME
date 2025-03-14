@@ -506,6 +506,11 @@ void Game::CustomModel::RenderingTextureAdditional()
 }
 void Game::CustomModel::UniformParametersInput()
 {
+   //溶解度，默认传入0 不溶解
+    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+    glUniform1f(dissolveThresholdLoc, 0);
+    
+    
     //金属度
     GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
     glUniform1f(metallicLoc, 0.0f);
@@ -818,7 +823,7 @@ void Game::CustomModel::DestroySelf()
 bool Game::CustomModel::SetActive(bool active)
 {
    
-  //  std::cout<<ID << "激活:" << active << std::endl;
+    std::cout<<ID << "激活:" << active << std::endl;
     
     return _ifActive=active;
 }

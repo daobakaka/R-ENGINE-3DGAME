@@ -284,6 +284,40 @@ void Game::CustomModelShader::RenderingTexture()
     }
 
 }
+void Game::CustomModelShader::UniformParametersInput()
+{
+    //溶解度，默认传入0 不溶解
+    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+    glUniform1f(dissolveThresholdLoc, 0);
+
+
+    //金属度
+    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
+    glUniform1f(metallicLoc, 0.0f);
+
+    //糙度
+    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
+    glUniform1f(roughnessLoc, 1.0f);
+    //透明度
+    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
+    glUniform1f(opacityLoc, 1.0f);
+    //基础材料折射率，纯金属折射率不受影响
+    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
+    glUniform1f(IORLoc, 1.5f);
+    //环境光贡献率
+    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
+    glUniform1f(aoLoc, 0.6f);
+
+    // 自发光
+    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
+    glUniform3f(emissionLoc, 0.1f, 0.1f, 0.1f); // 传入自发光颜色
+
+    // 基本色
+    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
+    glUniform3f(baseColorLoc, 0.5f, 0.5f, 0.5f); // 传入基本色（暗色）
+
+
+}
 void Game::CustomModelShader::RenderingTextureAdditional()
 {
     int textureUnit = _textureOrder + 1; // 从 textureOrder + 1 开始
@@ -977,7 +1011,20 @@ void Game::GamePlayer::Start()
 void Game::GamePlayer::UniformParametersInput()
 {
     
- 
+    _timeAccumulator += 0.0167;
+    //三秒之后完成溶解生成
+    if (_timeAccumulator < 1.01 * 10)
+    {
+        GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+        glUniform1f(dissolveThresholdLoc, 1 - _timeAccumulator);
+    }
+    else
+    {
+        //溶解度，默认传入0 不溶解
+        GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+        glUniform1f(dissolveThresholdLoc, 0);
+
+    }
     
     //金属度
     GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
@@ -1047,10 +1094,10 @@ void Game::GamePlayer::SpecialMethod()
 
 void Game::GameBullet::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
-    //给予子弹10 速度
-   // this->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0, 0, 10));
-    _waveTime += 0.0167f;
 
+    _waveTime += 0.0167f;
+    _timeAccumulator += 0.0167f;
+ 
 }
 void Game::GameBullet::UniformParametersInput()
 {
@@ -1066,6 +1113,10 @@ void Game::GameBullet::UniformParametersInput()
     glUniform1f(waveFrequencyLoc, _waveFrequency);
     glUniform1f(waveSpeedLoc, _waveSpeed);
 
+
+    //溶解度，默认传入0 不溶解
+    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+    glUniform1f(dissolveThresholdLoc, 0);
 
     //金属度
     GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
@@ -1116,6 +1167,10 @@ void Game::GameBullet::SelfIns()
 
 void Game::NoneLightModel::UniformParametersInput()
 {
+    //溶解度，默认传入0 不溶解
+    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+    glUniform1f(dissolveThresholdLoc, 0);
+
     //金属度
     GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
     glUniform1f(metallicLoc, 0.0f);
@@ -1236,7 +1291,7 @@ void Game::BlackHole::UpdateVariant(glm::mat4 view, glm::mat4 projection)
     _timeAccumulator += 0.0167f;  // 固定 dt = 0.0167 秒
 
     // 将角度从初始角度 -2.078 rad 开始，每帧减去 0.2088 rad/s * dt 累计的角度
-    float theta = -2.078f - 0.2088f * _timeAccumulator / 90;
+    float theta = -2.078f - 0.2088f * _timeAccumulator / 45;
 
     position.x = 1029.56f * cos(theta);
     position.z = 1029.56f * sin(theta);
@@ -1245,6 +1300,11 @@ void Game::BlackHole::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 
 void Game::BlackHole::UniformParametersInput()
 {
+    
+    //溶解度，默认传入0 不溶解
+    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+    glUniform1f(dissolveThresholdLoc, 0);
+    
     //金属度
     GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
     glUniform1f(metallicLoc, 0.9f);
@@ -1270,6 +1330,157 @@ void Game::BlackHole::UniformParametersInput()
     // 基本色
     GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
     glUniform3f(baseColorLoc, 0.1f, 0.3f, 0.3f); // 传入基本色（暗色）
+
+
+}
+
+void Game::GameStoneMonser::UpdateVariant(glm::mat4 view, glm::mat4 projection)
+{
+    if (_alive)
+    {
+        glm::vec2 lengthSqrt = glm::vec2(position.x - _player->position.x, position.z - _player->position.z);
+        
+        if (glm::dot(lengthSqrt,lengthSqrt) >100)
+
+        {                    
+                glm::vec2 direction = glm::vec2(_player->position.x, _player->position.z) - glm::vec2(position.x, position.z);
+                glm::vec2 normalizedDir = glm::normalize(direction);
+
+             /*   position.x += normalizedDir.x * _speed;
+                position.z += normalizedDir.y * _speed;*/
+
+                GetComponent<PhysicalEngine>()->GetVelocity().x = normalizedDir.x * _speed/0.0167f;
+                GetComponent<PhysicalEngine>()->GetVelocity().z = normalizedDir.y * _speed/0.0167f;
+
+                glm::vec3 forward = -glm::normalize(glm::vec3(normalizedDir.x, 0.0f, normalizedDir.y));
+                glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+                // 生成旋转四元数，让物体面向 forward
+                rotation = glm::quatLookAt(forward, up); 
+                PlayAnimation(0, 0.3f);            
+        }
+        else
+        {
+            rotation *= glm::quat(glm::vec3(0.0, 0, 0.3F));
+
+        }
+    }
+    //生命监测
+    if (GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health <= 0 && _alive == true)
+    {
+        GetComponent<CollisionBody>()->GetCollisionProperties().isActive = false;//物理及碰撞效果失活   
+        _alive = false;
+    }
+    if (!_alive)
+    {
+        if (!_isDeathA)
+        {
+            StopPlayAnimation();//停止播放动画
+            _isDeathA = true;
+        }
+         //播放死亡动画
+        PlayAnimation(1, 0.3f);
+        //计算死亡时间
+        _deathTime += 0.00167f*2;
+        if (_deathTime < 1.01 )
+        {
+            //溶解特效
+            GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+            glUniform1f(dissolveThresholdLoc, _deathTime);
+           /* GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
+            glUniform1f(opacityLoc, 1-_deathTime);*/
+           // std:: cout<< "溶解开始" << _deathTime << std::endl;
+        }
+        else
+        {
+            GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+            glUniform1f(dissolveThresholdLoc, _deathTime);
+            //通知生命周期管理器在外部进行渲染失活或者销毁
+            GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death = true;
+            
+        }
+
+    }
+}
+
+void Game::GameStoneMonser::UpdateSpecial(CustomModel* player)
+{
+
+
+}
+
+void Game::GameStoneMonser::UniformParametersInput()
+{
+    _timeAccumulator += 0.00167F*2;
+    //三秒之后完成溶解生成
+    if (_timeAccumulator<1.01)
+    {
+        GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+        glUniform1f(dissolveThresholdLoc, 1-_timeAccumulator);
+    }
+    else
+    {
+        if (_alive)
+        {
+            //溶解度，默认传入0 不溶解
+            GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+            glUniform1f(dissolveThresholdLoc, 0);
+        }
+
+
+    }
+    //金属度
+    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
+    glUniform1f(metallicLoc, 0.0f);
+
+    //糙度
+    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
+    glUniform1f(roughnessLoc, 1.0f);
+    //透明度
+    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
+    glUniform1f(opacityLoc, 1.0f);
+    //基础材料折射率，纯金属折射率不受影响
+    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
+    glUniform1f(IORLoc, 1.5f);
+    //环境光贡献率
+    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
+    glUniform1f(aoLoc, 0.6f);
+
+    // 自发光
+    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
+    glUniform3f(emissionLoc, 0.1f, 0.1f, 0.1f); // 传入自发光颜色
+
+    // 基本色
+    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
+    glUniform3f(baseColorLoc, 0.5f, 0.5f, 0.5f); // 传入基本色（暗色）
+    
+
+
+}
+
+void Game::GameStoneMonser::SelfIns()
+{
+   _player = LifecycleManager<CustomModel>::GetInstance()->GetspecialObjects()["player"];
+   _speed = 0.05f;
+   _alive = true;
+   _deathTime = 0;
+   //在异步中进行生成
+
+      //声明一个新动画
+   auto* ani1 = new Animation((AnimationDic["stoneMonster"]["die"]));
+   GetComponent<AnimationController>()->AddAnimation(ani1);
+   //--
+   AttachPhysicalEngine();
+   AttachCollider();//增加碰撞半径
+   GetComponent<PhysicalEngine>()->SetAcceleration(glm::vec3(0, -9.8f, 0));//设置重力为0
+   GetComponent<PhysicalEngine>()->SetFriction(0.5f);
+   GetComponent<CollisionBody>()->SetRadius(37);//修正原生模型大小造成的问题,可以通过开启重力与地板检测查看半径
+   GetComponent<PhysicalEngine>()->SetTrigger(false);
+   GetComponent<CollisionBody>()->SetGameProperties(200, 10, 1);
+
+
+
+
+
 
 
 }

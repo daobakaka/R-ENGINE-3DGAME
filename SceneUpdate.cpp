@@ -122,12 +122,11 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
     toDestory.clear();
     //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
     //遍历执行池
-
+  //  player->Update(view, projection);//玩家方法起始更新
     for (auto &item : manager->GetNativeObjects()) {
         //现在更改为使用构造化方式，统一使用
         if (item.second->GetVariant() == 0)
         {
-
             scripts->TChangeRandom(-0.01f, 0.01f);//改变构造随机种子
             // scripts->CubeUpdateFun(item); // 使用迭代器遍历链表并调用每个,暂时理解为一个遍历语法糖
         }
@@ -144,10 +143,15 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
 
         }
         else if (item.second->GetVariant() == ModelClass::StoneMonser)
-        {
-           
-            // 播放动画
-            item.second->PlayAnimation(0, 0.1f);
+        {          
+            // 播放动画,也可以在内部         
+           // 
+            //怪物生命监测
+            if (item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death==true)
+            {
+                toActiveFalse.push_back(item.second);
+            }
+
         }
         else if (item.second->GetVariant() == ModelClass::TsetButterfly)
         {
@@ -163,8 +167,12 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
             if(item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health<=0)
             toActiveFalse .push_back(item.second);
         }
-        else if (item.second->GetVariant() == ModelClass::InstanceSphere)
+        else if (item.second->GetVariant() == ModelClass::PlayerBullet)
         {
+            if (item.second->_timeAccumulator >= 30)
+            {
+                toDestory.push_back(item.second);//玩家子弹超过30秒销毁
+            }
         }
        
     }
@@ -173,12 +181,15 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
     //遍历缓存池
     for (auto& item : manager->GetCacheObjects())
     {
-
-        if (item.second->GetVariant() == ModelClass::TestPhysics)
+        //这里添加激活条件
+        if (false)
         {
-            toActiveTrue.push_back(item.second);
-        }
+            if (item.second->GetVariant() == ModelClass::TestPhysics)
+            {
+                toActiveTrue.push_back(item.second);
+            }
 
+        }
     }
 
     // 临时存取失活对象
@@ -187,7 +198,7 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
     }
     //临时存取激活对像
     for (auto* obj : toActiveTrue) {
-        obj->position += glm::vec3(0, 50, 0);
+        obj->position += glm::vec3(0, 10, 0);
         obj->GetComponent<PhysicalEngine>()->SetVelocity(glm::vec3(0));
         manager->SetActive(obj, true);
     }

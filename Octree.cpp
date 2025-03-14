@@ -160,7 +160,10 @@ void Octree::Update(CollisionProperties* obj) {
 }
 
 void Octree::Query(const CollisionProperties* obj, std::vector<CollisionProperties*>& result) {
-    _root->Query(obj, result);
+   
+        _root->Query(obj, result);
+    
+  
 }
 
 void Octree::InsertToRoot(CollisionProperties* obj) {

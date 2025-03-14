@@ -90,6 +90,7 @@ namespace Game {
 		float health = 100;
 		float damage = 3;
 		float speed = 1;
+		bool death = false;
 
 
 	};

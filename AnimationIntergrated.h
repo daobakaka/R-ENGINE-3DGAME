@@ -40,7 +40,7 @@ namespace Game {
         //void AddAnimation(const std::string& name, float duration);
         void AddAnimation(Animation* animation);
         void PlayAnimation(int index, float  deltaTime, CustomModel* model);
-        void StopAnimation();
+        void StopAnimation(int index=0);
         void Update(float deltaTime);
         std::vector<Vertex> GetCurrentAnimationVertices();
 

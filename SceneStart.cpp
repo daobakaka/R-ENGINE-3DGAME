@@ -170,7 +170,7 @@ CustomModel* GameStartT()
     gamePlayer->GetComponent<PhysicalEngine>()->SetRotationAdjust(1);//同时设置碰撞调整系数为1，杜绝物理系统的碰撞旋转
     gamePlayer->GetComponent<PhysicalEngine>()->SetMass(5);//设置较大质量，增强碰撞抗性
     gamePlayer->AttachCollider(CollisionType::Box,SpecialType::SPlayer,1);//注册为玩家，设置较小碰撞半径避免与地面直接摩擦        
-    gamePlayer->GetComponent<CollisionBody>()->SetGameProperties(1000, 20, 1);//设置玩家攻击力
+    gamePlayer->GetComponent<CollisionBody>()->SetGameProperties(1000, 20, 10);//设置玩家攻击力
 
 
     
@@ -207,20 +207,20 @@ CustomModel* GameStartT()
 
     }
 
-    //测试石头怪
+    //石头怪，这里用自定义类声明
     for (int i = 0; i < 1; i++)
     {//这里添加了动画要声明未蒙皮网格，在动态绘制区进行绘制
-        auto* stoneMonster = new CustomModelShader("commonLight", ModelDic["stoneMonster"], true, true, true);
+        auto* stoneMonster = new GameStoneMonser("commonLight", ModelDic["stoneMonster"], true, true, true);
         stoneMonster->SetVariant(ModelClass::StoneMonser);
-        stoneMonster->Initialize(glm::vec3(-40, 20, 30), glm::quat(glm::vec3(0, PI, 0.0f)), glm::vec3(0.1F));
+        stoneMonster->Initialize(glm::vec3(-40, 10, 30), glm::quat(glm::vec3(0, 0, 0.0f)), glm::vec3(0.1F));
         manager->RegisterObject(stoneMonster);
         stoneMonster->AttachTexture(TextureDic["stoneMonster"], 0,glm::vec2(1,1));
-        stoneMonster->AttachAnimationController(AnimationDic["stoneMonster"]["fly"]);
-
+        stoneMonster->AttachAnimationController(AnimationDic["stoneMonster"]["run"]);     
+        stoneMonster->SelfIns();//用于特别情况或者异步函数或者普通的参数设置解耦
 
     }
 
-    //测试盒子
+    //测试石块
     for (int i = 0; i < 10; i++)
     {
         auto* baseCube = new CustomModelShader("commonLight", ModelDic["baseCube"], false, true, true);
@@ -229,8 +229,9 @@ CustomModel* GameStartT()
         manager->RegisterObject(baseCube);
         baseCube->AttachTexture(TextureDic["stone"], 0);
         baseCube->AttachPhysicalEngine();
-        baseCube->GetComponent<PhysicalEngine>()->SetFriction(0.4f);
+        baseCube->GetComponent<PhysicalEngine>()->SetFriction(0.7f);
         baseCube->AttachCollider();
+        baseCube->GetComponent<CollisionBody>()->SetGameProperties(100000, 3);
     }
 
     //动态萤火虫
@@ -275,6 +276,47 @@ CustomModel* GameStartT()
     grass1Instance->Initialize(glm::vec3(0.0f,-0.01f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(3));
     manager->RegisterObject(grass1Instance);
     grass1Instance->AttachTexture(TextureDic["grass2"], 0, glm::vec2(3));
+    //类异步生成更多石头怪
+    StepVector3 stepStone;
+    stepStone.position = glm::vec3(1, 0.5f, 1);
+    stepStone.scale = glm::vec3(1.0f);
+    coroutine->StartSpawnByTimerAnimation<GameStoneMonser>(
+        manager,
+        "commonLight",
+        true,
+        true,
+        ModelDic["stoneMonster"],
+        AnimationDic["stoneMonster"]["run"],
+        TextureDic["stoneMonster"],
+        0,
+        glm::vec2(1, 1),
+        ModelClass::StoneMonser,
+        30, 200,
+        stepStone,
+        glm::vec3(-50.0f, 10.0, -50.0f),//赋默认值
+        glm::vec3(0.0f, 0, 0.0f),//赋默认值
+        glm::vec3(0.1F)
+    );
+    //另一个方向
+    coroutine->StartSpawnByTimerAnimation<GameStoneMonser>(
+        manager,
+        "commonLight",
+        true,
+        true,
+        ModelDic["stoneMonster"],
+        AnimationDic["stoneMonster"]["run"],
+        TextureDic["stoneMonster"],
+        0,
+        glm::vec2(1, 1),
+        ModelClass::StoneMonser,
+        60, 200,
+        stepStone,
+        glm::vec3(50.0f, 10.0, 50.0f),//赋默认值
+        glm::vec3(0.0f, 0, 0.0f),//赋默认值
+        glm::vec3(0.1F)
+    );
+
+
 
     //类异步生成蝴蝶对象
     StepVector3 step;
@@ -291,7 +333,7 @@ CustomModel* GameStartT()
         0,
         glm::vec2(1, 1),
         ModelClass::TsetButterfly,
-        10, 20,
+        10, 20000,
         step,
         glm::vec3(0.0f, 0, 0.0f),//赋默认值
         glm::vec3(0.0f, 0, 0.0f),//赋默认值

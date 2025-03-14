@@ -464,10 +464,9 @@ void Game::MakeAnimation()
 
     AnimationDic["butterfly"]["fly"] = animaitonData;
 
-    //加载石头怪顶点动画
+    //-----加载石头怪顶点动画,动画至少三个关键帧
     keyFrames.clear();
 
-    // 添加关键帧数据1,2,3
     keyFrames.push_back(LoadVerticesFromFile("stoneMonster.obj"));
     keyFrames.push_back(LoadVerticesFromFile("stoneMonster2.obj"));
     keyFrames.push_back(LoadVerticesFromFile("stoneMonster.obj"));
@@ -478,10 +477,29 @@ void Game::MakeAnimation()
     animaitonData.loop = true;
     animaitonData.speed = 0.2f;
 
-    AnimationDic["stoneMonster"]["fly"] = animaitonData;
+    AnimationDic["stoneMonster"]["run"] = animaitonData;
+    
+    keyFrames.clear();
+    keyFrames.push_back(LoadVerticesFromFile("stoneMonster.obj"));
+    keyFrames.push_back(LoadVerticesFromFile("stoneMonsterDeath3.obj"));
+    keyFrames.push_back(LoadVerticesFromFile("stoneMonsterDeath3.obj"));
+    animaitonData.keyFrames = keyFrames;
+    animaitonData.keyFrameTimes = keyFrameTimes;
+    animaitonData.loop = false;//死亡动画非循环
+    animaitonData.speed = 0.2f;
+    AnimationDic["stoneMonster"]["die"] = animaitonData;
 
 
-
+    keyFrames.clear();
+    keyFrames.push_back(LoadVerticesFromFile("stoneMonster.obj"));
+    keyFrames.push_back(LoadVerticesFromFile("stoneMonsterAttack1.obj"));
+    keyFrames.push_back(LoadVerticesFromFile("stoneMonsterAttack2.obj"));
+    keyFrames.push_back(LoadVerticesFromFile("stoneMonster.obj"));
+    animaitonData.keyFrames = keyFrames;
+    animaitonData.keyFrameTimes = keyFrameTimes;
+    animaitonData.loop = true;//攻击动画
+    animaitonData.speed = 0.1f;
+    AnimationDic["stoneMonster"]["attack"] = animaitonData;
 
 
 #pragma endregion
