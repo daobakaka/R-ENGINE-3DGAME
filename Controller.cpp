@@ -28,6 +28,7 @@ Controller::Controller()
     view = glm::lookAt(position, position + front, up);
     projection = glm::perspective(glm::radians(fov), aspect, nearPlane, farPlane);//初始化
     instance = this;  // 单例的初始化
+    _timer=0;
     //初始化控制器
 
 
@@ -247,34 +248,30 @@ void Game::Controller::FrameControlMethodPlayer(GLFWwindow* window, CustomModel*
 
 glm::mat4 Game::Controller::GetPlayerViewMatrix(CustomModel* player,glm::vec3 offset)
 {
-    if (rightMousePressed)
-    {
-        // 计算前向向量，绕 X 轴 (pitch) 和 Y 轴 (yaw) 旋转
-        glm::vec3 _front;
-        _front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));  // 水平和垂直方向旋转影响 X
-        _front.y = sin(glm::radians(pitch));  // 仅 pitch 影响 Y（俯仰）
-        _front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));  // 水平旋转影响 Z
-
-        // 归一化前向向量
-        front = glm::normalize(_front);
-
-        //// 重新计算右向量和上向量
-        //right = glm::normalize(glm::cross(front, up));  // 右向量是前向向量和上向量的叉积
-        //up = glm::normalize(glm::cross(right, front));   // 上向量是右向量和前向向量的叉积
-    }
     // 重新计算右向量和上向量
     right = glm::normalize(glm::cross(front, up));  // 右向量是前向向量和上向量的叉积
     up = glm::normalize(glm::cross(right, front));   // 上向量是右向量和前向向量的叉积
+    if (!player->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death)
+    {
+        // 通过 position, front 和 up 向量计算视图矩阵
+        return glm::lookAt(player->position + offset, player->position + front, up);
+    }
+    else
+    {
+        auto& timer = player->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.timer;
+     
 
-    // 通过 position, front 和 up 向量计算视图矩阵
-    return glm::lookAt(player->position+offset,player-> position + front, up);
+        
+        // 使用全局上向量 (0,1,0) 计算视图矩阵
+        return glm::lookAt(player->position + offset, player->position +glm::vec3(0,timer*50,0), glm::vec3(0, 1, 0));
+    }
 
 }
 
 void Game::Controller::ProcessInputPhysics(GLFWwindow* window, CustomModel* player)
 {
     glm::vec3 velocity = player->GetComponent<PhysicalEngine>()->GetVelocity();
-    if (glm::dot(velocity, velocity) < 500)
+    if (glm::dot(velocity, velocity) < 500&&!player->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death)
     {
 
     
@@ -323,8 +320,8 @@ void Game::Controller::ProcessInputPhysics(GLFWwindow* window, CustomModel* play
         player->GetComponent<PhysicalEngine>()->GetVelocity() -= up * moveSpeed;  // 下移
     }
 }
-        // 定义旋转速度（角度：单位为弧度），可结合 deltaTime 使旋转平滑
-        float rotationSpeed = 0.05f; // 每帧旋转的弧度数，视实际需求调整
+    // 定义旋转速度（角度：单位为弧度），可结合 deltaTime 使旋转平滑
+    float rotationSpeed = 0.05f; // 每帧旋转的弧度数，视实际需求调整
 
     // 如果鼠标左键被按下，则向左旋转（绕 Y 轴正向旋转）
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {

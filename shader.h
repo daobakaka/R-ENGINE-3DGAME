@@ -1284,4 +1284,168 @@ const char* stencilTestFragmentShaderSource = R"(
         FragColor = vec4(1,1,1,0.5F);  // 白色着色器
     }
 )";
+/// <summary>
+/// 通用后处理着色器
+/// </summary>
+const char* postProcessingVertexShaderSource = R"(
+
+#version 450 core
+layout (location = 0) in vec2 aPos;    // 顶点位置
+layout (location = 1) in vec2 aTexCoords; // 纹理坐标
+
+out vec2 TexCoords; // 传递给片段着色器的纹理坐标
+
+void main() {
+    TexCoords = aTexCoords;
+    gl_Position = vec4(aPos, 0.0, 1.0); // 直接输出顶点位置
+}
+)";
+/// <summary>
+/// 通用后处理片元包含灰度、反色、模糊、锐化、边缘检测、色调映射、像素化、暗角效果、扫描线等
+/// </summary>
+const char* postProcessingCommonFragmentShaderSource = R"(
+#version 450 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D screenTexture;
+uniform int effectType;
+
+// 灰度化
+vec4 grayscale(vec4 color) {
+    float average = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+    return vec4(average, average, average, color.a);
+}
+
+// 反色
+vec4 invert(vec4 color) {
+    return vec4(vec3(1.0) - color.rgb, color.a);
+}
+
+// 核效果（用于模糊、锐化等）
+vec4 kernelEffect(vec2 texCoords, float kernel[9]) {
+    vec2 texelSize = 1.0 / textureSize(screenTexture, 0);
+    vec3 color = vec3(0.0);
+    int index = 0;
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            vec2 offset = vec2(x, y) * texelSize;
+            color += texture(screenTexture, texCoords + offset).rgb * kernel[index];
+            index++;
+        }
+    }
+    return vec4(color, 1.0);
+}
+
+void main() {
+    vec4 color = texture(screenTexture, TexCoords);
+
+    // 确保 effectType 是整数类型
+    switch (effectType) {
+        case 0: // 无效果
+            FragColor = color;
+            break;
+
+        case 1: // 灰度化
+            FragColor = grayscale(color);
+            break;
+
+        case 2: // 反色
+            FragColor = invert(color);
+            break;
+
+        case 3: { // 模糊
+            float kernel[9] = float[](
+                1.0 / 16, 2.0 / 16, 1.0 / 16,
+                2.0 / 16, 4.0 / 16, 2.0 / 16,
+                1.0 / 16, 2.0 / 16, 1.0 / 16
+            );
+            FragColor = kernelEffect(TexCoords, kernel);
+            break;
+        }
+
+        case 4: { // 锐化
+            float kernel[9] = float[](
+                -1, -1, -1,
+                -1,  9, -1,
+                -1, -1, -1
+            );
+            FragColor = kernelEffect(TexCoords, kernel);
+            break;
+        }
+
+        default: // 默认无效果
+            FragColor = color;
+            break;
+    }
+}
+
+)";
+//特殊后处理片元-光晕
+const char* postProcessingBloomFragmentShaderSource = R"(
+
+#version 450 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+uniform sampler2D screenTexture;
+uniform bool attacked;  // 当为 true 时表示玩家受到攻击
+uniform bool death;     // 当为 true 时表示玩家处于死亡状态
+uniform float deathProgress; // 取值范围 0.0～1.0，0 表示无死亡效果，1 表示全黑
+
+// 灰度化函数：将颜色转换为灰度
+vec4 grayscale(vec4 color) {
+    float average = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+    return vec4(average, average, average, color.a);
+}
+
+void main()
+{
+    // 采样原始颜色
+    vec3 origColor = texture(screenTexture, TexCoords).rgb;
+    vec3 color = origColor;
+    
+    if(attacked)
+    {
+        // 计算纹理坐标到屏幕边缘的最小距离
+        float dx = min(TexCoords.x, 1.0 - TexCoords.x);
+        float dy = min(TexCoords.y, 1.0 - TexCoords.y);
+        float edgeDist = min(dx, dy);
+        
+        // 定义边缘过渡区域阈值（0到0.1之间）
+        float threshold = 0.1;
+        // 平滑过渡因子：边缘区域 factor 接近 1，中间区域接近 0
+        float factor = 1.0 - smoothstep(0.0, threshold, edgeDist);
+        
+        // 定义半透明红色叠加效果
+        float overlayAlpha = 0.5;
+        vec3 red = vec3(1.0, 0.0, 0.0);
+        vec3 overlay = overlayAlpha * red + (1.0 - overlayAlpha) * origColor;
+        
+        // 根据 factor 混合原始颜色和红色叠加效果
+        color = mix(origColor, overlay, factor);
+    }
+    
+    // 初步结果
+    vec4 finalColor = vec4(color, 1.0);
+    
+    if(death)
+    {
+        // 将当前颜色转换为灰度
+        vec4 gray = grayscale(finalColor);
+        // 随着 deathProgress 从0到1，逐步由彩色转为灰度
+        finalColor = mix(finalColor, gray, deathProgress);
+        // 再根据 deathProgress 调暗，使得当 deathProgress==1 时，结果接近全黑
+        finalColor.rgb *= (1.0 - deathProgress);
+    }
+    
+    FragColor = finalColor;
+}
+
+
+)";
+
+
+
 #endif

@@ -99,6 +99,7 @@ namespace Game {
 		void UseDepthShaderProgram();
 		//获取shader
 		GLint GetDepthShaderProgram();
+		float _timer = 0;//C++的值必须要初始化
 	
 
 #pragma region 新增玩家模块

@@ -82,10 +82,46 @@ void ShderViewPortRenderingT(const glm::mat4& view, const glm::mat4& projection,
     lightRender->UnbindDepthTestBuffer();//绘制完成之后，解除绑定深度测试的视口贴图
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
     shaderManager->UseShader("depthLinerVisual");
-    lightRender->RenderDopthTestTexture(shaderManager->GetShader("depthLinerVisual"));//计算视口的深度图
+    lightRender->RenderDepthTestTexture(shaderManager->GetShader("depthLinerVisual"));//计算视口的深度图
+
 
 }
+//全局后处理
+void PostProcessingT(const glm::mat4& view, const glm::mat4& projection, GLFWwindow* window, CustomModel* player)
+{
+    lightRender->UbindPostProcessingBuffer();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲和模板缓冲
+    shaderManager->UseShader("postProcessingBloom");
+    if (player->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.underAttack == true)
+    {
+        player->timeAccumulator += 0.0167f;
+        shaderManager->SetBool("postProcessingBloom", "attacked", true);
 
+    }
+    if (player->timeAccumulator > 0.5f)
+    {
+       player-> GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.underAttack = false;
+        shaderManager->SetBool("postProcessingBloom", "attacked", false);
+        player->timeAccumulator = 0;
+    }
+    if (player->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health <= 0)
+    {
+        auto& timer = player->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.timer;
+        timer += 0.0167f*0.5F;
+        player->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death = true;
+        player->GetComponent<CollisionBody>()->GetCollisionProperties().isActive = false; //解除碰撞及物理检测
+        shaderManager->SetBool("postProcessingBloom", "death", true);//设置shader玩家的死亡效果
+        if (timer>0.9f)
+        {
+            timer = 0.9f;
+        }
+        shaderManager->SetFloat("postProcessingBloom", "deathProgress", timer);//设置shader玩家的死亡效果
+    }
+    lightRender->RenderPostProcessingTexture(shaderManager->GetShader("postProcessingBloom"));
+    
+
+
+}
 
 //平行光统一参数传入和阴影传入部分
 void LightGlobalCalculate()
@@ -110,10 +146,10 @@ void LightGlobalCalculate()
     shaderManager->SetFloat("waveShader", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
 }
 
-void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window, CustomModel* player)
+void GameUpdateMainLogicT(const glm::mat4& view, const glm::mat4& projection, GLFWwindow* window, CustomModel* player)
 {
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲和模板缓冲
     //执行光源参数的全局输入
     LightGlobalCalculate();
     //每帧清空可移除对象
@@ -122,59 +158,54 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
     toDestory.clear();
     //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
     //遍历执行池
-  //  player->Update(view, projection);//玩家方法起始更新
-    for (auto &item : manager->GetNativeObjects()) {
-        //现在更改为使用构造化方式，统一使用
-        if (item.second->GetVariant() == 0)
-        {
-            scripts->TChangeRandom(-0.01f, 0.01f);//改变构造随机种子
-            // scripts->CubeUpdateFun(item); // 使用迭代器遍历链表并调用每个,暂时理解为一个遍历语法糖
-        }
-        else if (item.second->GetVariant() == ModelClass::BlackHoleE)
-        {
-            //脚本方法，执行综合方法
-          scripts->TestUpdateFun(item.second);
-         
-        }
-        else if (item.second->GetVariant() == ModelClass::ParallelLight)//平行光旋转，后面增加其他逻辑
-        {
+    for (auto& item : manager->GetNativeObjects()) {
+        switch (item.second->GetVariant()) {
 
-            scripts->TParallelLightRotation(item.second);
+        case ModelClass::BlackHoleE: // 对应 else if (item.second->GetVariant() == ModelClass::BlackHoleE)
+            scripts->TestUpdateFun(item.second); // 脚本方法，执行综合方法
+            break;
 
-        }
-        else if (item.second->GetVariant() == ModelClass::StoneMonser)
-        {          
-            // 播放动画,也可以在内部         
-           // 
-            //怪物生命监测
-            if (item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death==true)
-            {
-                toActiveFalse.push_back(item.second);
-            }
+        case ModelClass::ParallelLight: // 对应 else if (item.second->GetVariant() == ModelClass::ParallelLight)
+            scripts->TParallelLightRotation(item.second); // 平行光旋转
+            break;
 
-        }
-        else if (item.second->GetVariant() == ModelClass::TsetButterfly)
-        {
-            item.second->PlayAnimation(0, 0.1f);//播放简易顶点动画
-            if (item.second->_timeAccumulator>=120)
-            {
-                toDestory.push_back(item.second);//测试蝴蝶超过120秒消失，不用重新加载的对象，放入销毁列表
+        case ModelClass::StoneMonser: // 对应 else if (item.second->GetVariant() == ModelClass::StoneMonser)
+            if (item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death == true) {
+                toActiveFalse.push_back(item.second); // 怪物生命监测
             }
-        }
-        else if (item.second->GetVariant() == ModelClass::TestPhysics)
-        {
-            //设置生命值小于0时，物体消失，需要重复加载的对象，放入对象池以复用
-            if(item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health<=0)
-            toActiveFalse .push_back(item.second);
-        }
-        else if (item.second->GetVariant() == ModelClass::PlayerBullet)
-        {
-            if (item.second->_timeAccumulator >= 30)
-            {
-                toDestory.push_back(item.second);//玩家子弹超过30秒销毁
+            break;
+
+        case ModelClass::TsetButterfly: // 对应 else if (item.second->GetVariant() == ModelClass::TsetButterfly)
+            item.second->PlayAnimation(0, 0.1f); // 播放简易顶点动画
+            if (item.second->timeAccumulator >= 120) {
+                toDestory.push_back(item.second); // 测试蝴蝶超过120秒消失
             }
+            break;
+
+        case ModelClass::TestPhysics: // 对应 else if (item.second->GetVariant() == ModelClass::TestPhysics)
+            if (item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health <= 0) {
+                toActiveFalse.push_back(item.second); // 设置生命值小于0时，物体消失
+            }
+            break;
+
+        case ModelClass::PlayerBullet: // 对应 else if (item.second->GetVariant() == ModelClass::PlayerBullet)
+            if (item.second->timeAccumulator >= 30) {
+                toDestory.push_back(item.second); // 玩家子弹超过30秒销毁
+            }
+            break;
+
+        case ModelClass::Player: // 对应 else if (item.second->GetVariant() == ModelClass::Player)
+            if (item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death == true) {
+                // 玩家死亡逻辑
+                
+              
+
+            }
+            break;
+
+        default: 
+            break;
         }
-       
     }
 
 
@@ -220,11 +251,14 @@ void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* wind
 /// <param name="projection"></param>
 /// <param name="window"></param>
 /// <param name="player"></param>
-void GameUpdateBufferTestT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window, CustomModel* player)
+void GameUpdateBufferTestT(const glm::mat4& view, const glm::mat4& projection, GLFWwindow* window, CustomModel* player)
 {
 
     //玩家综合性脚本操控
-    scripts->PlayerControl(window, manager->GetspecialObjects()["player"]);
+    if (!player->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death)
+    {
+        scripts->PlayerControl(window, manager->GetspecialObjects()["player"]);
+    }
     //测试执行区域
     manager->GetspecialObjects()["treeInstance"]->Update(view, projection);
     //玩家模板测试

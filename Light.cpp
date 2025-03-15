@@ -444,7 +444,7 @@ void Game::LightRender::UnbindDepthTestBuffer()
     glViewport(0, 0, 2400, 1200);//阴影贴图渲染完成之后，解绑缓冲区，恢复本来的视口
 }
 
-void Game::LightRender::RenderDopthTestTexture(GLuint shader)
+void Game::LightRender::RenderDepthTestTexture(GLuint shader)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _depthMapTest);
@@ -493,7 +493,99 @@ void Game::LightRender::RenderDopthTestTexture(GLuint shader)
 }
 
 
-LightRender::LightRender() {
+ GLuint Game::LightRender::CreatePostProcessingMap()
+ {
+     // 创建 FBO 对象
+     glGenFramebuffers(1, &_postProcessingMapFBO);
+     glBindFramebuffer(GL_FRAMEBUFFER, _postProcessingMapFBO);
+
+     // 创建颜色纹理
+     glGenTextures(1, &_postProcessingMap);
+     glBindTexture(GL_TEXTURE_2D, _postProcessingMap);
+     // 使用颜色格式 GL_RGBA8
+     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4800, 2400, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+     // 将颜色纹理附加到 FBO 的颜色附件0
+     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _postProcessingMap, 0);
+
+     // 创建深度/模板渲染缓冲对象（RBO）
+     GLuint depthRBO;
+     glGenRenderbuffers(1, &depthRBO);
+     glBindRenderbuffer(GL_RENDERBUFFER, depthRBO);
+     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 4800, 2400);
+     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthRBO);
+
+     // 指定 FBO 的绘制目标为颜色附件 0
+     GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+     glDrawBuffers(1, drawBuffers);
+
+     // 检查 FBO 状态
+     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+     if (status != GL_FRAMEBUFFER_COMPLETE)
+     {
+         std::cout << "Post Processing FBO is incomplete! Status: 0x"
+             << std::hex << status << std::endl;
+     }
+
+     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+     return _postProcessingMapFBO;
+ }
+
+ void Game::LightRender::BindPostProcessingBuffer()
+ {
+     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);  // 清空深度缓冲,颜色缓冲，模板缓冲
+     glBindFramebuffer(GL_FRAMEBUFFER, _postProcessingMapFBO);//绑定初始化好的缓冲参数
+     glViewport(0, 0, 4800, 2400);//调整视口以适应阴影贴图分辨率
+
+ }
+
+ void Game::LightRender::UbindPostProcessingBuffer()
+ {
+     glBindFramebuffer(GL_FRAMEBUFFER, 0);//解除绑定
+     glViewport(0, 0, 2400,1200);//全局贴图渲染完成之后，恢复到原本视口，这里采用4800：2400高清贴图
+
+
+
+ }
+
+ void Game::LightRender::RenderPostProcessingTexture(GLuint shader)
+ {
+     glActiveTexture(GL_TEXTURE0);
+     glBindTexture(GL_TEXTURE_2D, _postProcessingMap);
+
+     GLuint postProcessingMapLoc = glGetUniformLocation(shader, "screenTexture");
+     glUniform1i(postProcessingMapLoc, 0);  // 将纹理单元0传递给着色器
+
+
+     if (quadVAO2 == 0)
+     {
+         float quadVertices[] = {
+             // positions        // texture Coords
+             -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+             -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+              1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+              1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+         };
+         // setup plane VAO
+         glGenVertexArrays(1, &quadVAO2);
+         glGenBuffers(1, &quadVBO2);
+         glBindVertexArray(quadVAO2);
+         glBindBuffer(GL_ARRAY_BUFFER, quadVBO2);
+         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+         glEnableVertexAttribArray(0);
+         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+         glEnableVertexAttribArray(1);
+         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+     }
+     glBindVertexArray(quadVAO2);
+     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+     glBindVertexArray(0);
+ }
+
+ LightRender::LightRender() {
     
 
     

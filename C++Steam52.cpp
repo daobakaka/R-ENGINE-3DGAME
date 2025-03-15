@@ -42,9 +42,10 @@ extern CustomModel* GameStartT();
 extern void LightInitialization();
 extern void SourceInitialize();
 extern void GameUpdateShadowRenderT(const glm::mat4& view, CustomModel* player, glm::vec3 offset);
-extern void GameUpdateMainLogicT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window, CustomModel* player);
-extern void GameUpdateBufferTestT(glm::mat4 view, glm::mat4 projection, GLFWwindow* window, CustomModel* player);
+extern void GameUpdateMainLogicT(const glm::mat4& view, const glm::mat4& projection, GLFWwindow* window, CustomModel* player);
+extern void GameUpdateBufferTestT(const glm::mat4& view, const glm::mat4& projection, GLFWwindow* window, CustomModel* player);
 extern void ShderViewPortRenderingT(const glm::mat4& view, const glm::mat4& projection,  CustomModel* player);
+extern void PostProcessingT(const glm::mat4& view, const glm::mat4& projectionn, GLFWwindow* window, CustomModel* player);
 //控制组件标识
 extern Controller* controller;
 extern LifecycleManager<CustomModel>* manager;
@@ -126,30 +127,41 @@ int GLins() {
         shaderManager->SetMat4("fireflyInstanceShader", "view", view);
         shaderManager->SetMat4("fireflyInstanceShader", "projection", projection);
 #pragma endregion
-        //这里渲染平行光阴影正交深度图
+        //多通道渲染
+        //通道1:这里渲染平行光阴影正交深度图
         if (true)
         {
             GameUpdateShadowRenderT(view,gamePlayer, glm::vec3(0, 30, 100));
         }
-        //后处理渲染,这里渲染视口投影矩阵深度图
+        //通道2：透视视口深度图渲染
         if (true)
         {
              ShderViewPortRenderingT(view, projection,gamePlayer);
         }
-        //主逻辑
+        //通道3：离屏渲染和主逻辑
         if (true)
         {
+            //绑定后处理的离屏帧缓冲对象，这里用于后处理，不需要后处理这里可以注释掉
+            lightRender->BindPostProcessingBuffer();
+
             GameUpdateMainLogicT(view, projection,window,gamePlayer);
             //保持天空盒在其他物体之前渲染,渲染天空盒
             skybox->Draw(view, projection);
             //控制器更新方法1、基本更新2、变体更新
             manager->UpdateAll(view, projection);
             manager->UpdateAllVariant(view, projection);
-            //执行三种渲染测试方法的特殊区域，后处理
+            //执行三种渲染测试方法的特殊区域，模板、深度
             GameUpdateBufferTestT(view, projection, window, gamePlayer);
+        }
+        //通道4：后处理渲染
+        if (true)
+        {
+            PostProcessingT(view, projection, window, gamePlayer);
         }
         //字体渲染
         cusText->RenderText("FPS :" + std::to_string(scripts->TUpdateFPS()), 2200.0f, 1150.0f, .70f, glm::vec3(1.0f, .50f, 1.0f));//帧率渲染
+        //字体渲染
+      //  cusText->RenderText("FPS :" + std::to_string(scripts->TUpdateFPS()), 2200.0f, 1150.0f, .70f, glm::vec3(1.0f, .50f, 1.0f));//帧率渲染
         //设置时间控制器，将协程的方法在主循环中进行时间控制
         coroutine->CoroutineUpdate();
         //帧率控制，目前是使用比较笨的阻塞方法

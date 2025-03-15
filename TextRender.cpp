@@ -163,7 +163,7 @@ void TextRender::InitializeTextRender(const char* textRenderVertex, const char* 
 // 渲染文本
 void TextRender::RenderText(const std::string& text, float x, float y, float scale, glm::vec3 color) {
 
-
+    glDisable(GL_DEPTH_TEST);  // 文字渲染通常关闭深度测试
     //--关于UI 的渲染  
 #pragma region 状态处理区域，处理完成之后需要归还状态
 
@@ -221,6 +221,7 @@ void TextRender::RenderText(const std::string& text, float x, float y, float sca
         x += (ch.Advance >> 6) * scale;  // 以像素为单位的宽度
     }
     glBindVertexArray(0);
+    glEnable(GL_DEPTH_TEST);
 #pragma endregion
 
 }

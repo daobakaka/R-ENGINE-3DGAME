@@ -601,7 +601,7 @@ void Game::CustomModelInstance::GenerateInstanceMatrices(ModelClass type)
 
         // 设置整体偏移参数
         float offsetX = 0.0f; // X 轴整体偏移
-        float offsetZ = 20.0f; // Z 轴整体偏移
+        float offsetZ = 1.0f; // Z 轴整体偏移
 
         for (int layer = 0; layer < layers; layer++) {
             // 计算当前层的半径
@@ -991,12 +991,7 @@ void ButterflyScriptShader::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 
 void GamePlayer::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
-
-
-
-
-    
-
+//因为存在全局后处理，涉及到shader的相关操作要放到后处理区域进行
 
 }
 void Game::GamePlayer::Start()
@@ -1006,6 +1001,9 @@ void Game::GamePlayer::Start()
     _manager= LifecycleManager<CustomModel>::GetInstance();
     //获取控制器组件
     _controller = Controller::GetInstance();
+    //获取着色器控制组件
+    _shaderManager = ShaderManager::GetInstance();
+   
 }
 
 void Game::GamePlayer::UniformParametersInput()
@@ -1340,7 +1338,7 @@ void Game::GameStoneMonser::UpdateVariant(glm::mat4 view, glm::mat4 projection)
     {
         glm::vec2 lengthSqrt = glm::vec2(position.x - _player->position.x, position.z - _player->position.z);
         
-        if (glm::dot(lengthSqrt,lengthSqrt) >100)
+        if (glm::dot(lengthSqrt,lengthSqrt) >80)
 
         {                    
                 glm::vec2 direction = glm::vec2(_player->position.x, _player->position.z) - glm::vec2(position.x, position.z);

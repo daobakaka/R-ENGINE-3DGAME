@@ -11,6 +11,7 @@ namespace Game
 	//全局唯一标识
 	//extern int TGUID;
 	class CustomModel;
+	class ShaderManager;
 	/// <summary>
 	/// 初始蝴蝶模型
 	/// </summary>
@@ -265,12 +266,10 @@ namespace Game
 		void RenderingStencilTest();
 
 		void SpecialMethod() override;
-		
 	private:
 		LifecycleManager<CustomModel>* _manager;
 		Controller* _controller;
-
-
+		ShaderManager* _shaderManager;
 
 	};
 
@@ -312,7 +311,9 @@ namespace Game
 
 	};
 #pragma endregion
-
+	/// <summary>
+	/// 石头怪
+	/// </summary>
 	class GameStoneMonser :public CustomModelShader
 	{
 	public:

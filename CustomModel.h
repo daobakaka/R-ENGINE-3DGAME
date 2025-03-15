@@ -91,7 +91,8 @@ namespace Game {
         //获取状态
         bool GetActiveState()const ;
         //额外游戏参数
-        float _timeAccumulator;//独立的时间计数器
+        float timeAccumulator=0;//独立的时间计数器,外部可直接访问
+        
 
     protected:
 #pragma region   数组初始化原则：{}只能在声明时进行初始化
@@ -124,7 +125,7 @@ namespace Game {
         int ID;
         //允许渲染视口透视深度图，必须通过CustomModelShader类生成
         bool _enableDepth;
-   
+        float _timeAccumulator=0;//独立的时间计数器,供内部使用
 
 
         //采用 consterxpr  绕过无效编译检查， static_assert 断言 进行编译阶段检查

@@ -129,16 +129,23 @@ namespace Game {
         /// <returns></returns>
         GLuint CreateDepthMapForTest();
 
-        //渲染深度测试图
+        //---渲染视口深度图
         void BindDepthTestBuffer();
 
         void UnbindDepthTestBuffer();
 
-        void RenderDopthTestTexture(GLuint shader);
+        void RenderDepthTestTexture(GLuint shader);
         
         glm::mat4 GetDepthMapCrossView(const glm::mat4& camerView, CustomModel* player, glm::vec3 offset);
+        /// <summary>
+        /// 创建后处理贴图
+        /// </summary>
+        /// <returns></returns>
+        GLuint CreatePostProcessingMap();
 
-
+        void BindPostProcessingBuffer();
+        void UbindPostProcessingBuffer();
+        void RenderPostProcessingTexture(GLuint shader);
         
     private:
         LightRender();
@@ -149,23 +156,30 @@ namespace Game {
         static LightRender* instance;
 
     public:
-        GLuint _depthMapParallelFBO;//阴影深度1
-        GLuint _depthMapTestFBO;//深度测试1
+        GLuint _depthMapParallelFBO;//阴影深度缓冲1
+        GLuint _depthMapTestFBO;//深度测试缓冲1
+        GLuint _postProcessingMapFBO;//后处缓冲1
     protected:
         GLuint _depthMapParallel;//阴影深度2
         GLuint _depthMapTest;//深度测试2
+        GLuint _postProcessingMap;//后处理1
+        //--
         GLuint _depthShaderProgram;
         GLuint _depthTestShader;
         GLuint _depthVisualShader;
         glm::mat4 _lightSpaceMatrix;
-        
 
     private:
+        //可以使用一组复用，这里先用三组分用
+        //平行光正交深度
         GLuint quadVAO = 0;
         GLuint quadVBO;
-
+        //视口透视深度
         GLuint quadVAO1 = 0;
         GLuint quadVBO1;
+        //后处理全局纹理
+        GLuint quadVAO2 = 0;
+        GLuint quadVBO2;
     };
 
 

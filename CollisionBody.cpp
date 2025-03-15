@@ -529,6 +529,7 @@ namespace Game {
             {
                 _collisionProperties.gameProperties.health -= other->gameProperties.damage;
                 std::cout << _collisionProperties.ID << "ÉúÃüÖµÎª£º" << _collisionProperties.gameProperties.health << std::endl;
+                _collisionProperties.gameProperties.underAttack = true;
             }
         }
         

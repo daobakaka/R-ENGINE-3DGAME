@@ -101,6 +101,12 @@ void Game::ShaderManager::IntegratedShaderCompile()
     //投影深度图计算,投影深度图可视化
     ShaderCompile(depthViewPortShaderVertexShaderSource, depthViewPortShaderFragmentShaderSource, "depthViewPortCal");
     ShaderCompile(depthVisualShaderVertexShaderSource, depthLinerVisualShaderFragmentShaderSource, "depthLinerVisual");
+
+    //后处理shader 通用、光晕
+    ShaderCompile(postProcessingVertexShaderSource, postProcessingCommonFragmentShaderSource, "postProcessingCommon");
+    std::cout << "完成编译检测shader1" << std::endl;
+    ShaderCompile(postProcessingVertexShaderSource, postProcessingBloomFragmentShaderSource, "postProcessingBloom");
+    std::cout << "完成编译检测shader2" << std::endl;
 }
 
 // Set methods for various uniform types

@@ -132,8 +132,10 @@ void LightInitialization()
 //但通过灯光渲染逻辑，现在实现了类似游戏引擎的光线渲染逻辑判断
 //初始化用于渲染阴影的平行光深度图，可以在类中直接构造，编译阴影着色器
     lightRender->CreateShadowMapForParallelLight();
-    //初始化用于渲染视口深度图的缓冲区，用于渲染视口深度图,用于后处理
+    //初始化用于渲染视口深度图的缓冲区，用于渲染视口深度图,用于后续渲染的深度运用
     lightRender->CreateDepthMapForTest();
+    //初始化用于后处理离屏帧缓冲区，用于屏幕图像的后处理
+    lightRender->CreatePostProcessingMap();
     //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
     auto pointLight2 = lightSpawner->SpawPointLight(glm::vec3(60, 5, 20), glm::vec3(1, 1, 1), 10);
     auto pointLight = lightSpawner->SpawPointLight(glm::vec3(30, 5, 0), glm::vec3(0, 1, 1), 10);
@@ -174,7 +176,7 @@ CustomModel* GameStartT()
 
 
     
-    //测试黑洞
+    //生成场景黑洞
     for (int i = 0; i <1; i++)
     {
         auto* baseSphere = new BlackHole("commonNoneLight", ModelDic["blackHole"], false, false, false);
@@ -185,7 +187,7 @@ CustomModel* GameStartT()
         baseSphere->AttachTexture(TextureDic["blackHole"], 0,glm::vec3(10));
 
     }
-    //测试树
+    //场景无光照shader树
     for (int i = 0; i < 1; i++)
     {
         auto* tree = new NoneLightModel("commonNoneLight", ModelDic["tree"], false, false, true);
@@ -196,7 +198,7 @@ CustomModel* GameStartT()
 
     }
 
-    //测试宝箱
+    //光照宝箱
     for (int i = 0; i < 1; i++)
     {
         auto* chest = new CustomModelShader("commonLight", ModelDic["chest"], false, true, true);
@@ -212,7 +214,7 @@ CustomModel* GameStartT()
     {//这里添加了动画要声明未蒙皮网格，在动态绘制区进行绘制
         auto* stoneMonster = new GameStoneMonser("commonLight", ModelDic["stoneMonster"], true, true, true);
         stoneMonster->SetVariant(ModelClass::StoneMonser);
-        stoneMonster->Initialize(glm::vec3(-40, 10, 30), glm::quat(glm::vec3(0, 0, 0.0f)), glm::vec3(0.1F));
+        stoneMonster->Initialize(glm::vec3(50, 10, -100), glm::quat(glm::vec3(0, 0, 0.0f)), glm::vec3(0.1F));
         manager->RegisterObject(stoneMonster);
         stoneMonster->AttachTexture(TextureDic["stoneMonster"], 0,glm::vec2(1,1));
         stoneMonster->AttachAnimationController(AnimationDic["stoneMonster"]["run"]);     
@@ -221,15 +223,16 @@ CustomModel* GameStartT()
     }
 
     //测试石块
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 5; i++)
     {
         auto* baseCube = new CustomModelShader("commonLight", ModelDic["baseCube"], false, true, true);
         baseCube->SetVariant(ModelClass::TestPhysics);
-        baseCube->Initialize(glm::vec3(-100+6.0f + 10.0f * i, 6.0f, -30.0f), glm::quat(glm::vec3(0.0f, 60.0f, 0.0f)), glm::vec3(3));
+        baseCube->Initialize(glm::vec3(-100+6.0f + 20.0f * i, 6.0f, -30.0f), glm::quat(glm::vec3(0.0f, 60.0f, 0.0f)), glm::vec3(3));
         manager->RegisterObject(baseCube);
         baseCube->AttachTexture(TextureDic["stone"], 0);
         baseCube->AttachPhysicalEngine();
         baseCube->GetComponent<PhysicalEngine>()->SetFriction(0.7f);
+        baseCube->GetComponent<PhysicalEngine>()->SetMass(10);//设置石块较大质量
         baseCube->AttachCollider();
         baseCube->GetComponent<CollisionBody>()->SetGameProperties(100000, 3);
     }
@@ -297,7 +300,7 @@ CustomModel* GameStartT()
         glm::vec3(0.0f, 0, 0.0f),//赋默认值
         glm::vec3(0.1F)
     );
-    //另一个方向
+    //另一个方向的石头怪
     coroutine->StartSpawnByTimerAnimation<GameStoneMonser>(
         manager,
         "commonLight",
@@ -309,14 +312,12 @@ CustomModel* GameStartT()
         0,
         glm::vec2(1, 1),
         ModelClass::StoneMonser,
-        60, 200,
+        70, 200,
         stepStone,
         glm::vec3(50.0f, 10.0, 50.0f),//赋默认值
         glm::vec3(0.0f, 0, 0.0f),//赋默认值
         glm::vec3(0.1F)
     );
-
-
 
     //类异步生成蝴蝶对象
     StepVector3 step;
