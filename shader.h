@@ -298,8 +298,11 @@ uniform sampler2D baseTexture;  // 基础纹理采样器
 uniform sampler2D normalTexture; // 法线纹理采样器
 uniform sampler2D heightTexture; // 高度贴图
 uniform sampler2D roughnessTexture; // 糙度贴图
-uniform samplerCube specularTexture; // 高光反射贴图（原名 reflectionTexture）
+uniform samplerCube specularCubeTexture; // 高光反射环境贴图
+uniform sampler2D specularTexture; // 高光反射2D贴图
 uniform sampler2D aoTexture;  // 环境光遮蔽贴图
+uniform sampler2D opacityTexture;//透明度贴图
+
 
 //--平行光贴图
 uniform sampler2D autoParallelShadowMap;//平行光光照贴图，用于生成主阴影
@@ -400,13 +403,19 @@ void main() {
     // 采样环境光遮蔽纹理并调整 AO
     float aoValue = texture(aoTexture, adjustedTexCoord).r * ao;
 
-    // 采样高光反射纹理
+    //采样高光反射环境纹理
     vec3 reflectionDir = reflect(-viewDir, norm);
-    vec3 specularColor = texture(specularTexture, reflectionDir).rgb;
+    vec3 envReflection = texture(specularCubeTexture, reflectionDir).rgb;
+    //采样高光反射2D纹理
+    vec3 specularColor2D = texture(specularTexture, TexCoord).rgb;
+    vec3 specularColor =specularColor2D*envReflection;
+
 
     // 采样基础纹理并调整基础颜色
     vec4 texColor = texture(baseTexture, adjustedTexCoord);
     vec3 finalBaseColor = baseColor * texColor.rgb;
+    // 采样透明度贴图并调整透明度
+    float opacityValue = texture(opacityTexture, adjustedTexCoord).r * opacity;
 
     // 初始化光照贡献
     vec3 ambientTotal = vec3(0.0);
@@ -492,7 +501,7 @@ if (parallelLightIntensity > 0.0001) {
     vec3 lighting = ambientTotal * aoValue + diffuseTotal + specularColor * metallic;
 
     // 计算光线损失
-    float lightLoss = calculateLightLoss(opacity, IOR);
+    float lightLoss = calculateLightLoss(opacityValue, IOR);
 
     // 最终颜色 = (光照效果 × 物体固有色) + 自发光
     vec3 result = lighting * finalBaseColor * (1.0 - lightLoss) + emission;
@@ -501,7 +510,7 @@ if (parallelLightIntensity > 0.0001) {
      { discard;  }
 
     // 输出颜色
-    FragColor = vec4(result, opacity) * texColor;
+    FragColor = vec4(result, opacityValue) * texColor;
 }
 )";
 /// <summary>
@@ -628,8 +637,10 @@ uniform sampler2D baseTexture;      // 基础纹理
 uniform sampler2D normalTexture;     // 法线纹理
 uniform sampler2D heightTexture;     // 高度贴图（用于视差映射）
 uniform sampler2D roughnessTexture;   // 粗糙度贴图
-uniform samplerCube specularTexture;  // 反光贴图（cube map）
+uniform samplerCube specularCubeTexture; // 高光反射环境贴图
+uniform sampler2D specularTexture; // 高光反射2D贴图
 uniform sampler2D aoTexture;          // 环境光遮蔽贴图
+uniform sampler2D opacityTexture;   // 透明度贴图
 
 // 阴影相关（保留方向光阴影计算）
 uniform sampler2D autoParallelShadowMap; // 平行光阴影贴图
@@ -657,13 +668,19 @@ void main()
     // 采样环境光遮蔽纹理并调整 AO
     float aoValue = texture(aoTexture, adjustedTexCoord).r * ao;
 
-    // 采样高光反射纹理
+    //采样高光反射环境纹理
     vec3 reflectionDir = reflect(-viewDir, norm);
-    vec3 specularColor = texture(specularTexture, reflectionDir).rgb;
+    vec3 envReflection = texture(specularCubeTexture, reflectionDir).rgb;
+    //采样高光反射2D纹理
+    vec3 specularColor2D = texture(specularTexture, TexCoord).rgb;
+    vec3 specularColor =specularColor2D*envReflection;
 
     // 采样基础纹理并调整基础颜色
     vec4 texColor = texture(baseTexture, adjustedTexCoord);
     vec3 finalBaseColor = baseColor * texColor.rgb;
+
+    // 采样透明度贴图并调整透明度
+    float opacityValue = texture(opacityTexture, adjustedTexCoord).r * opacity;
 
  // ---- 阴影计算（方向光阴影） ----
 vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
@@ -705,7 +722,7 @@ finalBaseColor *= (1.0 - shadow);
        //溶解度阈值丢弃像素
     if(texColor.r<dissolveThreshold)
      { discard;  }
-     FragColor = vec4(result, opacity) * texColor;
+     FragColor = vec4(result, opacityValue) * texColor;
 
 
 }

@@ -34,8 +34,10 @@ CoroutineMethod* coroutine ;
 LightSpawner* lightSpawner ;
 LightRender* lightRender ;
 ShaderManager* shaderManager;
-
-
+//全局纹理渲染
+extern void RenderingTextureGlobal(GLuint shaderProgram, const std::unordered_map<PictureTpye, GLuint>& textures, glm::vec2 textureScale = glm::vec2(1, 1), int textureOrder = 0);
+//全局参数传入
+extern void PassUniformParametersGlobal(GLuint shaderProgram, glm::vec3 baseColor, glm::vec3 emission, float metallic, float roughness, float opacity, float IOR, float ao, float dissolveThreshold = 0);
 void CallbackMouseScrollGlobal(GLFWwindow* window, double xoffset, double yoffset)
 {
 
@@ -66,7 +68,6 @@ GLFWwindow* GLinitializeT()
     }
     // 获取窗口尺寸
     glfwGetWindowSize(window, &controller->windowWidth, &controller->windowHeight);
-
     // 启用深度测试等
     glEnable(GL_DEPTH_TEST);//深度测试
     glEnable(GL_ALPHA_TEST);//alpha测试
@@ -74,15 +75,6 @@ GLFWwindow* GLinitializeT()
     glDepthFunc(GL_LESS); // 设置深度函数，通常使用GL_LESS
     glEnable(GL_BLEND);// 设置深度函数，通常使用GL_LESS
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //启用混合
-   // glEnable(GL_BLEND);
-   // glDisable(GL_BLEND);  // 禁用混合
-    // glDepthFunc(GL_LESS);
-    // glEnable(GL_CULL_FACE);
-   // glDisable(GL_CULL_FACE);
-    // glCullFace(GL_FRONT);   // 只剔除背面//背面剔除
-
-
     return window;
 }
 
@@ -128,108 +120,119 @@ void SourceInitialize()
 void LightInitialization()
 {
 
-    //预定义最大光源数量，这里可以做性能限定，目前光照的实现均为实时光照，目前没有提供注入模式，目前没有限制
-//但通过灯光渲染逻辑，现在实现了类似游戏引擎的光线渲染逻辑判断
-//初始化用于渲染阴影的平行光深度图，可以在类中直接构造，编译阴影着色器
+    //预定义最大光源数量，这里可以做性能限定，目前光照的实现均为实时光照
+    //初始化用于渲染阴影的平行光深度图，可以在类中直接构造，编译阴影着色器
     lightRender->CreateShadowMapForParallelLight();
     //初始化用于渲染视口深度图的缓冲区，用于渲染视口深度图,用于后续渲染的深度运用
     lightRender->CreateDepthMapForTest();
     //初始化用于后处理离屏帧缓冲区，用于屏幕图像的后处理
     lightRender->CreatePostProcessingMap();
     //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
-    auto pointLight2 = lightSpawner->SpawPointLight(glm::vec3(60, 5, 20), glm::vec3(1, 1, 1), 10);
+  //  auto pointLight2 = lightSpawner->SpawPointLight(glm::vec3(60, 5, 20), glm::vec3(1, 1, 1), 10);
     auto pointLight = lightSpawner->SpawPointLight(glm::vec3(30, 5, 0), glm::vec3(0, 1, 1), 10);
     auto pointLight3 = lightSpawner->SpawPointLight(glm::vec3(-15, 5, 0), glm::vec3(0, 1, 0), 10);
     auto pointLight4 = lightSpawner->SpawPointLight(glm::vec3(-30, 5, -30), glm::vec3(0, 0, 1), 10);
-
+    //增加场景灯光
+    auto pointLight5 = lightSpawner->SpawPointLight(glm::vec3(-70, 5, -10), glm::vec3(1, 0, 1), 10);
+   // auto pointLight6 = lightSpawner->SpawPointLight(glm::vec3(70, 5, 30), glm::vec3(1, 0, 0), 10);
     //平行光使用灯光生成器生成，默认一个
     auto parallelLight = lightSpawner->SpawParallelLight(glm::vec3(1,-1,1), glm::vec3(1, 1, 1), 1);//使用默认值 强度10
     //手电筒光使用灯光生成器生成，默认支持4个
-    auto splashLight = lightSpawner->SpawFlashLight(glm::vec3(0, 7, 20), glm::vec3(0, -1, 0),glm::vec3(1,0,0),20);//使用默认值 强度10
+    auto splashLight = lightSpawner->SpawFlashLight(glm::vec3(-20, 10, 20), glm::vec3(0, -1, 0),glm::vec3(1,0,0),30);//使用默认值 强度10
 
 }
 CustomModel* GameStartT()
 {
-    //生成基础面 默认第一，ID 为1
-    auto* basePlane = new  CustomModelShader("commonLight", ModelDic["basePlane"], false, true, false,false);
+    //光照基础面 默认第一，ID 为1
+    auto* basePlane = new  CustomModelShader("planeCommonLight", ModelDic["basePlane"], false, true, false,false);
     basePlane->SetVariant(ModelClass::StaticPlane);
     basePlane->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(1000.0f, 0.1f, 1000.0f));
     manager->RegisterObject(basePlane);
     basePlane->AttachTexture(TextureDic["grass"], 0, glm::vec2(50, 50));
+    basePlane->UniformParametersIns(glm::vec3(0.3f), glm::vec3(0.1f), 0.9f, 0.5f, 1, 1.33f, 0.6f, 0);
     basePlane->AttachPhysicalEngine(true);//声明为静态类型，目前注册为1
     basePlane->AttachCollider(CollisionType::Box,SpecialType::BasePlane,1);//注册特殊碰撞体--地板
 
-    //生成游戏玩家
-    auto* gamePlayer = new  GamePlayer("commonLight", ModelDic["testMonkey"], true, true, true);
+    //生成光照游戏玩家
+    auto* gamePlayer = new  GamePlayer("playerCommonLight", ModelDic["testMonkey"], false, true, true);
     gamePlayer->SetVariant(ModelClass::Player);
     gamePlayer->Initialize(glm::vec3(0.0f, 5.0f, 0.0f), glm::quat(glm::vec3(0.0f,0, 0.0f)), glm::vec3(3));
     manager->RegisterSpecialObjects(gamePlayer, "player");//注册入特殊对象储存器，方便在在玩家类内部使用，且在更新方法中引用
-    gamePlayer->AttachTexture(TextureDic["butterfly"], 0, glm::vec2(1, 1));
+    gamePlayer->AttachTexture(TextureDic["wheel"], 0, glm::vec2(1, 1));
+    gamePlayer->UniformParametersIns(glm::vec3(0.9f),glm::vec3(0.1f),0.9f,0.5f,1,1.33f,0.6f,0);
     gamePlayer->AttachPhysicalEngine();
-    gamePlayer->GetComponent<PhysicalEngine>()->SetElasticity(0);//设置弹性系数为0
+    gamePlayer->GetComponent<PhysicalEngine>()->SetElasticity(0.0F);//设置弹性系数为0
     gamePlayer->GetComponent<PhysicalEngine>()->SetFriction(0.9f);//设置摩擦系数为0.5，减少滑动
     gamePlayer->GetComponent<PhysicalEngine>()->SetRotationDamping(1);//设置旋转阻尼为1，避免碰撞旋转
     gamePlayer->GetComponent<PhysicalEngine>()->SetRotationAdjust(1);//同时设置碰撞调整系数为1，杜绝物理系统的碰撞旋转
     gamePlayer->GetComponent<PhysicalEngine>()->SetMass(5);//设置较大质量，增强碰撞抗性
-    gamePlayer->AttachCollider(CollisionType::Box,SpecialType::SPlayer,1);//注册为玩家，设置较小碰撞半径避免与地面直接摩擦        
+    gamePlayer->AttachCollider(CollisionType::Box,SpecialType::SPlayer,1.0F);//注册为玩家，设置较小碰撞半径避免与地面直接摩擦        
     gamePlayer->GetComponent<CollisionBody>()->SetGameProperties(1000, 20, 10);//设置玩家攻击力
-
-
-    
-    //生成场景黑洞
+     
+    //无光照黑洞
     for (int i = 0; i <1; i++)
     {
-        auto* baseSphere = new BlackHole("commonNoneLight", ModelDic["blackHole"], false, false, false);
+        auto* baseSphere = new BlackHole("blackHoleCommonNoneLight", ModelDic["blackHole"], false, false, false);
         baseSphere->SetVariant(ModelClass::BlackHoleE);
         baseSphere->Initialize(glm::vec3(-500,500,-900), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(300));
         manager->RegisterObject(baseSphere);
-        // manager->RegisterSpecialObjects(baseSphere, "testSphere");
         baseSphere->AttachTexture(TextureDic["blackHole"], 0,glm::vec3(10));
-
+        baseSphere->UniformParametersIns(glm::vec3(0.5f), glm::vec3(0.1f), 0.9f, 0.5f, 1, 1.33f, 0.6f, 0);
     }
-    //场景无光照shader树
+    //光照树
     for (int i = 0; i < 1; i++)
     {
-        auto* tree = new NoneLightModel("commonNoneLight", ModelDic["tree"], false, false, true);
+        auto* tree = new CustomModelShader("treeCommonLight", ModelDic["tree"], false, true, true);
         tree->SetVariant(ModelClass::CubeE);
         tree->Initialize(glm::vec3(60,0,-20), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(15));
         manager->RegisterObject(tree);
         tree->AttachTexture(TextureDic["tree"], 0,glm::vec2(1, 1));
-
+        tree->UniformParametersIns(glm::vec3(0.3f), glm::vec3(0.1f), 0.9f, 0.5f, 1, 1.33f, 0.6f, 0);
     }
-
     //光照宝箱
     for (int i = 0; i < 1; i++)
     {
-        auto* chest = new CustomModelShader("commonLight", ModelDic["chest"], false, true, true);
+        auto* chest = new CustomModelShader("chestCommonLight", ModelDic["chest"], false, true, true);
         chest->SetVariant(ModelClass::CubeE);
         chest->Initialize(glm::vec3(20, 0, 0), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(10));
         manager->RegisterObject(chest);
         chest->AttachTexture(TextureDic["chest"], 0);
-
+        chest->UniformParametersIns(glm::vec3(0.3f), glm::vec3(0.1f), 0.9f, 0.5f, 1, 1.33f, 0.6f, 0);
     }
 
-    //石头怪，这里用自定义类声明
+    //无光照宝箱
     for (int i = 0; i < 1; i++)
-    {//这里添加了动画要声明未蒙皮网格，在动态绘制区进行绘制
-        auto* stoneMonster = new GameStoneMonser("commonLight", ModelDic["stoneMonster"], true, true, true);
+    {
+        auto* chest = new NoneLightModel("chestCommonNoneLight", ModelDic["chest"], false, false, true);
+        chest->SetVariant(ModelClass::CubeE);
+        chest->Initialize(glm::vec3(20, 0, 30), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(10));
+        manager->RegisterObject(chest);
+        chest->AttachTexture(TextureDic["chest"], 0);
+        chest->UniformParametersIns(glm::vec3(0.3f), glm::vec3(0.1f), 0.9f, 0.5f, 1, 1.33f, 0.6f, 0);
+    }
+
+    //光照石头怪
+    for (int i = 0; i < 1; i++)
+    {//这里添加了动画要声明蒙皮网格，在动态绘制区进行绘制
+        auto* stoneMonster = new GameStoneMonser("stoneMonsterCommonLight", ModelDic["stoneMonster"], true, true, true);
         stoneMonster->SetVariant(ModelClass::StoneMonser);
         stoneMonster->Initialize(glm::vec3(50, 10, -100), glm::quat(glm::vec3(0, 0, 0.0f)), glm::vec3(0.1F));
         manager->RegisterObject(stoneMonster);
         stoneMonster->AttachTexture(TextureDic["stoneMonster"], 0,glm::vec2(1,1));
+        stoneMonster->UniformParametersIns(glm::vec3(0.3f), glm::vec3(0.1f), 0.0f, 0.5f, 1, 1.33f, 0.6f, 0);
         stoneMonster->AttachAnimationController(AnimationDic["stoneMonster"]["run"]);     
         stoneMonster->SelfIns();//用于特别情况或者异步函数或者普通的参数设置解耦
-
     }
 
-    //测试石块
+    //光照石块
     for (int i = 0; i < 5; i++)
     {
-        auto* baseCube = new CustomModelShader("commonLight", ModelDic["baseCube"], false, true, true);
+        auto* baseCube = new CustomModelShader("stoneCommonLight", ModelDic["baseCube"], false, true, true);
         baseCube->SetVariant(ModelClass::TestPhysics);
-        baseCube->Initialize(glm::vec3(-100+6.0f + 20.0f * i, 6.0f, -30.0f), glm::quat(glm::vec3(0.0f, 60.0f, 0.0f)), glm::vec3(3));
+        baseCube->Initialize(glm::vec3(-100+6.0f + 35.0f * i, 6.0f, -30.0f), glm::quat(glm::vec3(0.0f, 60.0f, 0.0f)), glm::vec3(3));
         manager->RegisterObject(baseCube);
         baseCube->AttachTexture(TextureDic["stone"], 0);
+        baseCube->UniformParametersIns(glm::vec3(0.3f), glm::vec3(0.1f), 0.0f, 0.5f, 1, 1.33f, 0.6f, 0);
         baseCube->AttachPhysicalEngine();
         baseCube->GetComponent<PhysicalEngine>()->SetFriction(0.7f);
         baseCube->GetComponent<PhysicalEngine>()->SetMass(10);//设置石块较大质量
@@ -246,18 +249,17 @@ CustomModel* GameStartT()
     fireflyInstance->Initialize(glm::vec3(-40.0f, 5.0f, 30.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(0.10F));
     fireflyInstance->AttachTexture(TextureDic["butterfly"], 0, glm::vec2(1, 1));
 
-    //树实例化,使用视口深度图
+    //树实例化,使用视口深度图，该渲染的结果可以基于视口深度图，利用深度信息进行相关绘制
     auto* treeInstance = new  CustomModelInstance("noneLightDepthCalInstancer", ModelDic["tree"], false, false, false, 20000, glm::vec3(10),glm::vec3(0,1,0),
         ModelClass::InstanceCircle);
     treeInstance->EnableDepthcal();//允许使用视口深度图进行计算
     treeInstance->SetVariant(ModelClass::InstanceCircle);
     treeInstance->Initialize(glm::vec3(0.0f, -0.5f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(5));
     manager->RegisterSpecialObjects(treeInstance,"treeInstance");//这里的树作为特殊容器对象注入，以便之后进行深度测试调整alpha值
-    //manager->RegisterObject(treeInstance);//取消注入，放到最后渲染
     treeInstance->AttachTexture(TextureDic["tree"], 0, glm::vec2(1, 1));
 
     //碎石1实例化
-    auto* stone1Instance = new  CustomModelInstance("noneLightInstancer", ModelDic["stone1"], false, false, false, 500, glm::vec3(2), glm::vec3(0, 0.4F, 0),
+    auto* stone1Instance = new  CustomModelInstance("stoneNoneLightInstancer", ModelDic["stone1"], false, false, false, 500, glm::vec3(2), glm::vec3(0, 0.4F, 0),
         ModelClass::InstanceRound);
     stone1Instance->SetVariant(ModelClass::InstanceRound);
     stone1Instance->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(2));
@@ -265,15 +267,15 @@ CustomModel* GameStartT()
     stone1Instance->AttachTexture(TextureDic["stoneInstance"], 0, glm::vec2(1, 1));
 
     //碎石2实例化
-    auto* stone2Instance = new  CustomModelInstance("noneLightInstancer", ModelDic["stone2"], false, false, false, 500, glm::vec3(2), glm::vec3(0, 0.3F, 0),
+    auto* stone2Instance = new  CustomModelInstance("stoneNoneLightInstancer", ModelDic["stone2"], false, false, false, 500, glm::vec3(2), glm::vec3(0, 0.3F, 0),
         ModelClass::InstanceRound);
     stone2Instance->SetVariant(ModelClass::InstanceRound);
     stone2Instance->Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(2));
     manager->RegisterObject(stone2Instance);
-    stone2Instance->AttachTexture(TextureDic["stoneInstance"], 0, glm::vec2(2, 2));
+    stone2Instance->AttachTexture(TextureDic["stoneInstance"], 0, glm::vec2(1, 1));
 
     //草1实例化
-    auto* grass1Instance = new  CustomModelInstance("noneLightInstancer", ModelDic["grass2"], false, false, false, 1000, glm::vec3(1,1,1), glm::vec3(0, 0.9F, 0),
+    auto* grass1Instance = new  CustomModelInstance("grassNoneLightInstancer", ModelDic["grass2"], false, false, false, 1000, glm::vec3(1,1,1), glm::vec3(0, 0.9F, 0),
         ModelClass::InstanceRound);
     grass1Instance->SetVariant(ModelClass::InstanceRound);
     grass1Instance->Initialize(glm::vec3(0.0f,-0.01f, 0.0f), glm::quat(glm::vec3(0.0f, .0f, 0.0f)), glm::vec3(3));
@@ -285,7 +287,7 @@ CustomModel* GameStartT()
     stepStone.scale = glm::vec3(1.0f);
     coroutine->StartSpawnByTimerAnimation<GameStoneMonser>(
         manager,
-        "commonLight",
+        "stoneMonsterCommonLight",
         true,
         true,
         ModelDic["stoneMonster"],
@@ -303,7 +305,7 @@ CustomModel* GameStartT()
     //另一个方向的石头怪
     coroutine->StartSpawnByTimerAnimation<GameStoneMonser>(
         manager,
-        "commonLight",
+        "stoneMonsterCommonLight",
         true,
         true,
         ModelDic["stoneMonster"],
@@ -325,7 +327,7 @@ CustomModel* GameStartT()
     step.scale = glm::vec3(1.0f);
     coroutine->StartSpawnByTimerAnimation<ButterflyScriptShader>(
         manager,
-        "commonLight",
+        "butterflyCommonLight",
         true,
         true,
         ModelDic["butterfly"],
@@ -342,14 +344,6 @@ CustomModel* GameStartT()
     );
 
     return gamePlayer;
-    //CustomModel* testMonkey = new CustomModel(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, ModelDic["testMonkey"], false, true);
-    //testMonkey->SetVariant(ModelClass::CubeTestE);
-    //testMonkey->Initialize(glm::vec3(-0.0f, 3.0f, 2.0f), glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), glm::vec3(0.5f));
-    //manager->RegisterObject(testMonkey);
-    //testMonkey->AttachTexture(TextureDic["butterfly"][0], 0,glm::vec2(1,1));
-    //测试用的方法，生成注册器中的ActorButterFly 方法
-  // coroutine->StartSpawnButterfliesByTimer(manager, TextureDic["butterfly"][0],0);
-    //综合性赋值方法泛型方法， 可以直接异步初始化各种继承customModel的对象
 
 }
 

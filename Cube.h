@@ -106,7 +106,7 @@ namespace Game {
 
 
     private:
-        void LoadCubemap(std::vector<std::string>& faces);
+        GLuint LoadCubemap(std::vector<std::string>& faces);
 
     };
 }

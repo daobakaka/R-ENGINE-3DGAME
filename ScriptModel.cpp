@@ -33,7 +33,7 @@ void LightModel::SteLightParameters(glm::vec3 color, float intensity, glm::vec3 
     myDirection = dirction;
 }
 
-void LightModel::RenderingTexture()
+void LightModel::BindTexture()
 {
     // 1) 使用当前 LightModel 的着色器
     glUseProgram(shaderProgram);
@@ -223,8 +223,11 @@ CustomModelShader::CustomModelShader()
 
 bool CustomModelShader::Draw(glm::mat4 view, glm::mat4 projection)
 {
-    //集成纹理渲染方法,要在draw之前调用，才能生效
-    RenderingTexture();
+    glUseProgram(shaderProgram);
+    if (_drawCommon)
+    {
+        CommonShaderRendering();
+    }
     UniformParametersInput();//父类在这里调用空方法
     RenderingLight();//通用shader，光的渲染在这里进行
 
@@ -239,15 +242,21 @@ bool CustomModelShader::Draw(glm::mat4 view, glm::mat4 projection)
     return true;
 }
 
+void Game::CustomModelShader::EnableCommonShaderRendering(bool change)
+{
+    _drawCommon = change;
+}
+
 bool Game::CustomModelShader::DrawDynamical(glm::mat4 view, glm::mat4 projection)
 {
-
-    //集成纹理渲染方法,要在draw之前调用，才能生效
-    RenderingTexture();
+    glUseProgram(shaderProgram);
+    if (_drawCommon)
+    {
+        CommonShaderRendering();
+    }
     UniformParametersInput();//父类在这里调用空方法
     RenderingLight();//通用shader，光的渲染在这里进行
-    // glUseProgram(shaderProgram);
-
+   
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
     glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
     glBindVertexArray(VAO);
@@ -262,7 +271,7 @@ bool Game::CustomModelShader::DrawDynamical(glm::mat4 view, glm::mat4 projection
     return true;
 }
 
-void Game::CustomModelShader::RenderingTexture()
+void Game::CustomModelShader::BindTexture()
 {
     //这里调用引用的shader避免重复计算
     glUseProgram(shaderProgram);
@@ -279,47 +288,20 @@ void Game::CustomModelShader::RenderingTexture()
         // 绑定纹理到纹理单元 0+order，这个顺序的所有纹理单元都遍历绑定一次
         glUniform1i(picData, _textureOrder);
 
-
-        RenderingTextureAdditional();
     }
 
 }
 void Game::CustomModelShader::UniformParametersInput()
 {
-    //溶解度，默认传入0 不溶解
-    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
-    glUniform1f(dissolveThresholdLoc, 0);
-
-
-    //金属度
-    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
-    glUniform1f(metallicLoc, 0.0f);
-
-    //糙度
-    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
-    glUniform1f(roughnessLoc, 1.0f);
-    //透明度
-    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
-    glUniform1f(opacityLoc, 1.0f);
-    //基础材料折射率，纯金属折射率不受影响
-    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
-    glUniform1f(IORLoc, 1.5f);
-    //环境光贡献率
-    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
-    glUniform1f(aoLoc, 0.6f);
-
-    // 自发光
-    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
-    glUniform3f(emissionLoc, 0.1f, 0.1f, 0.1f); // 传入自发光颜色
-
-    // 基本色
-    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
-    glUniform3f(baseColorLoc, 0.5f, 0.5f, 0.5f); // 传入基本色（暗色）
-
+  
 
 }
-void Game::CustomModelShader::RenderingTextureAdditional()
+void Game::CustomModelShader::BindTextureAdditional()
 {
+    //该方法中所有的贴图都可以从外部传入，针对通用shader可以单独传入，单独绘制
+    //针对大范围或者批量化的对象，可以重写此方法，让图像纹理在外部统一传入，可以采取UBO模式
+
+
     int textureUnit = _textureOrder + 1; // 从 textureOrder + 1 开始
 
     for (const auto& pair : _textures) {
@@ -368,6 +350,21 @@ void Game::CustomModelShader::RenderingTextureAdditional()
             glUniform1i(aoTextureLoc, textureUnit); // 传递纹理单元
             break;
         }
+        case OpacityP: {
+            GLuint opacityTextureLoc = glGetUniformLocation(shaderProgram, "opacityTexture");
+            glActiveTexture(GL_TEXTURE0 + textureUnit); // 激活纹理单元
+            glBindTexture(GL_TEXTURE_2D, textureID); // 绑定 AO 纹理
+            glUniform1i(opacityTextureLoc, textureUnit); // 传递纹理单元
+            break;
+        }
+        case SpecularCubeP: {
+           // break;//静态立方体贴图可以从外部直接传入
+            GLuint specularCubeTextureLoc = glGetUniformLocation(shaderProgram, "specularCubeTexture");
+            glActiveTexture(GL_TEXTURE0 + textureUnit);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, textureID); // 使用 GL_TEXTURE_CUBE_MAP
+            glUniform1i(specularCubeTextureLoc, textureUnit);
+            break;
+        }
         default:
             break;
         }
@@ -376,9 +373,18 @@ void Game::CustomModelShader::RenderingTextureAdditional()
     }
 
 }
-void Game::CustomModelShader::RenderingLight()
+void Game::CustomModelShader::CommonShaderRendering()
 {
 
+    BindTexture();
+    BindTextureAdditional();
+
+
+
+}
+void Game::CustomModelShader::RenderingLight()
+{
+    glUseProgram(shaderProgram);
     if (ifLight)
     {  // 2. 点光源数据
         const auto& pointLights = lightSpawner->GetPointLights();
@@ -797,9 +803,9 @@ void Game::CustomModelInstance::EnableDepthcal()
 // 需要保留原有的方法签名
 bool Game::CustomModelInstance::Draw(glm::mat4 view, glm::mat4 projection)
 {
-    // 直接调用渲染纹理方法，渲染纹理数据
-    RenderingTexture();
-    UniformParametersInput();//传入shader 参数
+    glUseProgram(shaderProgram);
+    //传入shader 参数
+    UniformParametersInput();
     // 绑定VAO
     glBindVertexArray(VAO);
 
@@ -822,12 +828,11 @@ bool Game::CustomModelInstance::Draw(glm::mat4 view, glm::mat4 projection)
 // DrawDynamical 方法
 bool Game::CustomModelInstance::DrawDynamical(glm::mat4 view, glm::mat4 projection)
 {
-    // 直接调用渲染纹理方法，渲染纹理数据
-    RenderingTexture();
+  
+    glUseProgram(shaderProgram);
     UniformParametersInput();//传入shader 参数
     // 获取模型矩阵的uniform位置
-    GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
-
+    GLuint modelLoc = glGetUniformLocation(shaderProgram, "transform");
     // 设置模型矩阵
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(transform));
 
@@ -867,7 +872,7 @@ void Game::CustomModelInstance::UniformParametersInput()
 }
 
 // RenderingTexture方法
-void Game::CustomModelInstance::RenderingTexture()
+void Game::CustomModelInstance::BindTexture()
 {
     // 这里调用引用的shader避免重复计算
     glUseProgram(shaderProgram);
@@ -895,6 +900,10 @@ void Game::CustomModelInstance::RenderingTexture()
 
     }
 
+}
+
+void Game::CustomModelInstance::BindTextureAdditional()
+{
 }
 
 #pragma endregion
@@ -993,6 +1002,10 @@ void GamePlayer::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
 //因为存在全局后处理，涉及到shader的相关操作要放到后处理区域进行
 
+  /*  auto* playerEye = _manager->GetspecialObjects()["playerEye"];
+    playerEye->position = this->position + glm::vec3(0, 10, 0);
+    playerEye->rotation = this->rotation;*/
+
 }
 void Game::GamePlayer::Start()
 {
@@ -1008,7 +1021,7 @@ void Game::GamePlayer::Start()
 
 void Game::GamePlayer::UniformParametersInput()
 {
-    
+    glUseProgram(shaderProgram);
     _timeAccumulator += 0.0167;
     //三秒之后完成溶解生成
     if (_timeAccumulator < 1.01 * 10)
@@ -1024,31 +1037,6 @@ void Game::GamePlayer::UniformParametersInput()
 
     }
     
-    //金属度
-    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
-    glUniform1f(metallicLoc,0.9f);
-
-    //糙度
-    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
-    glUniform1f(roughnessLoc, .5f);
-    //透明度
-    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
-    glUniform1f(opacityLoc, 1.0f);
-    //折射率
-    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
-    glUniform1f(IORLoc, 1.330f);
-    //环境光贡献率
-    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
-    glUniform1f(aoLoc, 1.5f);
-
-
-    // 自发光
-    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
-    glUniform3f(emissionLoc, .05f, .05f, .05f); // 传入自发光颜色
-
-    // 基本色
-    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
-    glUniform3f(baseColorLoc, 0.9f, 0.9f, 0.9f); // 传入基本色（暗色）
 }
 
 void Game::GamePlayer::RenderingStencilTest()
@@ -1095,12 +1083,14 @@ void Game::GameBullet::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 
     _waveTime += 0.0167f;
     _timeAccumulator += 0.0167f;
+    timeAccumulator += 0.0167F;
  
 }
 void Game::GameBullet::UniformParametersInput()
-{
 
-    // 获取 uniform 变量的位置
+{
+    glUseProgram(shaderProgram);//这是状态切换，必须要先激活
+    //独立变量方法里面就可以传入shader 特定的方法，如溶解度控制、顶点变换，或者特殊变化等
     GLuint timeLoc = glGetUniformLocation(shaderProgram, "waveTime");
     GLuint waveAmplitudeLoc = glGetUniformLocation(shaderProgram, "waveAmplitude");
     GLuint waveFrequencyLoc = glGetUniformLocation(shaderProgram, "waveFrequency");
@@ -1111,37 +1101,6 @@ void Game::GameBullet::UniformParametersInput()
     glUniform1f(waveFrequencyLoc, _waveFrequency);
     glUniform1f(waveSpeedLoc, _waveSpeed);
 
-
-    //溶解度，默认传入0 不溶解
-    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
-    glUniform1f(dissolveThresholdLoc, 0);
-
-    //金属度
-    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
-    glUniform1f(metallicLoc, 0.3f);
-
-    //糙度
-    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
-    glUniform1f(roughnessLoc, .1f);
-    //透明度
-    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
-    glUniform1f(opacityLoc, 0.4f);
-    //折射率
-    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
-    glUniform1f(IORLoc, 1.330f);
-    //环境光贡献率
-    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
-    glUniform1f(aoLoc, 1.5f);
-
-
-
-    // 自发光
-    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
-    glUniform3f(emissionLoc, .05f, .05f, .05f); // 传入自发光颜色
-
-    // 基本色
-    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
-    glUniform3f(baseColorLoc, 0.9f, 0.9f, 0.9f); // 传入基本色（暗色）
 
 }
 void Game::GameBullet::SelfIns()
@@ -1165,35 +1124,6 @@ void Game::GameBullet::SelfIns()
 
 void Game::NoneLightModel::UniformParametersInput()
 {
-    //溶解度，默认传入0 不溶解
-    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
-    glUniform1f(dissolveThresholdLoc, 0);
-
-    //金属度
-    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
-    glUniform1f(metallicLoc, 0.0f);
-
-    //糙度
-    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
-    glUniform1f(roughnessLoc, 1.0f);
-    //透明度
-    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
-    glUniform1f(opacityLoc, 1.0f);
-    //折射率
-    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
-    glUniform1f(IORLoc, 1.330f);
-    //环境光贡献率
-    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
-    glUniform1f(aoLoc, 2.0f);
-
-
-    // 自发光
-    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
-    glUniform3f(emissionLoc, .05f, .05f, .05f); // 传入自发光颜色
-
-    // 基本色
-    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
-    glUniform3f(baseColorLoc, 0.9f, 0.9f, 0.9f); // 传入基本色（暗色）
 
 }
 
@@ -1204,8 +1134,8 @@ void Game::FireflyInstance::SelfIns()
 }
 
 void Game::FireflyInstance::UpdateVariant(glm::mat4 view, glm::mat4 projection) {
+    glUseProgram(shaderProgram);
     float time = glfwGetTime();
-
     for (int i = 0; i < _instanceCount; ++i) {
         // 获取当前实例的随机扰动值
         const InstanceData& data = _instanceData[i];
@@ -1235,7 +1165,7 @@ void Game::FireflyInstance::UpdateVariant(glm::mat4 view, glm::mat4 projection) 
 
 void Game::FireflyInstance::UniformParametersInput()
 {
-
+    glUseProgram(shaderProgram);
     // 获取当前时间
     float time = glfwGetTime();
 
@@ -1298,38 +1228,7 @@ void Game::BlackHole::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 
 void Game::BlackHole::UniformParametersInput()
 {
-    
-    //溶解度，默认传入0 不溶解
-    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
-    glUniform1f(dissolveThresholdLoc, 0);
-    
-    //金属度
-    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
-    glUniform1f(metallicLoc, 0.9f);
-
-    //糙度
-    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
-    glUniform1f(roughnessLoc, 0.3f);
-    //透明度
-    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
-    glUniform1f(opacityLoc, 0.95f);
-    //折射率
-    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
-    glUniform1f(IORLoc, 0.330f);
-    //环境光贡献率
-    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
-    glUniform1f(aoLoc, 0.9f);
-
-
-    // 自发光
-    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
-    glUniform3f(emissionLoc, .15f, .05f, .05f); // 传入自发光颜色
-
-    // 基本色
-    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
-    glUniform3f(baseColorLoc, 0.1f, 0.3f, 0.3f); // 传入基本色（暗色）
-
-
+     
 }
 
 void Game::GameStoneMonser::UpdateVariant(glm::mat4 view, glm::mat4 projection)
@@ -1370,6 +1269,7 @@ void Game::GameStoneMonser::UpdateVariant(glm::mat4 view, glm::mat4 projection)
     }
     if (!_alive)
     {
+
         if (!_isDeathA)
         {
             StopPlayAnimation();//停止播放动画
@@ -1381,15 +1281,14 @@ void Game::GameStoneMonser::UpdateVariant(glm::mat4 view, glm::mat4 projection)
         _deathTime += 0.00167f*2;
         if (_deathTime < 1.01 )
         {
+            glUseProgram(shaderProgram);
             //溶解特效
             GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
             glUniform1f(dissolveThresholdLoc, _deathTime);
-           /* GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
-            glUniform1f(opacityLoc, 1-_deathTime);*/
-           // std:: cout<< "溶解开始" << _deathTime << std::endl;
         }
         else
         {
+            glUseProgram(shaderProgram);
             GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
             glUniform1f(dissolveThresholdLoc, _deathTime);
             //通知生命周期管理器在外部进行渲染失活或者销毁
@@ -1400,14 +1299,10 @@ void Game::GameStoneMonser::UpdateVariant(glm::mat4 view, glm::mat4 projection)
     }
 }
 
-void Game::GameStoneMonser::UpdateSpecial(CustomModel* player)
-{
-
-
-}
-
 void Game::GameStoneMonser::UniformParametersInput()
+
 {
+    glUseProgram(shaderProgram);
     _timeAccumulator += 0.00167F*2;
     //三秒之后完成溶解生成
     if (_timeAccumulator<1.01)
@@ -1424,40 +1319,13 @@ void Game::GameStoneMonser::UniformParametersInput()
             glUniform1f(dissolveThresholdLoc, 0);
         }
 
-
     }
-    //金属度
-    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
-    glUniform1f(metallicLoc, 0.0f);
-
-    //糙度
-    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
-    glUniform1f(roughnessLoc, 1.0f);
-    //透明度
-    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
-    glUniform1f(opacityLoc, 1.0f);
-    //基础材料折射率，纯金属折射率不受影响
-    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
-    glUniform1f(IORLoc, 1.5f);
-    //环境光贡献率
-    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
-    glUniform1f(aoLoc, 0.6f);
-
-    // 自发光
-    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
-    glUniform3f(emissionLoc, 0.1f, 0.1f, 0.1f); // 传入自发光颜色
-
-    // 基本色
-    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
-    glUniform3f(baseColorLoc, 0.5f, 0.5f, 0.5f); // 传入基本色（暗色）
-    
-
-
+  
 }
 
 void Game::GameStoneMonser::SelfIns()
 {
-   _player = LifecycleManager<CustomModel>::GetInstance()->GetspecialObjects()["player"];
+   _player = LifecycleManager<CustomModel>::GetInstance()->GetSpecialObjects()["player"];
    _speed = 0.05f;
    _alive = true;
    _deathTime = 0;

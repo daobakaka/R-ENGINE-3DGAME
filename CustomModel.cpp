@@ -431,11 +431,7 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 bool CustomModel::DrawDynamical(glm::mat4 view, glm::mat4 projection)
 {
    
-    //集成纹理渲染方法,要在draw之前调用，才能生效
-    RenderingTexture();
-    
-   // glUseProgram(shaderProgram);
-
+    glUseProgram(shaderProgram);
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
     GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
     GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
@@ -474,69 +470,70 @@ bool CustomModel::AttachTexture(const std::unordered_map<PictureTpye, GLuint>& t
     if (order < 0) {
         return false; // 无效的 order
     }
-
     _textures = textureData;
     _textureOrder = order;
     _textureScale = textureScale;
-    return _drawTexture = true;
+    _drawTexture = true;
+    glUseProgram(shaderProgram);
+    BindTexture();
+    BindTextureAdditional();
+    return true;
 }
-void CustomModel::RenderingTexture()
+void CustomModel::BindTexture()
 {
+  
     if (_drawTexture) {
         // 传入纹理缩放因子
         GLuint textureScaleLoc = glGetUniformLocation(shaderProgram, "textureScale");
         glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y);
 
-
-            GLuint baseTextureLoc = glGetUniformLocation(shaderProgram, "baseTexture");
-            glActiveTexture(GL_TEXTURE0+_textureOrder); // 激活纹理单元 0
-            glBindTexture(GL_TEXTURE_2D, _textures[BaseP]); // 绑定基础纹理
-            glUniform1i(baseTextureLoc, 0); // 传递纹理单元 
-        
-        // 加载其他纹理
-        RenderingTextureAdditional();
+        GLuint baseTextureLoc = glGetUniformLocation(shaderProgram, "baseTexture");
+        glActiveTexture(GL_TEXTURE0+_textureOrder); // 激活纹理单元 0
+        glBindTexture(GL_TEXTURE_2D, _textures[BaseP]); // 绑定基础纹理
+        glUniform1i(baseTextureLoc, 0); // 传递纹理单元          
     }
  }
 
-
-void Game::CustomModel::RenderingTextureAdditional()
+void Game::CustomModel::BindTextureAdditional()
 {   
     //commonlight 的参数输入留在子类进行，通用类就只有一张纹理图片
 
 }
 void Game::CustomModel::UniformParametersInput()
 {
-   //溶解度，默认传入0 不溶解
+
+
+}
+void Game::CustomModel::UniformParametersIns(glm::vec3 baseColor, glm::vec3 emission, float metallic, float roughness, float opacity, float IOR, float ao, float dissolveThreshold)
+{
+    glUseProgram(shaderProgram);
+   // 溶解度，默认传入0 不溶解
     GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
-    glUniform1f(dissolveThresholdLoc, 0);
-    
-    
+    glUniform1f(dissolveThresholdLoc, dissolveThreshold);
+
+
     //金属度
     GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
-    glUniform1f(metallicLoc, 0.0f);
+    glUniform1f(metallicLoc, metallic);
 
     //糙度
     GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
-    glUniform1f(roughnessLoc, 1.0f);
+    glUniform1f(roughnessLoc, roughness);
     //透明度
     GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
-    glUniform1f(opacityLoc, 1.0f);
+    glUniform1f(opacityLoc, opacity);
     //基础材料折射率，纯金属折射率不受影响
     GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
-    glUniform1f(IORLoc, 1.5f);
+    glUniform1f(IORLoc, IOR);
     //环境光贡献率
     GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
-    glUniform1f(aoLoc, 0.6f);
-
+    glUniform1f(aoLoc, ao);
     // 自发光
     GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
-    glUniform3f(emissionLoc, 0.1f, 0.1f, 0.1f); // 传入自发光颜色
-
+    glUniform3f(emissionLoc, emission.x,emission.y,emission.z); // 传入自发光颜色
     // 基本色
     GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
-    glUniform3f(baseColorLoc, 0.5f, 0.5f, 0.5f); // 传入基本色（暗色）
-
-
+    glUniform3f(baseColorLoc, baseColor.x,baseColor.y,baseColor.z); // 传入基本色（暗色）
 
 }
 void Game::CustomModel::RenderingLight(LightSpawner* lightSpawner)
@@ -829,10 +826,8 @@ bool Game::CustomModel::SetActive(bool active)
 }
 bool CustomModel::Draw (glm::mat4 view, glm::mat4 projection)
 {
-    //集成纹理渲染方法,要在draw之前调用，才能生效
-    RenderingTexture();
-    
-   // glUseProgram(shaderProgram);
+
+    glUseProgram(shaderProgram);
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
     GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
     GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
@@ -895,6 +890,7 @@ bool CustomModel::DrawLine(glm::mat4 view, glm::mat4 projection)
 /// <returns></returns>
 bool CustomModel::DrawLineFixedWidget(glm::mat4 view, glm::mat4 projection)
 {
+   
     //增加视口渲染
   //  glDisable(GL_DEPTH_TEST);
     GLint viewport[4];
@@ -974,7 +970,9 @@ void CustomModel::Update(glm::mat4 view, glm::mat4 projection)
     //这种写法就，直接封装了更新变化和通知CPU渲染的两个方法，如果具体定义方法，只需要在其他脚本里面单独定义某个方法，更改transform即可，由管理池泛型调用
     UpdateTransform();
     //确认动态绘制或者静态绘制
-   IsSkinnedMesh==true? DrawDynamical(view, projection): Draw(view, projection);
+    //先切换着色器状态
+    glUseProgram(shaderProgram);
+    IsSkinnedMesh == true ? DrawDynamical(view, projection) : Draw(view, projection);
 }
 //变体方法，可以增加变体的运行行为
 void  CustomModel::UpdateVariant(glm::mat4 view, glm::mat4 projection)

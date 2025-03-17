@@ -24,13 +24,11 @@ namespace Game {
     public:
         static CoroutineMethod* GetInstance();
 
-
         // 添加定时任务
         void AddTimerTask(float intervalSeconds, int repeatCount, std::function<void()> callback);
 
         // 更新所有定时任务
         void CoroutineUpdate();
-
 
     private:
         CoroutineMethod();
@@ -115,6 +113,7 @@ namespace Game {
 
                    
                     model->AttachTexture(textures,order,section);
+                    model->UniformParametersIns();
                     model->AttachAnimationController(animationData);
 
                     if (ifPhysical) {
@@ -186,6 +185,7 @@ namespace Game {
 
      
                     model->AttachTexture(textures,order,section);
+                    model->UniformParametersIns();
                 
                     if (ifPhysical) {
                         model->AttachPhysicalEngine();

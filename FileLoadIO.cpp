@@ -501,7 +501,16 @@ void Game::MakeAnimation()
     animaitonData.speed = 0.1f;
     AnimationDic["stoneMonster"]["attack"] = animaitonData;
 
-
+    //加载玩家动画
+    keyFrames.clear();
+    keyFrames.push_back(LoadVerticesFromFile("player.obj"));
+    keyFrames.push_back(LoadVerticesFromFile("player2.obj"));
+    keyFrames.push_back(LoadVerticesFromFile("player.obj"));
+    animaitonData.keyFrames = keyFrames;
+    animaitonData.keyFrameTimes = keyFrameTimes;
+    animaitonData.loop = true;
+    animaitonData.speed = 1.8f;
+    AnimationDic["playerEye"]["run"] = animaitonData;
 #pragma endregion
 
 
@@ -647,7 +656,13 @@ void Game::MakeModel()
 
     ModelDic["blackHole"] = modelData;
 
+    //玩家
+    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\player.obj", verticesStruct, indices);
 
+    modelData.verticesStruct = verticesStruct;
+    modelData.indices = indices;
+
+    ModelDic["playerEye"] = modelData;
 #pragma endregion
 
 
@@ -694,10 +709,61 @@ void Game::MakeModelFbx()
   std::cout << "------------------------------" << std::endl;
 }
 
+/// <summary>
+/// 内部辅助方法 用于加载天空盒纹理
+/// </summary>
+/// <param name="faces"></param>
+/// <returns></returns>
+GLuint LoadCubemap(std::vector<std::string>& faces)
+{
+    GLuint _cubeMapID;
+    
+    glGenTextures(1, &_cubeMapID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, _cubeMapID);
+
+    int width, height, nrChannels;
+    for (GLuint i = 0; i < faces.size(); i++)
+    {
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            // stbi_image_free(data);
+        }
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return _cubeMapID;
+
+}
+
 
 void Game::MakeTxture()
 
 {
+    //加载静态天空盒立方体贴图纹理
+    stbi_set_flip_vertically_on_load(false);
+    std::vector<std::string> faces = {
+         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/rightimage.png",  // 右面
+         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/leftimage.png",   // 左面
+         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/upimage.png",    // 上面
+         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/downimage.png", // 下面
+         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/backimage.png",    // 后面
+         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/frontimage.png",  // 前面
+          //opengl 后前顺序跳转
+    };
+
+    GLuint cubeMap = LoadCubemap(faces);//加载天空盒纹理
     //纹理坐标翻转，原生的图像格式纹理坐标与opengl不一致，这里非常重要
     stbi_set_flip_vertically_on_load(true);
 
@@ -735,15 +801,25 @@ void Game::MakeTxture()
     //两种草
     GLuint grass1Texture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\grass1.png");
     GLuint grass2Texture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\grass2.png");
+    //气泡弹
+    GLuint water = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\water\\waterDiffuse.png");
+    GLuint waterNormal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\water\\waterNormal.png");
+    GLuint waterSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\water\\waterNormal1.png");
+    GLuint waterHeight = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\water\\waterHeight.png");
+    GLuint waterOpacity = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\water\\waterOpacity.png");
+    //轮子
+    GLuint wheelTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\wheel.png");
     //初始化参数
     std::vector<GLuint> picd;
     //加载默认纹理
     picd.push_back(defaultTexture);//默认灰色基础图
     picd.push_back(defaultW);//默认白色法线图
-    picd.push_back(defaultW);//默认白色高亮图
+    picd.push_back(defaultW);//默认白色2D高亮图
     picd.push_back(defaultW);//默认白色环境图
     picd.push_back(defaultW);//默认白色高度图
     picd.push_back(defaultW);//默认白色糙度图
+    picd.push_back(defaultW);//默认白色透明度贴图
+    picd.push_back(cubeMap);//默认天空盒环境光贴图
     picd.push_back(defaultW);//默认白色其他图
     picd.push_back(nosie1Texture);//噪声纹理1
     picd.push_back(nosie2Texture);//噪声纹理2
@@ -753,9 +829,11 @@ void Game::MakeTxture()
     TextureDic["default"][PictureTpye::HightP] = picd[3];
     TextureDic["default"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["default"][PictureTpye::AOP]= picd[5];
-    TextureDic["default"][PictureTpye::OtherP] = picd[6];
-    TextureDic["default"][PictureTpye::Noise1P] = picd[7];
-    TextureDic["default"][PictureTpye::Noise2P] = picd[8];
+    TextureDic["default"][PictureTpye::OpacityP] = picd[6];
+    TextureDic["default"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["default"][PictureTpye::OtherP] = picd[8];
+    TextureDic["default"][PictureTpye::Noise1P] = picd[9];
+    TextureDic["default"][PictureTpye::Noise2P] = picd[10];
     //初始化参数       
     std::vector<GLuint> pic;
     //加载蝴蝶纹理
@@ -767,7 +845,9 @@ void Game::MakeTxture()
     TextureDic["butterfly"][PictureTpye::HightP] = picd[3];
     TextureDic["butterfly"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["butterfly"][PictureTpye::AOP] = picd[5];
-    TextureDic["butterfly"][PictureTpye::OtherP] = picd[6];
+    TextureDic["butterfly"][PictureTpye::OpacityP] = picd[6];
+    TextureDic["butterfly"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["butterfly"][PictureTpye::OtherP] = picd[8];
     //加载光源点渲染纹理
     pic.clear();
     pic.push_back(lightTexture);
@@ -785,7 +865,9 @@ void Game::MakeTxture()
     TextureDic["grass"][PictureTpye::HightP] = picd[3];
     TextureDic["grass"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["grass"][PictureTpye::AOP] = picd[5];
-    TextureDic["grass"][PictureTpye::OtherP] = picd[6];
+    TextureDic["grass"][PictureTpye::OpacityP] = picd[6];
+    TextureDic["grass"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["grass"][PictureTpye::OtherP] = picd[8];
     //加载石头
     pic.clear();
     pic.push_back(stoneTexture);
@@ -795,7 +877,9 @@ void Game::MakeTxture()
     TextureDic["stone"][PictureTpye::HightP] = picd[3];
     TextureDic["stone"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["stone"][PictureTpye::AOP] = picd[5];
-    TextureDic["stone"][PictureTpye::OtherP] = picd[6];
+    TextureDic["stone"][PictureTpye::OpacityP] = picd[6];
+    TextureDic["stone"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["stone"][PictureTpye::OtherP] = picd[8];
 
 #pragma region 打石头游戏区域
     //树
@@ -809,7 +893,9 @@ void Game::MakeTxture()
     TextureDic["tree"][PictureTpye::HightP] = picd[3];
     TextureDic["tree"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["tree"][PictureTpye::AOP] = picd[5];
-    TextureDic["tree"][PictureTpye::OtherP] = picd[6];
+    TextureDic["tree"][PictureTpye::OpacityP] = picd[6];
+    TextureDic["tree"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["tree"][PictureTpye::OtherP] = picd[8];
 
     //宝箱
     pic.clear();
@@ -822,7 +908,9 @@ void Game::MakeTxture()
     TextureDic["chest"][PictureTpye::HightP] = picd[3];
     TextureDic["chest"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["chest"][PictureTpye::AOP] = picd[5];
-    TextureDic["chest"][PictureTpye::OtherP] = picd[6];
+    TextureDic["chest"][PictureTpye::OpacityP] = picd[6];
+    TextureDic["chest"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["chest"][PictureTpye::OtherP] = picd[8];
 
     //石头怪
     pic.clear();
@@ -833,7 +921,9 @@ void Game::MakeTxture()
     TextureDic["stoneMonster"][PictureTpye::HightP] = picd[3];
     TextureDic["stoneMonster"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["stoneMonster"][PictureTpye::AOP] = picd[5];
-    TextureDic["stoneMonster"][PictureTpye::OtherP] = picd[6];
+    TextureDic["stoneMonster"][PictureTpye::OpacityP] = picd[6];
+    TextureDic["stoneMonster"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["stoneMonster"][PictureTpye::OtherP] = picd[8];
 
     //碎石实例化
     pic.clear();
@@ -846,7 +936,9 @@ void Game::MakeTxture()
     TextureDic["stoneInstance"][PictureTpye::HightP] = picd[3];
     TextureDic["stoneInstance"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["stoneInstance"][PictureTpye::AOP] = picd[5];
-    TextureDic["stoneInstance"][PictureTpye::OtherP] = picd[6];
+    TextureDic["stoneInstance"][PictureTpye::OpacityP] = picd[6];
+    TextureDic["stoneInstance"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["stoneInstance"][PictureTpye::OtherP] = picd[8];
     //高清背包
     pic.clear();
     pic.push_back(backpage);
@@ -860,15 +952,19 @@ void Game::MakeTxture()
     TextureDic["backpack"][PictureTpye::HightP] = picd[3];
     TextureDic["backpack"][PictureTpye::RoughnessP] = pic[3];
     TextureDic["backpack"][PictureTpye::AOP] = pic[4];
-    TextureDic["backpack"][PictureTpye::OtherP] = picd[6];
+    TextureDic["backpack"][PictureTpye::OpacityP] = picd[6];
+    TextureDic["backpack"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["backpack"][PictureTpye::OtherP] = picd[8];
     //黑洞，暂时用其他图像生成
-    TextureDic["blackHole"][PictureTpye::BaseP] = picd[7];//黑噪图1
+    TextureDic["blackHole"][PictureTpye::BaseP] = picd[9];//黑噪图1
     TextureDic["blackHole"][PictureTpye::NormalP] = pic[1];
     TextureDic["blackHole"][PictureTpye::SpecularP] = pic[2];
     TextureDic["blackHole"][PictureTpye::HightP] = picd[3];
     TextureDic["blackHole"][PictureTpye::RoughnessP] = pic[3];
     TextureDic["blackHole"][PictureTpye::AOP] = pic[4];
-    TextureDic["blackHole"][PictureTpye::OtherP] = picd[6];
+    TextureDic["blackHole"][PictureTpye::OpacityP] = picd[6];
+    TextureDic["blackHole"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["blackHole"][PictureTpye::OtherP] = picd[8];
     //实例化草1
     pic.clear();
     pic.push_back(grass1Texture);
@@ -877,6 +973,40 @@ void Game::MakeTxture()
     pic.clear();
     pic.push_back(grass2Texture);
     TextureDic["grass2"][PictureTpye::BaseP] = pic[0];
+    //气泡弹飞行道具
+    pic.clear();
+    //pic.push_back(water);
+    pic.push_back(wheelTexture);//这里使用wheel似乎更炫酷
+    pic.push_back(waterNormal);
+    pic.push_back(waterSpecular);
+    pic.push_back(waterHeight);
+    pic.push_back(waterOpacity);
+    TextureDic["water"][PictureTpye::BaseP] = pic[0];
+    TextureDic["water"][PictureTpye::NormalP] = pic[1];
+    TextureDic["water"][PictureTpye::SpecularP] = pic[2];
+    TextureDic["water"][PictureTpye::HightP] = picd[3];
+    TextureDic["water"][PictureTpye::RoughnessP] = picd[4];
+    TextureDic["water"][PictureTpye::AOP] = picd[5];
+    TextureDic["water"][PictureTpye::OpacityP] = pic[4];
+    TextureDic["water"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["water"][PictureTpye::OtherP] = picd[8];
+    //轮子
+    pic.clear();
+    pic.push_back(wheelTexture);
+    pic.push_back(waterNormal);
+    pic.push_back(waterSpecular);
+    pic.push_back(waterHeight);
+    pic.push_back(waterOpacity);
+    TextureDic["wheel"][PictureTpye::BaseP] = pic[0];
+    TextureDic["wheel"][PictureTpye::NormalP] = pic[1];
+    TextureDic["wheel"][PictureTpye::SpecularP] = pic[2];
+    TextureDic["wheel"][PictureTpye::HightP] = picd[3];
+    TextureDic["wheel"][PictureTpye::RoughnessP] = picd[4];
+    TextureDic["wheel"][PictureTpye::AOP] = picd[5];
+    TextureDic["wheel"][PictureTpye::OpacityP] = pic[4];
+    TextureDic["wheel"][PictureTpye::SpecularCubeP] = picd[7];
+    TextureDic["wheel"][PictureTpye::OtherP] = picd[8];
+
 #pragma endregion
 
 

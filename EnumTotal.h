@@ -33,8 +33,8 @@ namespace Game {
 		StaticPlane,//静态地板
 		//独立模块
 		Player,//游戏主角
+		PlayerEye,//游戏眼睛
 		PlayerBullet,//主角子弹
-
 		StoneMonser,//石头怪
 		BlackHoleE,//黑洞
 		
@@ -48,6 +48,8 @@ namespace Game {
 		HightP,
 		RoughnessP,
 		AOP,
+		OpacityP,//透明度贴图
+		SpecularCubeP,//立方体贴图，环境映射
 		OtherP,//其他纹理
 		Noise1P,//噪声纹理1
 		Noise2P,//噪声纹理2

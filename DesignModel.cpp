@@ -99,11 +99,13 @@ Game::DesignModel::~DesignModel()
 
 bool Game::DesignModel::Draw(glm::mat4 view, glm::mat4 projection)
 {
+    glUseProgram(shaderProgram);
     // 遍历所有 Mesh 并渲染
     for (size_t i = 0; i < _meshVAOs.size(); i++) {
 
         //集成纹理渲染方法,要在draw之前调用，才能生效
-        RenderingTexture();
+        BindTexture();
+        BindTextureAdditional();
         // 设置模型矩阵
         GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(transform));
@@ -131,10 +133,12 @@ bool Game::DesignModel::Draw(glm::mat4 view, glm::mat4 projection)
 
 bool Game::DesignModel::DrawDynamical(glm::mat4 view, glm::mat4 projection)
 {
+    glUseProgram(shaderProgram);
     // 遍历所有 Mesh 并渲染
     for (size_t i = 0; i < _meshVAOs.size(); i++) {
         //集成纹理渲染方法,要在draw之前调用，才能生效
-        RenderingTexture();
+        BindTexture();
+        BindTextureAdditional();
         // 设置模型矩阵
         GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(transform));

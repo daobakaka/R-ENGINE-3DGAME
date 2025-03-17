@@ -1,7 +1,5 @@
 #ifndef Custom_Model_H
 #define Custom_Model_H
-//！！！--即使头文件中有相互包含，一定要注意顺序，这是很可能有隐藏的编译错误的地方，检查不到，程序也不能运行
-//#include "GameObject.h"
 #include "AnimationIntergrated.h"
 
 namespace Game {
@@ -19,10 +17,11 @@ namespace Game {
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndices, bool isSkinnedMesh, bool ifLight = false);
        //--最常用方法
         CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData& modelData, bool isSkinnedMesh, bool ifLight = false,bool ifShadow=false);
+        
         void UpdateVerticesForAnimation(size_t animationFrame);
         void UpdateVerticesForAnimation(const std::vector<Vertex>& vertex);
         virtual void Start() override;
-        virtual void SpecialMethod();//特殊方法，用于特殊构造体重写
+        virtual void SpecialMethod();//特殊方法，用于派生类外部访问重写
         virtual void SelfIns(); //特殊初始化方法，用于派生类重写
         //--继承GameObject 的声明
         virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
@@ -42,44 +41,25 @@ namespace Game {
         virtual void DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader) override; //静态绘制深度图，可重写
         virtual void DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix,GLuint shader) override;//动态绘制深度图，可重写
         virtual void UpdateDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader) override;//深度图更新方法，可重写
-
         //视口深度图模块，用于读取视口深度值
         virtual void DrawDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader) ; //静态绘制深度图，可重写
         virtual void DrawDepthViewPortPicDynamical(glm::mat4 view, glm::mat4 projection, GLuint shader) ;//动态绘制深度图，可重写
         virtual void UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader) ;//深度图更新方法，可重写
-
         //物理引擎模块
         virtual void UpdatePhysics();
         //检查碰撞
         virtual void UpdateCollisionAndPhysics(std::unordered_map<int, CollisionProperties*>& cop);
-        /// <summary>
-        /// 附加纹理方法，添加了压缩因子
-        /// </summary>
-        /// <param name="textureName"></param>
-        /// <param name="order"></param>
-        /// <param name="textureScale"></param>
-        /// <returns></returns>
-        virtual bool AttachTexture(const  std::unordered_map<PictureTpye, GLuint>& textureData, int order=0, glm::vec2 textureScale= glm::vec2(1));
-        virtual void RenderingTexture();//渲染纹理方法可重写
-        virtual void RenderingTextureAdditional();//附加的渲染纹理方法
-        virtual void UniformParametersInput();//全局shader参数输入重写
-        virtual void RenderingLight(LightSpawner* lightSpawner);
-        /// <summary>
-        /// 添加物理组件，初始化基本参数
-        /// </summary>
-        /// <param name="mass"></param>
-        /// <param name="friction"></param>
-        /// <param name="velocity"></param>
-        /// <param name="acceleration"></param>
-        /// <returns></returns>
+        //附加纹理方法，添加了压缩因子
+        virtual bool AttachTexture(const std::unordered_map<PictureTpye, GLuint>& textureData, int order=0, glm::vec2 textureScale= glm::vec2(1));
+        virtual void UniformParametersIns(glm::vec3 baseColor=glm::vec3(0.3f), glm::vec3 emission=glm::vec3(0.05f), float metallic=0, float roughness=1, float opacity=1, float IOR=1.33f, float ao=0.6f, float dissolveThreshold = 0);//shadner 基本参数初始化
+        virtual void RenderingLight(LightSpawner* lightSpawner);      
+        //添加物理组件，初始化基本参数
         virtual bool AttachPhysicalEngine(bool staticObj = false,float mass=1, float friction=0.05f, glm::vec3 velocity = glm::vec3(0), glm::vec3 acceleration = glm::vec3(0, -9.8f, 0),
             float elasticity = 0.5f, bool lockXZAxi = true, float rotationDampping = 0.15f,  bool trigger = false, int layer = 1, float rotationAdjust = 0.382f
             ); 
         virtual bool AttachCollider(CollisionType collider=CollisionType::Box, SpecialType type = SpecialType::OriginalT,float radius=1);//附件碰撞体可重写
         //判断是否需要碰撞，碰撞的对象，封装在泛型基类中的vector容器里
-        virtual bool GetIfCollision() override;
-
-  
+        virtual bool GetIfCollision() override;  
         //销毁
          void DestroySelf();
         //激活与失活
@@ -87,7 +67,6 @@ namespace Game {
         //对象ID处理逻辑
         int GetID();
         int SetID(int id);
-
         //获取状态
         bool GetActiveState()const ;
         //额外游戏参数
@@ -128,6 +107,12 @@ namespace Game {
         float _timeAccumulator=0;//独立的时间计数器,供内部使用
 
 
+
+    protected:
+        //纹理的绑定及传参，在类内部进行
+        virtual void BindTexture();//渲染纹理方法可重写
+        virtual void BindTextureAdditional();//附加的渲染纹理方法
+        virtual void UniformParametersInput();//全局shader参数输入重写
         //采用 consterxpr  绕过无效编译检查， static_assert 断言 进行编译阶段检查
     public:
         template <typename T>

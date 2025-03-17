@@ -85,13 +85,36 @@ void Game::ShaderManager::IntegratedShaderCompile()
     //功能全面的无光照的通用shader(可生成阴影)
     ShaderCompile(CustomNoLightShadowShaderVertexSource, CustomNoLightShadowShaderFragmentSource, "commonNoneLight");
 
-    //独立shader,构建玩家飞行道具
+    //独立shader,构建玩家飞行道具,数量大的对象使用专用sahder
     ShaderCompile(waveVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "waveShader");
     //独立shader,玩家模板测试
     ShaderCompile(stencilTestVertexShaderSource, stencilTestFragmentShaderSource, "stencilTestShader");
     //独立实例化shader,用于生成萤光效果
     ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFireFlyFragmentShaderSource, "fireflyInstanceShader");
 
+    //独立shader,地板，有光照
+    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "planeCommonLight");
+   //独立shader,玩家，有光照
+    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "playerCommonLight");
+    //独立shader,石头怪，有光照
+    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "stoneMonsterCommonLight");
+    //独立shader,蝴蝶，有光照
+    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "butterflyCommonLight");
+    //独立shader,宝箱，有光照
+    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "chestCommonLight");
+    //独立shader,树，有光照
+    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "treeCommonLight");
+
+    //独立shader实例化石头
+    ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "stoneNoneLightInstancer");
+    //独立shader实例化草
+    ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "grassNoneLightInstancer");
+
+
+    //独立shader黑洞,无光照
+    ShaderCompile(CustomNoLightShadowShaderVertexSource, CustomNoLightShadowShaderFragmentSource, "blackHoleCommonNoneLight");
+    //独立shader宝箱，无光照
+    ShaderCompile(CustomNoLightShadowShaderVertexSource, CustomNoLightShadowShaderFragmentSource, "chestCommonNoneLight");
 
 
     //深度图着色器模块
@@ -196,6 +219,23 @@ void Game::ShaderManager::SetTexture(const std::string& shaderName, const std::s
 
     // 将纹理单元传递给片段着色器
     glUniform1i(uniformLocation, order);
+
+}
+
+void Game::ShaderManager::SetCubeTexture(const std::string& shaderName, const std::string& uniformName, GLuint textureID, int order)
+{
+    glUseProgram(_shaderMap[shaderName]);
+    // 获取 Uniform 的位置
+    GLint uniformLocation = glGetUniformLocation(_shaderMap[shaderName], uniformName.c_str());
+    // 激活指定的纹理单元
+    glActiveTexture(GL_TEXTURE0 + order);
+
+    // 绑定纹理
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    // 将纹理单元传递给片段着色器
+    glUniform1i(uniformLocation, order);
+
 
 }
 

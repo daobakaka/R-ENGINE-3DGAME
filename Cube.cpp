@@ -1,6 +1,7 @@
 #pragma once
 #include "Cube.h"
 #include "stb_image.h"
+#include "FileLoadIO.h"
 using namespace Game;
 
 extern const char* skyboxVertexShaderSource;
@@ -151,32 +152,33 @@ Game::Cube::Cube()
 
     glBindVertexArray(0);//解除当前顶点数组的绑定
 
-    std::vector<std::string> faces = {
-       //第一套OPENGL 右手坐标
-        //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/right.jpg",  // 右面
-        //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/left.jpg",   // 左面
-        //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/top.jpg",    // 上面
-        //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/bottom.jpg", // 下面
-        //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/front.jpg",  // 前面
-        //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/back.jpg",    // 后面
-        //第二套  左手坐标
-        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/rightimage.png",  // 右面
-        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/leftimage.png",   // 左面
-        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/upimage.png",    // 上面
-        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/downimage.png", // 下面
-        "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/backimage.png",    // 后面
-         "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/frontimage.png",  // 前面
-        //第三套立方体贴图
-         // "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/rightimage.png",  // 右面 (+X)
-         //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/leftimage.png",   // 左面 (–X)
-         // "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/upimage.png",     // 顶面 (+Y)
-         //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/downimage.png",   // 底面 (–Y)
-         //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/backimage.png",   // 后面 (+Z) 
-         //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/frontimage.png"   // 前面 (–Z) 
+    //std::vector<std::string> faces = {
+    //   //第一套OPENGL 右手坐标
+    //    //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/right.jpg",  // 右面
+    //    //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/left.jpg",   // 左面
+    //    //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/top.jpg",    // 上面
+    //    //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/bottom.jpg", // 下面
+    //    //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/front.jpg",  // 前面
+    //    //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox/back.jpg",    // 后面
+    //    //第二套  左手坐标
+    //    "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/rightimage.png",  // 右面
+    //    "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/leftimage.png",   // 左面
+    //    "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/upimage.png",    // 上面
+    //    "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/downimage.png", // 下面
+    //    "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/backimage.png",    // 后面
+    //     "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox2/frontimage.png",  // 前面
+    //    //第三套立方体贴图
+    //     // "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/rightimage.png",  // 右面 (+X)
+    //     //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/leftimage.png",   // 左面 (–X)
+    //     // "E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/upimage.png",     // 顶面 (+Y)
+    //     //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/downimage.png",   // 底面 (–Y)
+    //     //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/backimage.png",   // 后面 (+Z) 
+    //     //"E:/C++/FirstOne/C++Steam52/Assets/Texture/skybox3/frontimage.png"   // 前面 (–Z) 
 
-    };
-    stbi_set_flip_vertically_on_load(false);
-    LoadCubemap(faces);//天空盒的CUBEMAP 采用 专有的加载方式
+    //};
+    //stbi_set_flip_vertically_on_load(false);
+    //TextureDic["default"][PictureTpye::SpecularCubeP]= LoadCubemap(faces);//天空盒的CUBEMAP 采用 专有的加载方式,这里顺带生生成一张立方体贴图
+    _cubeMapID = TextureDic["default"][PictureTpye::SpecularCubeP];
 
 }
  /// <summary>
@@ -278,7 +280,7 @@ bool Cube::AttachTexture(GLuint textureName, int order)
     return false;
 }
 
-void Game::Cube::LoadCubemap(std::vector<std::string> &faces)
+GLuint Game::Cube::LoadCubemap(std::vector<std::string> &faces)
 {
     glGenTextures(1, &_cubeMapID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, _cubeMapID);
@@ -305,7 +307,7 @@ void Game::Cube::LoadCubemap(std::vector<std::string> &faces)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-
+    return _cubeMapID;
 
 }
 

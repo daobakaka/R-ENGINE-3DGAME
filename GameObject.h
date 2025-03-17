@@ -20,9 +20,6 @@ namespace Game {
     public:
 
         ////控制器实例以及视图(相机拍摄角度)和投影矩阵(相机视野，屏幕比例，近、远裁面)
-        //Controller* controller;
-        //glm::mat4 view;
-        //glm::mat4 projection;
         //--变换模块
         glm::vec3 position;    // 物体位置
         glm::quat rotation;    // 物体旋转（四元数）
@@ -76,7 +73,7 @@ namespace Game {
        // virtual bool AttachTexture(GLuint name,int order);
 
         //--mono 方法基础性重写
-        virtual void Start() override;//事实上 unity 中的awake 或者enable就是构造的位置，所以start 在其后面
+        virtual void Start() override;//事实上游戏引擎中的awake 或者enable就是构造的位置，所以start 在其后面
         // virtual void Update() override;//更新方法和每个模型的 顶点相关联，所以在具体的模型类中进行重写
         virtual void Destroy() override;//这里的销毁 本身的逻辑就是删除引用的实例类，所以可以直接默认
         virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;

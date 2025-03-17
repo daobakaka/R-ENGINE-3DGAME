@@ -42,7 +42,7 @@ namespace Game {
         void UpdatePhysicsCollision(float deltaTime = 0.0167f);
         //设置默认旋转锁定，默认设置锁定X和Z;
 
-                // 设置物体的物理属性，这一系列方法通过引用逻辑优化
+        // 设置物体的物理属性
         void SetPosition(glm::vec3 pos) { _collisionProperties.position = pos; }
         void SetVelocity(glm::vec3 vel) { _collisionProperties.velocity = vel; }
         void SetAcceleration(glm::vec3 acc) { _collisionProperties.acceleration = acc; }

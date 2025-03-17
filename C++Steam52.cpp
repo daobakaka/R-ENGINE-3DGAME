@@ -46,6 +46,7 @@ extern void GameUpdateMainLogicT(const glm::mat4& view, const glm::mat4& project
 extern void GameUpdateBufferTestT(const glm::mat4& view, const glm::mat4& projection, GLFWwindow* window, CustomModel* player);
 extern void ShderViewPortRenderingT(const glm::mat4& view, const glm::mat4& projection,  CustomModel* player);
 extern void PostProcessingT(const glm::mat4& view, const glm::mat4& projectionn, GLFWwindow* window, CustomModel* player);
+extern void StaticShaderGlobalParametersPassingT(const glm::mat4& view, const glm::mat4& projection);
 //控制组件标识
 extern Controller* controller;
 extern LifecycleManager<CustomModel>* manager;
@@ -102,30 +103,8 @@ int GLins() {
         // 获取视图矩阵和投影矩阵
         glm::mat4 view = controller->GetPlayerViewMatrix(gamePlayer, glm::vec3(0, 30, 100));//摄像机的朝向
         glm::mat4 projection = controller->GetProjectionMatrix();//摄像机的裁剪方向
-        //为通用shader 传入共用视图及透视矩阵,这里改善了方法，设置时直接传入名字调用相关shader，后期可综合
-        shaderManager->SetMat4("commonLight", "view", view);
-        shaderManager->SetMat4("commonLight", "projection", projection);
-        //传入实例化shader的渲染
-        shaderManager->SetMat4("noneLightInstancer", "view", view);
-        shaderManager->SetMat4("noneLightInstancer", "projection", projection);
-        //传入实例化后处理的渲染
-        shaderManager->SetMat4("noneLightDepthCalInstancer", "view", view);
-        shaderManager->SetMat4("noneLightDepthCalInstancer", "projection", projection);
-        //传入无光照着色器
-        shaderManager->SetMat4("noneLight", "view", view);
-        shaderManager->SetMat4("noneLight", "projection", projection);
-        //传入无光照通用着色器
-        shaderManager->SetMat4("commonNoneLight", "view", view);
-        shaderManager->SetMat4("commonNoneLight", "projection", projection);
-        //传入波浪通用光照着色器(构建类似泡泡的飞行道具)
-        shaderManager->SetMat4("waveShader", "view", view);
-        shaderManager->SetMat4("waveShader", "projection", projection);
-        //传入玩家模板测试
-        shaderManager->SetMat4("stencilTestShader", "view", view);
-        shaderManager->SetMat4("stencilTestShader", "projection", projection);
-        //传入实例化荧光着色器
-        shaderManager->SetMat4("fireflyInstanceShader", "view", view);
-        shaderManager->SetMat4("fireflyInstanceShader", "projection", projection);
+        //静态shader全局参数传入
+        StaticShaderGlobalParametersPassingT(view,projection);
 #pragma endregion
         //多通道渲染
         //通道1:这里渲染平行光阴影正交深度图
@@ -149,7 +128,6 @@ int GLins() {
             skybox->Draw(view, projection);
             //控制器更新方法1、基本更新2、变体更新
             manager->UpdateAll(view, projection);
-            manager->UpdateAllVariant(view, projection);
             //执行三种渲染测试方法的特殊区域，模板、深度
             GameUpdateBufferTestT(view, projection, window, gamePlayer);
         }
@@ -160,8 +138,6 @@ int GLins() {
         }
         //字体渲染
         cusText->RenderText("FPS :" + std::to_string(scripts->TUpdateFPS()), 2200.0f, 1150.0f, .70f, glm::vec3(1.0f, .50f, 1.0f));//帧率渲染
-        //字体渲染
-      //  cusText->RenderText("FPS :" + std::to_string(scripts->TUpdateFPS()), 2200.0f, 1150.0f, .70f, glm::vec3(1.0f, .50f, 1.0f));//帧率渲染
         //设置时间控制器，将协程的方法在主循环中进行时间控制
         coroutine->CoroutineUpdate();
         //帧率控制，目前是使用比较笨的阻塞方法

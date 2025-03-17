@@ -575,5 +575,12 @@ for (int i = 0; i < 1; i++)
 
 }
 
+////生成游戏眼睛，在玩家类操控
+//auto* playerEye = new CustomModelShader("commonLight", ModelDic["playerEye"], true, true, true);
+//playerEye->SetVariant(ModelClass::PlayerEye);
+//playerEye->Initialize(glm::vec3(0,10,0));
+//manager->RegisterObject(playerEye);//注入普通类，增加普通逻辑
+//playerEye->AttachTexture(TextureDic["wheel"], 0, glm::vec2(1, 1));
+
 /
 #endif

@@ -49,7 +49,7 @@ namespace Game
 
 		void SteLightParameters(glm::vec3 color, float intensity, glm::vec3 direction = glm::vec3(0));
 
-		void RenderingTexture() override;
+		void BindTexture() override;
 
 	private:
 		glm::vec3 myColor;
@@ -114,18 +114,20 @@ namespace Game
 		virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
 
 		//virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;//变体移动可重写
-
+		//允许采用统一shader绘制开关
+		void  EnableCommonShaderRendering(bool change=false);
 		virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;//动态绘制可重写，与IntergtatedAnimatior联动
-
-		virtual void RenderingTexture()override;
-		virtual void UniformParametersInput() override;//全局shader参数输入重写
-		virtual void RenderingTextureAdditional() override;//重写附件纹理方法;
 
 		virtual void RenderingLight();//通过着色器的光照渲染
 		virtual void SelfIns() override;
 	protected:
 		LightSpawner* lightSpawner;
-
+		virtual void BindTexture()override;//
+		virtual void UniformParametersInput() override;//全局shader参数输入重写
+		virtual void BindTextureAdditional() override;//通用shader类重写基类额外渲染方法，以渲染完整的7张贴图
+		//统一shader绘制方法
+		void CommonShaderRendering();
+		bool _drawCommon = false;
 
 
 	};
@@ -154,22 +156,13 @@ namespace Game
 			glm::vec3 rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f),
 			ModelClass type = ModelClass::InstanceCube); // 旋转增量，通过 rotationAxis 控制
 
-
 		virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
-
 		//virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;//变体移动可重写
-
 		virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;//动态绘制可重写，与IntergtatedAnimatior联动
-
-		virtual void  UniformParametersInput() override;
-		virtual void RenderingTexture()override;
-		virtual void GenerateInstanceMatrices(ModelClass type=ModelClass::InstanceCube);
 		virtual void SpecialMethod()override;
-		//实例化变换
-		virtual void UpadeInstanceMatrices();
 		//视口深度图绘制
 		virtual void UpdateDepthViewPortPic(glm::mat4 view, glm::mat4 projection, GLuint shader) override;
-
+		//允许测试深度
 		void EnableDepthcal();
 
 	protected:
@@ -180,7 +173,13 @@ namespace Game
 		std::vector<glm::mat4> _modelMatrices;  // 使用 std::vector 存储动态数量的实例矩阵
 		LightRender* _lightRender;
 		bool _useViewPortDepthMap;
-
+		virtual void GenerateInstanceMatrices(ModelClass type = ModelClass::InstanceCube);
+		virtual void UniformParametersInput() override;
+		virtual void BindTexture()override;
+		//实例化类重写额外绑定纹理方法为空方法，因为目前只支持基础纹理
+		virtual void BindTextureAdditional() override;
+		//实例化变换
+		virtual void UpadeInstanceMatrices();
 	};
 
 	
@@ -194,11 +193,11 @@ namespace Game
 		using CustomModelInstance :: CustomModelInstance;
 		void SelfIns() override;
 		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;//重写变体更新方法，构建萤火虫自身运动
-		//萤火虫动态发光
-		virtual void  UniformParametersInput() override;
 	protected:
 		std::vector<InstanceData> _instanceData; // 存储每个实例的随机扰动值
 		void InitializeInstanceData(); // 初始化每个实例的随机扰动值
+		//萤火虫动态发光
+		virtual void  UniformParametersInput() override;
 
 	};
 
@@ -241,8 +240,9 @@ namespace Game
 		//这里直接继承基类的构造函数
 		using CustomModelShader::CustomModelShader;
 		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
-		void  UniformParametersInput() override;//黑洞类在这里重写传参
-	private:
+	protected:
+		void UniformParametersInput() override;//黑洞类在这里重写传参
+
 	};
 
 #pragma endregion
@@ -260,24 +260,23 @@ namespace Game
 		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
 
 		void Start() override;//重写初始化代码
-
-		void  UniformParametersInput() override;//玩家类在这里重写传参
-
-		void RenderingStencilTest();
-
+		//特殊方法
 		void SpecialMethod() override;
 	private:
 		LifecycleManager<CustomModel>* _manager;
 		Controller* _controller;
 		ShaderManager* _shaderManager;
-
+	protected:	
+		void UniformParametersInput() override;//玩家类在这里重写传参
+		void RenderingStencilTest();
 	};
 
 	class NoneLightModel :public CustomModelShader
 	{
 
-	public :
+	public:
 		using CustomModelShader::CustomModelShader;
+	protected:
 		void  UniformParametersInput() override;//玩家类在这里重写传参
 
 
@@ -288,9 +287,8 @@ namespace Game
 #pragma endregion
 #pragma region 游戏道具板块
 
-
-	/// <summary>
-/// 子弹
+/// <summary>
+/// 气泡子弹
 /// </summary>
 	class GameBullet :public CustomModelShader
 	{
@@ -298,8 +296,6 @@ namespace Game
 	public:
 		using CustomModelShader::CustomModelShader;
 		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
-
-		void  UniformParametersInput();//重写通用shader的传参，改变状态
 		void SelfIns() override;//初始化随机参数
 	protected:
 
@@ -307,7 +303,7 @@ namespace Game
 		float _waveAmplitude ; // 波浪幅度
 		float _waveFrequency; // 波浪频率
 		float _waveSpeed ;     // 波浪速度
-
+		void UniformParametersInput();//重写通用shader的传参，改变状态
 
 	};
 #pragma endregion
@@ -319,8 +315,6 @@ namespace Game
 	public:
 		using CustomModelShader::CustomModelShader;
 	    void UpdateVariant(glm::mat4 view, glm::mat4 projection) override; //自主移动
-		void UpdateSpecial(CustomModel* player);
-		void  UniformParametersInput();//重写通用shader的传参，改变状态
 		void SelfIns() override;//初始化随机参数
 
 
@@ -333,6 +327,7 @@ namespace Game
 		bool _isRunA;
 		bool _isAttackA;
 		bool _isDeathA;
+		void UniformParametersInput();//重写通用shader的传参，改变状态
 	};
 	
 

@@ -3,7 +3,7 @@
 #include"GameObject.h"
 #include "FileLoadIO.h"
 namespace Game {
-    // 使用前向声明，而不是包含完整的头文件,便于CPP中引用Custom文件,避免嵌套
+
     class CustomModel; // 前向声明 CustomModel 类
 
     class Animation

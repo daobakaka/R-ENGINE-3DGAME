@@ -34,7 +34,7 @@ namespace Game {
         //这里的对象采取遍历的方法进行处理，针对同种变体的对象，进行复原，必须要对setActiveFalse的结构才使用
         std::unordered_map<int, T*>& GetCacheObjects();
         //特殊对象容器，比如玩家或者其他的比如需要进行深度 alpha 模板测试的特殊实例
-        std::unordered_map<const char*, T*>& GetspecialObjects();
+        std::unordered_map<const char*, T*>& GetSpecialObjects();
 
         void StartAll();
         void UpdateAll(glm::mat4 view, glm::mat4 projection);
@@ -165,7 +165,7 @@ namespace Game {
     }
 
      template<typename T>
- std::unordered_map<const char*, T*>& LifecycleManager<T>::GetspecialObjects()
+ std::unordered_map<const char*, T*>& LifecycleManager<T>::GetSpecialObjects()
      {
      return specialObjects;
      }
@@ -195,6 +195,8 @@ namespace Game {
         }
         nativeObjects.clear();
         variantObjects.clear();
+        cacheObjects.clear();
+        specialObjects.clear();
     }
 
     template <typename T>
