@@ -539,7 +539,7 @@ void Game::LightRender::RenderDepthTestTexture(GLuint shader)
      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);  // 清空深度缓冲,颜色缓冲，模板缓冲
      glBindFramebuffer(GL_FRAMEBUFFER, _postProcessingMapFBO);//绑定初始化好的缓冲参数
      glViewport(0, 0, 4800, 2400);//调整视口以适应阴影贴图分辨率
-
+     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);  // 清空深度缓冲,颜色缓冲，模板缓冲
  }
 
  void Game::LightRender::UbindPostProcessingBuffer()

@@ -465,7 +465,7 @@ bool CustomModel::DrawDynamical(glm::mat4 view, glm::mat4 projection)
 /// <param name="textureName"></param>
 /// <param name="order"></param>
 /// <returns></returns>
-bool CustomModel::AttachTexture(const std::unordered_map<PictureTpye, GLuint>& textureData, int order, glm::vec2 textureScale) {
+bool CustomModel::AttachTexture(const std::unordered_map<PictureTpye, GLuint>& textureData,bool isBatch ,int order, glm::vec2 textureScale) {
     // 检查 order 是否有效
     if (order < 0) {
         return false; // 无效的 order
@@ -473,16 +473,11 @@ bool CustomModel::AttachTexture(const std::unordered_map<PictureTpye, GLuint>& t
     _textures = textureData;
     _textureOrder = order;
     _textureScale = textureScale;
-    _drawTexture = true;
-    glUseProgram(shaderProgram);
-    BindTexture();
-    BindTextureAdditional();
-    return true;
+    _drawTextureBatch = isBatch;
+    return  true;
 }
 void CustomModel::BindTexture()
-{
-  
-    if (_drawTexture) {
+{   
         // 传入纹理缩放因子
         GLuint textureScaleLoc = glGetUniformLocation(shaderProgram, "textureScale");
         glUniform2f(textureScaleLoc, _textureScale.x, _textureScale.y);
@@ -490,8 +485,7 @@ void CustomModel::BindTexture()
         GLuint baseTextureLoc = glGetUniformLocation(shaderProgram, "baseTexture");
         glActiveTexture(GL_TEXTURE0+_textureOrder); // 激活纹理单元 0
         glBindTexture(GL_TEXTURE_2D, _textures[BaseP]); // 绑定基础纹理
-        glUniform1i(baseTextureLoc, 0); // 传递纹理单元          
-    }
+        glUniform1i(baseTextureLoc, 0); // 传递纹理单元             
  }
 
 void Game::CustomModel::BindTextureAdditional()
@@ -504,43 +498,40 @@ void Game::CustomModel::UniformParametersInput()
 
 
 }
+void Game::CustomModel::UniformParametersChange()
+{
+}
+void Game::CustomModel::InnerRendringTexture(const glm::mat4& view, const glm::mat4& projection)
+{
+    if (!_drawTextureBatch)
+    {
+        glUseProgram(shaderProgram);
+        BindTexture();
+        BindTextureAdditional();
+        UniformParametersInput();//传参应该在这里引用
+    }
+  
+    UniformParametersChange();//变化传参，针对部分参数进行变化，在一帧内改变对应的值,这应该在批量绘制的外部引用    
+    IsSkinnedMesh == true ? DrawDynamical(view, projection) : Draw(view, projection);
+ 
+}
 void Game::CustomModel::UniformParametersIns(glm::vec3 baseColor, glm::vec3 emission, float metallic, float roughness, float opacity, float IOR, float ao, float dissolveThreshold)
 {
-    glUseProgram(shaderProgram);
-   // 溶解度，默认传入0 不溶解
-    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
-    glUniform1f(dissolveThresholdLoc, dissolveThreshold);
-
-
-    //金属度
-    GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
-    glUniform1f(metallicLoc, metallic);
-
-    //糙度
-    GLuint roughnessLoc = glGetUniformLocation(shaderProgram, "roughness");
-    glUniform1f(roughnessLoc, roughness);
-    //透明度
-    GLuint opacityLoc = glGetUniformLocation(shaderProgram, "opacity");
-    glUniform1f(opacityLoc, opacity);
-    //基础材料折射率，纯金属折射率不受影响
-    GLuint IORLoc = glGetUniformLocation(shaderProgram, " IOR");
-    glUniform1f(IORLoc, IOR);
-    //环境光贡献率
-    GLuint aoLoc = glGetUniformLocation(shaderProgram, "ao");
-    glUniform1f(aoLoc, ao);
-    // 自发光
-    GLuint emissionLoc = glGetUniformLocation(shaderProgram, "emission");
-    glUniform3f(emissionLoc, emission.x,emission.y,emission.z); // 传入自发光颜色
-    // 基本色
-    GLuint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
-    glUniform3f(baseColorLoc, baseColor.x,baseColor.y,baseColor.z); // 传入基本色（暗色）
+  
+    _baseColor = baseColor;
+    _emissionColor = emission;
+    _metallic = metallic;
+    _roughness = roughness;
+    _opacity = opacity;
+    _IOR = IOR;
+    _ao = ao;
+    _dissolveThreshold = dissolveThreshold;    
 
 }
+
 void Game::CustomModel::RenderingLight(LightSpawner* lightSpawner)
 {
-
-    glUseProgram(shaderProgram);
-
+ 
     // 2. 点光源数据
     const auto& pointLights = lightSpawner->GetPointLights();
     std::vector<std::pair<float, int>> pointLightDistances;  // 存储每个点光源到物体的距离平方和索引,新声明的结构
@@ -730,9 +721,7 @@ void Game::CustomModel::UpdatePhysics()
     //开启物理模式，却未开启碰撞，才进行简单加速度物理计算
     if (_ifPhysics&&!_ifCollision)
     {
-
         _physicsBody->UpdatePhysics();
-
 
     }
 
@@ -741,17 +730,12 @@ void Game::CustomModel::UpdatePhysics()
 void Game::CustomModel::UpdateCollisionAndPhysics(std::unordered_map<int, CollisionProperties*>& cop)
 {
 
-
     if (_ifCollision)
     {
   
-
-
         _collider->UpdateCollisionState(cop);
-
-        
+       
     }
-
 }
 
 bool Game::CustomModel::AttachPhysicalEngine(bool staticObj,float mass, float friction, glm::vec3 velocity, glm::vec3 acceleration, float elasticity, bool lockXZAxi,
@@ -807,6 +791,11 @@ int Game::CustomModel::SetID(int id)
 bool Game::CustomModel::GetActiveState()const
 {
     return _ifActive;
+}
+
+bool Game::CustomModel::GetBatchDrawState()
+{
+    return _drawTextureBatch;
 }
 
 void Game::CustomModel::DestroySelf()
@@ -970,9 +959,8 @@ void CustomModel::Update(glm::mat4 view, glm::mat4 projection)
     //这种写法就，直接封装了更新变化和通知CPU渲染的两个方法，如果具体定义方法，只需要在其他脚本里面单独定义某个方法，更改transform即可，由管理池泛型调用
     UpdateTransform();
     //确认动态绘制或者静态绘制
-    //先切换着色器状态
-    glUseProgram(shaderProgram);
-    IsSkinnedMesh == true ? DrawDynamical(view, projection) : Draw(view, projection);
+    InnerRendringTexture(view, projection);
+
 }
 //变体方法，可以增加变体的运行行为
 void  CustomModel::UpdateVariant(glm::mat4 view, glm::mat4 projection)

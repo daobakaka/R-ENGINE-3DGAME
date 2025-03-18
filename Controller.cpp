@@ -321,7 +321,7 @@ void Game::Controller::ProcessInputPhysics(GLFWwindow* window, CustomModel* play
     }
 }
     // 定义旋转速度（角度：单位为弧度），可结合 deltaTime 使旋转平滑
-    float rotationSpeed = 0.05f; // 每帧旋转的弧度数，视实际需求调整
+    float rotationSpeed = 0.03f; // 每帧旋转的弧度数，视实际需求调整
 
     // 如果鼠标左键被按下，则向左旋转（绕 Y 轴正向旋转）
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {

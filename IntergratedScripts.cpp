@@ -135,7 +135,7 @@ void Game::IntergratedScripts::PlayerControl(GLFWwindow* window, CustomModel* ot
             bullet->SetVariant(ModelClass::PlayerBullet);
             bullet->Initialize(other->position + glm::vec3(0, 8, 0), glm::quat(glm::vec3(0)), glm::vec3(3.0f));
             manager->RegisterObject(bullet);
-            bullet->AttachTexture(TextureDic["water"], 0, glm::vec2(1, 1));
+            bullet->AttachTexture(TextureDic["water"], true,0, glm::vec2(1, 1));//设置批量绘制为true,渲染逻辑需要在外部调用
             bullet->UniformParametersIns();
             bullet->AttachPhysicalEngine();
             bullet->AttachCollider();

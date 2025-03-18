@@ -122,10 +122,10 @@ int GLins() {
         {
             //绑定后处理的离屏帧缓冲对象，这里用于后处理，不需要后处理这里可以注释掉
             lightRender->BindPostProcessingBuffer();
-
-            GameUpdateMainLogicT(view, projection,window,gamePlayer);
             //保持天空盒在其他物体之前渲染,渲染天空盒
             skybox->Draw(view, projection);
+            //基本逻辑，批处理方法
+            GameUpdateMainLogicT(view, projection,window,gamePlayer);
             //控制器更新方法1、基本更新2、变体更新
             manager->UpdateAll(view, projection);
             //执行三种渲染测试方法的特殊区域，模板、深度
@@ -136,13 +136,12 @@ int GLins() {
         {
             PostProcessingT(view, projection, window, gamePlayer);
         }
-        //字体渲染
-        cusText->RenderText("FPS :" + std::to_string(scripts->TUpdateFPS()), 2200.0f, 1150.0f, .70f, glm::vec3(1.0f, .50f, 1.0f));//帧率渲染
+        //开启字体渲染
+       // cusText->RenderText("FPS :" + std::to_string(scripts->TUpdateFPS()), 2200.0f, 1150.0f, .70f, glm::vec3(1.0f, .50f, 1.0f));//帧率渲染
         //设置时间控制器，将协程的方法在主循环中进行时间控制
         coroutine->CoroutineUpdate();
         //帧率控制，目前是使用比较笨的阻塞方法
         scripts->TControlFrameRate(120);
-
         // 测试收尾交换缓冲区
         CheckOpenGLError();
         // 交换缓冲区

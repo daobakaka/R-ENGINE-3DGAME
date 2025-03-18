@@ -115,7 +115,6 @@ namespace Game
 
 		//virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;//变体移动可重写
 		//允许采用统一shader绘制开关
-		void  EnableCommonShaderRendering(bool change=false);
 		virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;//动态绘制可重写，与IntergtatedAnimatior联动
 
 		virtual void RenderingLight();//通过着色器的光照渲染
@@ -125,9 +124,7 @@ namespace Game
 		virtual void BindTexture()override;//
 		virtual void UniformParametersInput() override;//全局shader参数输入重写
 		virtual void BindTextureAdditional() override;//通用shader类重写基类额外渲染方法，以渲染完整的7张贴图
-		//统一shader绘制方法
-		void CommonShaderRendering();
-		bool _drawCommon = false;
+		virtual void UniformParametersChange() override;
 
 
 	};
@@ -197,7 +194,7 @@ namespace Game
 		std::vector<InstanceData> _instanceData; // 存储每个实例的随机扰动值
 		void InitializeInstanceData(); // 初始化每个实例的随机扰动值
 		//萤火虫动态发光
-		virtual void  UniformParametersInput() override;
+		virtual void  UniformParametersChange() override;
 
 	};
 
@@ -241,7 +238,7 @@ namespace Game
 		using CustomModelShader::CustomModelShader;
 		void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;
 	protected:
-		void UniformParametersInput() override;//黑洞类在这里重写传参
+		void UniformParametersChange() override;//黑洞类在这里重写传参
 
 	};
 
@@ -267,20 +264,8 @@ namespace Game
 		Controller* _controller;
 		ShaderManager* _shaderManager;
 	protected:	
-		void UniformParametersInput() override;//玩家类在这里重写传参
+		void UniformParametersChange() override;//玩家类在这里重写传参
 		void RenderingStencilTest();
-	};
-
-	class NoneLightModel :public CustomModelShader
-	{
-
-	public:
-		using CustomModelShader::CustomModelShader;
-	protected:
-		void  UniformParametersInput() override;//玩家类在这里重写传参
-
-
-
 	};
 
 
@@ -303,7 +288,7 @@ namespace Game
 		float _waveAmplitude ; // 波浪幅度
 		float _waveFrequency; // 波浪频率
 		float _waveSpeed ;     // 波浪速度
-		void UniformParametersInput();//重写通用shader的传参，改变状态
+		void UniformParametersChange() override;//重写通用shader的传参，改变状态
 
 	};
 #pragma endregion
@@ -327,7 +312,7 @@ namespace Game
 		bool _isRunA;
 		bool _isAttackA;
 		bool _isDeathA;
-		void UniformParametersInput();//重写通用shader的传参，改变状态
+		void UniformParametersChange()override;//重写通用shader的传参，改变状态
 	};
 	
 

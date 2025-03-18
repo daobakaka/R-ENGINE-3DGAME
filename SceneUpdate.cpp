@@ -121,6 +121,8 @@ void PostProcessingT(const glm::mat4& view, const glm::mat4& projection, GLFWwin
 /// <param name="textureOrder"></param>
 void RenderingTextureGlobal(GLuint shaderProgram, const std::unordered_map<PictureTpye, GLuint>& textures, glm::vec2 textureScale = glm::vec2(1, 1), int textureOrder = 0)
 {
+ 
+    glUseProgram(shaderProgram);
     // 传入纹理缩放因子
     GLuint textureScaleLoc = glGetUniformLocation(shaderProgram, "textureScale");
     if (textureScaleLoc != -1)
@@ -212,6 +214,10 @@ void RenderingTextureGlobal(GLuint shaderProgram, const std::unordered_map<Pictu
 /// <param name="dissolveThreshold"></param>
 void PassUniformParametersGlobal(GLuint shaderProgram, glm::vec3 baseColor, glm::vec3 emission, float metallic, float roughness, float opacity, float IOR, float ao, float dissolveThreshold = 0)
 {
+    //溶解度
+    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
+    glUniform1f(dissolveThresholdLoc, dissolveThreshold);
+
 
     //金属度
     GLuint metallicLoc = glGetUniformLocation(shaderProgram, "metallic");
@@ -268,39 +274,10 @@ void StaticShaderGlobalParametersPassingT(const glm::mat4& view, const glm::mat4
     //传入实例化荧光着色器
     shaderManager->SetMat4("fireflyInstanceShader", "view", view);
     shaderManager->SetMat4("fireflyInstanceShader", "projection", projection);
-    //传入地板光照着色器
-    shaderManager->SetMat4("planeCommonLight", "view", view);
-    shaderManager->SetMat4("planeCommonLight", "projection", projection);
-    //传入玩家光照着色器
-    shaderManager->SetMat4("playerCommonLight", "view", view);
-    shaderManager->SetMat4("playerCommonLight", "projection", projection);
-    //传入黑洞无光照着色器
-    shaderManager->SetMat4("blackHoleCommonNoneLight", "view", view);
-    shaderManager->SetMat4("blackHoleCommonNoneLight", "projection", projection);
-    //传入石头怪光照着色器
-    shaderManager->SetMat4("stoneMonsterCommonLight", "view", view);
-    shaderManager->SetMat4("stoneMonsterCommonLight", "projection", projection);
-    //传入石头光照着色器
-    shaderManager->SetMat4("stoneCommonLight", "view", view);
-    shaderManager->SetMat4("stoneCommonLight", "projection", projection);
-    //传入蝴蝶光照着色器
-    shaderManager->SetMat4("butterflyCommonLight", "view", view);
-    shaderManager->SetMat4("butterflyCommonLight", "projection", projection);
-    //传入宝箱光照着色器
-    shaderManager->SetMat4("chestCommonLight", "view", view);
-    shaderManager->SetMat4("chestCommonLight", "projection", projection);
-    //传入树光照着色器
-    shaderManager->SetMat4("treeCommonLight", "view", view);
-    shaderManager->SetMat4("treeCommonLight", "projection", projection);
-    //传入宝箱无光照着色器
-    shaderManager->SetMat4("chestCommonNoneLight", "view", view);
-    shaderManager->SetMat4("chestCommonNoneLight", "projection", projection);
-    //传入实例化草着色器
-    shaderManager->SetMat4("grassNoneLightInstancer", "view", view);
-    shaderManager->SetMat4("grassNoneLightInstancer", "projection", projection);
-    //传入实例化石着色器
-    shaderManager->SetMat4("stoneNoneLightInstancer", "view", view);
-    shaderManager->SetMat4("stoneNoneLightInstancer", "projection", projection);
+    //传入全局光照通用独立着色器
+    shaderManager->SetMat4("aloneCommonLight", "view", view);
+    shaderManager->SetMat4("aloneCommonLight", "projection", projection);
+  
 }
 
 //平行光统一参数传入和阴影传入部分
@@ -310,66 +287,33 @@ void LightShaderGlobalParamerersCalculate()
     shaderManager->SetMat4("commonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
     shaderManager->SetMat4("commonNoneLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
     shaderManager->SetMat4("waveShader", "lightSpaceMatrix", lightRender->GetLightMatrix());
-    shaderManager->SetMat4("planeCommonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
-    shaderManager->SetMat4("playerCommonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
-    shaderManager->SetMat4("stoneMonsterCommonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
-    shaderManager->SetMat4("stoneCommonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
-    shaderManager->SetMat4("butterflyCommonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
-    shaderManager->SetMat4("chestCommonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
-    shaderManager->SetMat4("treeCommonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
-    shaderManager->SetMat4("chestCommonNoneLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
-    shaderManager->SetMat4("blackHoleCommonNoneLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
+    shaderManager->SetMat4("aloneCommonLight", "lightSpaceMatrix", lightRender->GetLightMatrix());
+ 
     //激活阴影纹理单元,这里设置纹理单元10避免冲突
     shaderManager->SetTexture("commonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
     shaderManager->SetTexture("commonNoneLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
     shaderManager->SetTexture("waveShader", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
-    shaderManager->SetTexture("planeCommonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
-    shaderManager->SetTexture("playerCommonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
-    shaderManager->SetTexture("stoneMonsterCommonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
-    shaderManager->SetTexture("stoneCommonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
-    shaderManager->SetTexture("butterflyCommonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
-    shaderManager->SetTexture("chestCommonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
-    shaderManager->SetTexture("treeCommonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
-    shaderManager->SetTexture("chestCommonNoneLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
-    shaderManager->SetTexture("blackHoleCommonNoneLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
+    shaderManager->SetTexture("aloneCommonLight", "autoParallelShadowMap", lightRender->GetDepthShaderProgram(ShaderClass::DepthMapParallel), 10);
+  
     //平行光强度渲染,平行光的参数是一致的
     shaderManager->SetVec3("commonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
     shaderManager->SetVec3("commonNoneLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
     shaderManager->SetVec3("waveShader", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
-    shaderManager->SetVec3("planeCommonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
-    shaderManager->SetVec3("playerCommonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
-    shaderManager->SetVec3("stoneMonsterCommonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
-    shaderManager->SetVec3("stoneCommonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
-    shaderManager->SetVec3("butterflyCommonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
-    shaderManager->SetVec3("chestCommonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
-    shaderManager->SetVec3("treeCommonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
-    shaderManager->SetVec3("chestCommonNoneLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
-    shaderManager->SetVec3("blackHoleCommonNoneLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
+    shaderManager->SetVec3("aloneCommonLight", "parallelLightDirection", lightSpawner->GetParallelLight().direction);
+   
     //以上两个通用着色器，采用同样的参数传入
     shaderManager->SetVec3("commonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
     shaderManager->SetFloat("commonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
     shaderManager->SetVec3("waveShader", "parallelLightColor", lightSpawner->GetParallelLight().color);
     shaderManager->SetFloat("waveShader", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
-    shaderManager->SetVec3("planeCommonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
-    shaderManager->SetFloat("planeCommonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
-    shaderManager->SetVec3("playerCommonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
-    shaderManager->SetFloat("playerCommonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
-    shaderManager->SetVec3("stoneMonsterCommonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
-    shaderManager->SetFloat("stoneMonsterCommonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
-    shaderManager->SetVec3("stoneCommonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
-    shaderManager->SetFloat("stoneCommonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
-    shaderManager->SetVec3("butterflyCommonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
-    shaderManager->SetFloat("butterflyCommonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
-    shaderManager->SetVec3("chestCommonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
-    shaderManager->SetFloat("chestCommonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
-    shaderManager->SetVec3("treeCommonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
-    shaderManager->SetFloat("treeCommonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
+    shaderManager->SetVec3("aloneCommonLight", "parallelLightColor", lightSpawner->GetParallelLight().color);
+    shaderManager->SetFloat("aloneCommonLight", "parallelLightIntensity", lightSpawner->GetParallelLight().intensity);
+   
 }
 
 void GameUpdateMainLogicT(const glm::mat4& view, const glm::mat4& projection, GLFWwindow* window, CustomModel* player)
 {
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);  // 清除颜色缓冲和深度缓冲和模板缓冲
+  
     //执行光源参数的全局输入
     LightShaderGlobalParamerersCalculate();
     //每帧清空可移除对象
@@ -378,57 +322,91 @@ void GameUpdateMainLogicT(const glm::mat4& view, const glm::mat4& projection, GL
     toDestory.clear();
     //2.使用综合脚本进行控制，场景类独立性综合性的方法,这个方法也可以通过变体种子int参数来执行不同的脚本
     //遍历执行池
-    for (auto& item : manager->GetNativeObjects()) {
-        switch (item.second->GetVariant()) {
+    for (auto& modelClassPair : manager->GetNativeObjects()) {
+        ModelClass modelClass = modelClassPair.first; // 获取当前分类
 
-        case ModelClass::BlackHoleE: // 对应 else if (item.second->GetVariant() == ModelClass::BlackHoleE)
-            scripts->TestUpdateFun(item.second); // 脚本方法，执行综合方法
-            break;
-
-        case ModelClass::ParallelLight: // 对应 else if (item.second->GetVariant() == ModelClass::ParallelLight)
-            scripts->TParallelLightRotation(item.second); // 平行光旋转
-            break;
-
-        case ModelClass::StoneMonser: // 对应 else if (item.second->GetVariant() == ModelClass::StoneMonser)
-            if (item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death == true) {
-                toActiveFalse.push_back(item.second); // 怪物生命监测
+        switch (modelClass) {
+        case ModelClass::BlackHoleE:
+            // 直接进入内层遍历
+            for (auto& item : modelClassPair.second) {
+                CustomModel* object = item.second; // 获取对象
+                scripts->TestUpdateFun(object); // 脚本方法，执行综合方法
             }
             break;
 
-        case ModelClass::TsetButterfly: // 对应 else if (item.second->GetVariant() == ModelClass::TsetButterfly)
-            item.second->PlayAnimation(0, 0.1f); // 播放简易顶点动画
-            if (item.second->timeAccumulator >= 120) {
-                toDestory.push_back(item.second); // 测试蝴蝶超过120秒消失
+        case ModelClass::ParallelLight:
+            // 直接进入内层遍历
+            for (auto& item : modelClassPair.second) {
+                CustomModel* object = item.second; // 获取对象
+                scripts->TParallelLightRotation(object); // 平行光旋转
             }
             break;
 
-        case ModelClass::TestPhysics: // 对应 else if (item.second->GetVariant() == ModelClass::TestPhysics)
-            if (item.second->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health <= 0) {
-                toActiveFalse.push_back(item.second); // 设置生命值小于0时，物体消失
+        case ModelClass::StoneMonser:
+            //批量对象开启纹理或参数的批量导入
+        
+            RenderingTextureGlobal(shaderManager->GetShader("commonLight"), TextureDic["stoneMonster"]);
+            PassUniformParametersGlobal(shaderManager->GetShader("commonLight"), glm::vec3(0.3F), glm::vec3(0.1f), 0, 1, 1, 1.33f, 0.6f);
+            for (auto& item : modelClassPair.second) {
+                CustomModel* object = item.second; // 获取对象              
+                if (object->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.death == true) {
+                    toActiveFalse.push_back(object); // 怪物生命监测
+                }
+                object->Update(view, projection);//更新状态
             }
             break;
 
-        case ModelClass::PlayerBullet: // 对应 else if (item.second->GetVariant() == ModelClass::PlayerBullet)
-            if (item.second->timeAccumulator >= 30) {
-                toDestory.push_back(item.second); // 玩家子弹超过30秒销毁
+        case ModelClass::TsetButterfly:
+
+            RenderingTextureGlobal(shaderManager->GetShader("commonLight"), TextureDic["butterfly"]);
+            PassUniformParametersGlobal(shaderManager->GetShader("commonLight"), glm::vec3(0.3F), glm::vec3(0.1f), 0, 1, 1, 1.33f, 0.6f);
+            for (auto& item : modelClassPair.second) {
+                CustomModel* object = item.second; // 获取对象
+                object->PlayAnimation(0, 0.1f); // 播放简易顶点动画
+                if (object->timeAccumulator >= 120) {
+                    toDestory.push_back(object); // 测试蝴蝶超过120秒消失
+                }
+                object->Update(view, projection);//更新状态
             }
             break;
 
-        default: 
+        case ModelClass::TestPhysics:
+          
+            RenderingTextureGlobal(shaderManager->GetShader("commonLight"), TextureDic["stone"]);
+            PassUniformParametersGlobal(shaderManager->GetShader("commonLight"), glm::vec3(0.3F), glm::vec3(0.1f), 0, 1, 1, 1.33f, 0.6f);
+            for (auto& item : modelClassPair.second) {
+                CustomModel* object = item.second; // 获取对象
+                if (object->GetComponent<CollisionBody>()->GetCollisionProperties().gameProperties.health <= 0) {
+                    toActiveFalse.push_back(object); // 设置生命值小于0时，物体消失
+                }
+                object->Update(view, projection);//更新状态
+            }
+            break;
+
+        case ModelClass::PlayerBullet:
+
+            RenderingTextureGlobal(shaderManager->GetShader("waveShader"), TextureDic["water"]);
+            PassUniformParametersGlobal(shaderManager->GetShader("waveShader"), glm::vec3(0.1F), glm::vec3(0.99f,0.68F,0.1F), 0.3F, 0.3f, 0.9F, 1.33f, 0.6f);
+            for (auto& item : modelClassPair.second) {
+                CustomModel* object = item.second; // 获取对象
+                if (object->timeAccumulator >= 30) {
+                    toDestory.push_back(object); // 玩家子弹超过30秒销毁
+                }
+                object->Update(view, projection);//更新状态
+            }
+            break;
+
+        default:
             break;
         }
     }
-
     //遍历缓存池
     for (auto& item : manager->GetCacheObjects())
     {
         //这里添加激活条件
         if (false)
         {
-            if (item.second->GetVariant() == ModelClass::TestPhysics)
-            {
-                toActiveTrue.push_back(item.second);
-            }
+        
         }
     }
     // 临时存取失活对象
@@ -477,7 +455,6 @@ void GameUpdateBufferTestT(const glm::mat4& view, const glm::mat4& projection, G
     glStencilFunc(GL_ALWAYS, 1, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     manager->GetSpecialObjects()["player"]->Update(view, projection);
-    manager->GetSpecialObjects()["player"]->UpdateVariant(view, projection);
     glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glDepthFunc(GL_GREATER); // 仅在当前片段深度值大于深度缓冲区中的值时通过测试

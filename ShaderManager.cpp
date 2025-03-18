@@ -78,6 +78,8 @@ void Game::ShaderManager::IntegratedShaderCompile()
     ShaderCompile(noneLightVertexShaderSource, noneLightFragmentShaderSource, "noneLight");
     //功能全面的通用光照shader
     ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "commonLight");
+    //功能全面的通用光照独立shader
+    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "aloneCommonLight");
     //无光照的基础实例化shader
     ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "noneLightInstancer");
     //无光照的基础实例化shader,可进行深度图进行后处理
@@ -91,30 +93,6 @@ void Game::ShaderManager::IntegratedShaderCompile()
     ShaderCompile(stencilTestVertexShaderSource, stencilTestFragmentShaderSource, "stencilTestShader");
     //独立实例化shader,用于生成萤光效果
     ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFireFlyFragmentShaderSource, "fireflyInstanceShader");
-
-    //独立shader,地板，有光照
-    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "planeCommonLight");
-   //独立shader,玩家，有光照
-    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "playerCommonLight");
-    //独立shader,石头怪，有光照
-    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "stoneMonsterCommonLight");
-    //独立shader,蝴蝶，有光照
-    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "butterflyCommonLight");
-    //独立shader,宝箱，有光照
-    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "chestCommonLight");
-    //独立shader,树，有光照
-    ShaderCompile(colorlightsArrayVertexShaderSource, colorlightsArraySourceFragmentShaderSource, "treeCommonLight");
-
-    //独立shader实例化石头
-    ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "stoneNoneLightInstancer");
-    //独立shader实例化草
-    ShaderCompile(instanceNoLightingVertexShaderSource, instanceNoLightingFragmentShaderSource, "grassNoneLightInstancer");
-
-
-    //独立shader黑洞,无光照
-    ShaderCompile(CustomNoLightShadowShaderVertexSource, CustomNoLightShadowShaderFragmentSource, "blackHoleCommonNoneLight");
-    //独立shader宝箱，无光照
-    ShaderCompile(CustomNoLightShadowShaderVertexSource, CustomNoLightShadowShaderFragmentSource, "chestCommonNoneLight");
 
 
     //深度图着色器模块

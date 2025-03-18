@@ -50,7 +50,7 @@ namespace Game {
         //检查碰撞
         virtual void UpdateCollisionAndPhysics(std::unordered_map<int, CollisionProperties*>& cop);
         //附加纹理方法，添加了压缩因子
-        virtual bool AttachTexture(const std::unordered_map<PictureTpye, GLuint>& textureData, int order=0, glm::vec2 textureScale= glm::vec2(1));
+        virtual bool AttachTexture(const std::unordered_map<PictureTpye, GLuint>& textureData, bool isBatch=false,int order=0, glm::vec2 textureScale= glm::vec2(1));       
         virtual void UniformParametersIns(glm::vec3 baseColor=glm::vec3(0.3f), glm::vec3 emission=glm::vec3(0.05f), float metallic=0, float roughness=1, float opacity=1, float IOR=1.33f, float ao=0.6f, float dissolveThreshold = 0);//shadner 基本参数初始化
         virtual void RenderingLight(LightSpawner* lightSpawner);      
         //添加物理组件，初始化基本参数
@@ -71,6 +71,8 @@ namespace Game {
         bool GetActiveState()const ;
         //额外游戏参数
         float timeAccumulator=0;//独立的时间计数器,外部可直接访问
+        //获取批量绘制状态
+        bool GetBatchDrawState();
         
 
     protected:
@@ -87,7 +89,8 @@ namespace Game {
         //贴图组件,存在继承关系，这里子类需要访问
         std::unordered_map<PictureTpye, GLuint> _textures; // 纹理容器
         int _textureOrder;//绘制使用的纹理单元
-        bool _drawTexture;
+        //基于Opengl状态机批量绘制开关
+        bool _drawTextureBatch;
         glm::vec2 _textureScale;
         size_t index;
         size_t vertexCount;
@@ -103,16 +106,26 @@ namespace Game {
         //游戏对象全局唯一标识符
         int ID;
         //允许渲染视口透视深度图，必须通过CustomModelShader类生成
-        bool _enableDepth;
+        bool _enableDepth = false;
         float _timeAccumulator=0;//独立的时间计数器,供内部使用
-
-
+    protected:
+        glm::vec3 _baseColor = glm::vec3(0.1f);
+        glm::vec3 _emissionColor = glm::vec3(0.05f);
+        float _metallic = 0;
+        float _roughness = 1;
+        float _opacity = 1;
+        float _ao = 0.6f;
+        float _IOR = 1.33f;
+        float _dissolveThreshold = 0;
 
     protected:
         //纹理的绑定及传参，在类内部进行
         virtual void BindTexture();//渲染纹理方法可重写
         virtual void BindTextureAdditional();//附加的渲染纹理方法
-        virtual void UniformParametersInput();//全局shader参数输入重写
+        virtual void UniformParametersInput();//全局shader参数输入
+        virtual void UniformParametersChange();//全局shader参数的变化
+        //批量绘制开关，如果没有开批量绘制，则不用在外部显示调用，在update方法里内部调用
+        virtual void InnerRendringTexture(const glm::mat4& view, const glm::mat4& projection);
         //采用 consterxpr  绕过无效编译检查， static_assert 断言 进行编译阶段检查
     public:
         template <typename T>

@@ -60,6 +60,7 @@ namespace Game {
             const ModelData& modelData,
             const AnimationData& animationData,
             std::unordered_map<PictureTpye,GLuint> textures = TextureDic["default"],
+            bool batch=false,
             int order = 0,
             glm::vec2 section=glm::vec2(1,1),
             ModelClass modelEnum = ModelClass::OriginalE,
@@ -83,7 +84,7 @@ namespace Game {
             AddTimerTask(interval, count,
                 [manager, name, modelData, animationData,
                 modelEnum,  ifPhysical, ifCollider, stepVector3,
-                position, rotation, scale, counterPtr,ifLight,textures,order, ifShadow,section]()
+                position, rotation, scale, counterPtr,ifLight,textures,order, ifShadow,section,batch]()
                 {
                     // 自增计数
                     (*counterPtr)++;
@@ -112,8 +113,8 @@ namespace Game {
                     );
 
                    
-                    model->AttachTexture(textures,order,section);
-                    model->UniformParametersIns();
+                    model->AttachTexture(textures,batch,order,section);
+                    model->UniformParametersIns();//默认初始化
                     model->AttachAnimationController(animationData);
 
                     if (ifPhysical) {
@@ -138,6 +139,7 @@ namespace Game {
             bool ifShadow,
             const ModelData& modelData,
             std::unordered_map<PictureTpye, GLuint> textures = TextureDic["default"],
+            bool batch=false,
             int order=0,
             glm::vec2 section = glm::vec2(1, 1),
             ModelClass modelEnum = ModelClass::OriginalE,
@@ -158,7 +160,7 @@ namespace Game {
             AddTimerTask(interval, count,
                 [manager, modelData, modelEnum,
                  ifPhysical, ifCollider, stepVector3,
-                position, rotation, scale, counterPtr, ifLight, textures,order,name,ifShadow, section]()
+                position, rotation, scale, counterPtr, ifLight, textures,order,name,ifShadow, section,batch]()
                 {
                     // 自增计数
                     (*counterPtr)++;
@@ -184,7 +186,7 @@ namespace Game {
                     );
 
      
-                    model->AttachTexture(textures,order,section);
+                    model->AttachTexture(textures,batch,order,section);
                     model->UniformParametersIns();
                 
                     if (ifPhysical) {
