@@ -12,11 +12,11 @@
 #include <chrono>
 #include <thread>
 namespace Game {
-	class IntergratedScripts
+	class IntegratedScripts
 	{
 	public:
-		static IntergratedScripts* GetInstance();//指针方法，返回一个指向该方法的指针
-		~IntergratedScripts();
+		static IntegratedScripts* GetInstance();//指针方法，返回一个指向该方法的指针
+		~IntegratedScripts();
 		//具体类型的方法模块
 		float TGetRandomFloat(float min, float max);
 		//综合变换随机数方法
@@ -35,8 +35,8 @@ namespace Game {
 
 	private:
 
-		static IntergratedScripts* instance;
-		IntergratedScripts();
+		static IntegratedScripts* instance;
+		IntegratedScripts();
 		std::mt19937 gen;  // 随机数生成器
 		float randomFloat;
 		int randomInt;

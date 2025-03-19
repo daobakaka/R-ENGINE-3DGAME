@@ -73,13 +73,11 @@ namespace Game {
             bool ifPhysical = false,
             bool ifCollider = false
         )
-        {// 编译断言，类似于泛型约束
+        {// 编译断言
             static_assert(std::is_base_of_v<CustomModel, T>, "T must inherit from CustomModel!");
 
             // 每个任务都有自己独立的 counterPtr
-            auto counterPtr = std::make_shared<int>(0);//这里可以为每个对象添加共享智能指针，如果直接 int countPtr=0,这样会使得在回调函数运行
-                                                        //时，重新复制一个副本，导致每次归零，智能指针由编译器后台自动管理和释放，非常方便
-                                                        //其可以在回调的时候，通过lamda的捕获，记住初始化的引用，不会因函数重新回调而结束            
+            auto counterPtr = std::make_shared<int>(0);//这里可以为每个对象添加共享智能指针,管理简便         
 
             AddTimerTask(interval, count,
                 [manager, name, modelData, animationData,

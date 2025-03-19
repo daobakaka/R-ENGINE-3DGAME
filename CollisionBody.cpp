@@ -102,49 +102,7 @@ namespace Game {
             _octree->Remove(&_collisionProperties);
         }
       
-      
-
-
-
-
-        // 在这里打印碰撞体的参数
-     // std::cout << "Collision Body ID: " << _collisionProperties.ID << "\n";
-        //std::cout << "Position: (" << _collisionProperties.position.x << ", "
-        //    << _collisionProperties.position.y << ", "
-        //    << _collisionProperties.position.z << ")\n";
-
-        //std::cout << "Velocity: (" << _collisionProperties.velocity.x << ", "
-        //    << _collisionProperties.velocity.y << ", "
-        //    << _collisionProperties.velocity.z << ")\n";
-
-        //std::cout << "Acceleration: (" << _collisionProperties.acceleration.x << ", "
-        //    << _collisionProperties.acceleration.y << ", "
-        //    << _collisionProperties.acceleration.z << ")\n";
-
-        //std::cout << "Mass: " << _collisionProperties.mass << "\n";
-        //std::cout << "Friction: " << _collisionProperties.friction << "\n";
-        //std::cout << "Collision Min: (" << _collisionProperties._collisionMin.x << ", "
-        //    << _collisionProperties._collisionMin.y << ", "
-        //    << _collisionProperties._collisionMin.z << ")\n";
-        //std::cout << "Collision Max: (" << _collisionProperties._collisionMax.x << ", "
-        //    << _collisionProperties._collisionMax.y << ", "
-        //    << _collisionProperties._collisionMax.z << ")\n";
-
-        // 打印角速度
-        //std::cout << "Angular Velocity: (" << _collisionProperties.angularVelocity.x << ", "
-        //    << _collisionProperties.angularVelocity.y << ", "
-        //    << _collisionProperties.angularVelocity.z << ")\n";
-
-        //// 打印四元数旋转
-        //std::cout << "Rotation (Quaternion): (" << _collisionProperties.rotation.w << ", "
-        //    << _collisionProperties.rotation.x << ", "
-        //    << _collisionProperties.rotation.y << ", "
-        //    << _collisionProperties.rotation.z << ")\n";
-
-
     }
-
-
 
     void CollisionBody::SetRadius(float r)
     {

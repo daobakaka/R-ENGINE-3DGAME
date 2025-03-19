@@ -826,7 +826,7 @@ void Game::MakeTxture()
     TextureDic["default"][PictureTpye::BaseP] = picd[0];
     TextureDic["default"][PictureTpye::NormalP] = picd[1];
     TextureDic["default"][PictureTpye::SpecularP] = picd[2];
-    TextureDic["default"][PictureTpye::HightP] = picd[3];
+    TextureDic["default"][PictureTpye::HeightP] = picd[3];
     TextureDic["default"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["default"][PictureTpye::AOP]= picd[5];
     TextureDic["default"][PictureTpye::OpacityP] = picd[6];
@@ -842,7 +842,7 @@ void Game::MakeTxture()
     TextureDic["butterfly"][PictureTpye::BaseP] = pic[0];
     TextureDic["butterfly"][PictureTpye::NormalP] = picd[1];
     TextureDic["butterfly"][PictureTpye::SpecularP] = picd[2];
-    TextureDic["butterfly"][PictureTpye::HightP] = picd[3];
+    TextureDic["butterfly"][PictureTpye::HeightP] = picd[3];
     TextureDic["butterfly"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["butterfly"][PictureTpye::AOP] = picd[5];
     TextureDic["butterfly"][PictureTpye::OpacityP] = picd[6];
@@ -862,7 +862,7 @@ void Game::MakeTxture()
     TextureDic["grass"][PictureTpye::BaseP] = pic[0];
     TextureDic["grass"][PictureTpye::NormalP] = picd[1];
     TextureDic["grass"][PictureTpye::SpecularP] = picd[2];
-    TextureDic["grass"][PictureTpye::HightP] = picd[3];
+    TextureDic["grass"][PictureTpye::HeightP] = picd[3];
     TextureDic["grass"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["grass"][PictureTpye::AOP] = picd[5];
     TextureDic["grass"][PictureTpye::OpacityP] = picd[6];
@@ -874,7 +874,7 @@ void Game::MakeTxture()
     TextureDic["stone"][PictureTpye::BaseP] = pic[0];
     TextureDic["stone"][PictureTpye::NormalP] = picd[1];
     TextureDic["stone"][PictureTpye::SpecularP] = picd[2];
-    TextureDic["stone"][PictureTpye::HightP] = picd[3];
+    TextureDic["stone"][PictureTpye::HeightP] = picd[3];
     TextureDic["stone"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["stone"][PictureTpye::AOP] = picd[5];
     TextureDic["stone"][PictureTpye::OpacityP] = picd[6];
@@ -890,7 +890,7 @@ void Game::MakeTxture()
     TextureDic["tree"][PictureTpye::BaseP] = pic[0];
     TextureDic["tree"][PictureTpye::NormalP] = pic[1];
     TextureDic["tree"][PictureTpye::SpecularP] = pic[2];
-    TextureDic["tree"][PictureTpye::HightP] = picd[3];
+    TextureDic["tree"][PictureTpye::HeightP] = picd[3];
     TextureDic["tree"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["tree"][PictureTpye::AOP] = picd[5];
     TextureDic["tree"][PictureTpye::OpacityP] = picd[6];
@@ -903,9 +903,9 @@ void Game::MakeTxture()
     pic.push_back(chestTextureNormal);
     pic.push_back(chseTextureSpecular);// 
     TextureDic["chest"][PictureTpye::BaseP] = pic[0];
-    TextureDic["chest"][PictureTpye::HightP] = pic[1];
+    TextureDic["chest"][PictureTpye::HeightP] = pic[1];
     TextureDic["chest"][PictureTpye::SpecularP] = pic[2];
-    TextureDic["chest"][PictureTpye::HightP] = picd[3];
+    TextureDic["chest"][PictureTpye::HeightP] = picd[3];
     TextureDic["chest"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["chest"][PictureTpye::AOP] = picd[5];
     TextureDic["chest"][PictureTpye::OpacityP] = picd[6];
@@ -918,7 +918,7 @@ void Game::MakeTxture()
     TextureDic["stoneMonster"][PictureTpye::BaseP] = pic[0];
     TextureDic["stoneMonster"][PictureTpye::NormalP] = picd[1];
     TextureDic["stoneMonster"][PictureTpye::SpecularP] = picd[2];
-    TextureDic["stoneMonster"][PictureTpye::HightP] = picd[3];
+    TextureDic["stoneMonster"][PictureTpye::HeightP] = picd[3];
     TextureDic["stoneMonster"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["stoneMonster"][PictureTpye::AOP] = picd[5];
     TextureDic["stoneMonster"][PictureTpye::OpacityP] = picd[6];
@@ -931,9 +931,9 @@ void Game::MakeTxture()
     pic.push_back(stoneNormal);
     pic.push_back(stoneSpecular);// 
     TextureDic["stoneInstance"][PictureTpye::BaseP] = pic[0];
-    TextureDic["stoneInstance"][PictureTpye::HightP] = pic[1];
+    TextureDic["stoneInstance"][PictureTpye::HeightP] = pic[1];
     TextureDic["stoneInstance"][PictureTpye::SpecularP] = pic[2];
-    TextureDic["stoneInstance"][PictureTpye::HightP] = picd[3];
+    TextureDic["stoneInstance"][PictureTpye::HeightP] = picd[3];
     TextureDic["stoneInstance"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["stoneInstance"][PictureTpye::AOP] = picd[5];
     TextureDic["stoneInstance"][PictureTpye::OpacityP] = picd[6];
@@ -949,7 +949,7 @@ void Game::MakeTxture()
     TextureDic["backpack"][PictureTpye::BaseP] = pic[0];
     TextureDic["backpack"][PictureTpye::NormalP] = pic[1];
     TextureDic["backpack"][PictureTpye::SpecularP] = pic[2];
-    TextureDic["backpack"][PictureTpye::HightP] = picd[3];
+    TextureDic["backpack"][PictureTpye::HeightP] = picd[3];
     TextureDic["backpack"][PictureTpye::RoughnessP] = pic[3];
     TextureDic["backpack"][PictureTpye::AOP] = pic[4];
     TextureDic["backpack"][PictureTpye::OpacityP] = picd[6];
@@ -959,7 +959,7 @@ void Game::MakeTxture()
     TextureDic["blackHole"][PictureTpye::BaseP] = picd[9];//ºÚÔëÍ¼1
     TextureDic["blackHole"][PictureTpye::NormalP] = pic[1];
     TextureDic["blackHole"][PictureTpye::SpecularP] = pic[2];
-    TextureDic["blackHole"][PictureTpye::HightP] = picd[3];
+    TextureDic["blackHole"][PictureTpye::HeightP] = picd[3];
     TextureDic["blackHole"][PictureTpye::RoughnessP] = pic[3];
     TextureDic["blackHole"][PictureTpye::AOP] = pic[4];
     TextureDic["blackHole"][PictureTpye::OpacityP] = picd[6];
@@ -984,7 +984,7 @@ void Game::MakeTxture()
     TextureDic["water"][PictureTpye::BaseP] = pic[0];
     TextureDic["water"][PictureTpye::NormalP] = pic[1];
     TextureDic["water"][PictureTpye::SpecularP] = pic[2];
-    TextureDic["water"][PictureTpye::HightP] = picd[3];
+    TextureDic["water"][PictureTpye::HeightP] = picd[3];
     TextureDic["water"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["water"][PictureTpye::AOP] = picd[5];
     TextureDic["water"][PictureTpye::OpacityP] = pic[4];
@@ -1000,7 +1000,7 @@ void Game::MakeTxture()
     TextureDic["wheel"][PictureTpye::BaseP] = pic[0];
     TextureDic["wheel"][PictureTpye::NormalP] = pic[1];
     TextureDic["wheel"][PictureTpye::SpecularP] = pic[2];
-    TextureDic["wheel"][PictureTpye::HightP] = picd[3];
+    TextureDic["wheel"][PictureTpye::HeightP] = picd[3];
     TextureDic["wheel"][PictureTpye::RoughnessP] = picd[4];
     TextureDic["wheel"][PictureTpye::AOP] = picd[5];
     TextureDic["wheel"][PictureTpye::OpacityP] = pic[4];

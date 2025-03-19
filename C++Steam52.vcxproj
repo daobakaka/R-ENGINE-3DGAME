@@ -140,7 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AnimationIntergrated.cpp" />
+    <ClCompile Include="AnimationIntegrated.cpp" />
     <ClCompile Include="CollisionBody.cpp" />
     <ClCompile Include="DesignModel.cpp" />
     <ClCompile Include="Light.cpp" />
@@ -158,7 +158,7 @@
     <ClCompile Include="CustomModel.cpp" />
     <ClCompile Include="FileLoadIO.cpp" />
     <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="IntergratedScripts.cpp" />
+    <ClCompile Include="IntegratedScripts.cpp" />
     <ClCompile Include="LifecycleManager.cpp" />
     <ClCompile Include="MeshDataManager.cpp" />
     <ClCompile Include="Monster.cpp" />
@@ -169,7 +169,7 @@
     <ClCompile Include="TextRender.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AnimationIntergrated.h" />
+    <ClInclude Include="AnimationIntegrated.h" />
     <ClInclude Include="CollisionBody.h" />
     <ClInclude Include="DesignModel.h" />
     <ClInclude Include="IComponent.h" />
@@ -178,7 +178,7 @@
     <ClInclude Include="CustomModel.h" />
     <ClInclude Include="FileLoadIO.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="IntergratedScripts.h" />
+    <ClInclude Include="IntegratedScripts.h" />
     <ClInclude Include="LifecycleManager.h" />
     <ClInclude Include="MeshDataManager.h" />
     <ClInclude Include="MicroCpp.h" />

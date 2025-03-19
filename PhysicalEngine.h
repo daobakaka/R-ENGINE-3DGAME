@@ -31,7 +31,7 @@ namespace Game {
         void SetLayer(int layer = 1);
         void SetRotationAdjust(float r = 0.382f);
 
-        // 获取当前物体的物理状态const拓宽范围常用于get方法标识
+        // 获取引用，可更改
         glm::vec3 &GetPosition() ;
         glm::vec3 &GetVelocity() ;
         glm::vec3 &GetAcceleration() ;

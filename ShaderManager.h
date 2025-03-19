@@ -18,7 +18,7 @@ namespace Game
         GLuint GetShader(const std::string& name);
 
         void UseShader(const std::string& name);
-
+        //ºØ≥…shader±‡“Î
         void IntegratedShaderCompile();
 
         // Set methods for various uniform types

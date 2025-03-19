@@ -1,6 +1,6 @@
 #ifndef Custom_Model_H
 #define Custom_Model_H
-#include "AnimationIntergrated.h"
+#include "AnimationIntegrated.h"
 
 namespace Game {
     extern std::unordered_map<int, CollisionProperties*> CollisionProps;//就在碰撞体内部这个大类内部进行检查
@@ -20,6 +20,7 @@ namespace Game {
         
         void UpdateVerticesForAnimation(size_t animationFrame);
         void UpdateVerticesForAnimation(const std::vector<Vertex>& vertex);
+        //通用的start方法，程序运行启动时调用一次
         virtual void Start() override;
         virtual void SpecialMethod();//特殊方法，用于派生类外部访问重写
         virtual void SelfIns(); //特殊初始化方法，用于派生类重写
@@ -29,8 +30,8 @@ namespace Game {
         virtual bool DrawLineFixedWidget(glm::mat4 view, glm::mat4 projection);//绘制坐标系方法，固定在一个屏幕里面，可以重写
        virtual ~CustomModel();
         //--继承MonoBehaviour的声明
-        virtual void Update(glm::mat4 view, glm::mat4 projection) override;//常规移动可重写
-        virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;//变体移动可重写
+        virtual void Update(glm::mat4 view, glm::mat4 projection) override;//核心方法，这个方法由生命周期管理器管理，更新物理状态、碰撞参数、渲染纹理、渲染参数、基本三维参数、调用DrawCall
+        virtual void UpdateVariant(glm::mat4 view, glm::mat4 projection) override;//依附于核心方法，派生类用于重写实现不一样的更新逻辑
         virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;//动态绘制可重写，与IntergtatedAnimatior联动
         //--动画模块，因为每个对象具体的动画操作也许会不一样，目前采用分离方法
         virtual void AttachAnimationController(AnimationData animaitonData);//附加动画控制器，可传入一个默认动画
@@ -92,22 +93,23 @@ namespace Game {
         //基于Opengl状态机批量绘制开关
         bool _drawTextureBatch;
         glm::vec2 _textureScale;
-        size_t index;
-        size_t vertexCount;
+        size_t _index;
+        size_t _vertexCount;
 #pragma endregion
 
         //碰撞体及物理模块参数
     protected:
-        bool _ifCollision;
-        glm::vec3 _collisionMin;
-        glm::vec3 _collisionMax;
-        bool _ifPhysics;
+        bool _ifCollision=false;
+        glm::vec3 _collisionMin = glm::vec3(0);
+        glm::vec3 _collisionMax = glm::vec3(0);
+        bool _ifPhysics=false;
         bool _ifActive = true;
         //游戏对象全局唯一标识符
-        int ID;
+        int ID = 0;
         //允许渲染视口透视深度图，必须通过CustomModelShader类生成
         bool _enableDepth = false;
         float _timeAccumulator=0;//独立的时间计数器,供内部使用
+        //两种通用着色器基本参数
     protected:
         glm::vec3 _baseColor = glm::vec3(0.1f);
         glm::vec3 _emissionColor = glm::vec3(0.05f);

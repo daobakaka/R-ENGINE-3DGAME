@@ -11,7 +11,6 @@
 
 extern const char* textRenderVertex;
 extern const char* textRenderFragment;
-//全局变量只能在一个头文件或源文件中引用，头文件中的全局变量，是引用的时候进行编译，多个引用多个编译，所以会报错
 namespace Game {
 
     struct TextCharacter {
@@ -48,13 +47,13 @@ namespace Game {
         GLuint LoadTextureFromBitmap(FT_Bitmap& bitmap);
 
         // 存储字体字符信息的unordered_map
-        std::unordered_map<GLubyte, TextCharacter> TextMapDic;
+        std::unordered_map<GLubyte, TextCharacter> _TextMapDic;
 
         // VBO和VAO
-        GLuint VBO, VAO,EBO;
+        GLuint _VBO, _VAO,_EBO;
 
         // shader程序
-        GLuint shaderProgram;
+        GLuint _shaderProgram;
 
         void PrintBitmap(const FT_Bitmap& bitmap);
     };

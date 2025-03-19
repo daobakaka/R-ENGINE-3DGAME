@@ -11,7 +11,7 @@ inline float SquareFun(float x)
 {
 	return x * x;
 }
-//2.constexpr auto PI = 3.14159  常量  constexpr 常量表达式：指在编译的时候就知道结果的表示式，定义的值在编译的时候就确定，不能修改，因此效率更高
+//2.constexpr auto PI = 3.14159  常量  constexpr 常量表达式：在编译的时候就知道结果的表示式，定义的值在编译的时候就确定，不能修改，因此效率更高
 constexpr auto PIConst = 3.14159;
 constexpr int SquareInt(int x)
 {

@@ -47,14 +47,14 @@ namespace Game
 		using CustomModel::CustomModel;
 	public:
 
-		void SteLightParameters(glm::vec3 color, float intensity, glm::vec3 direction = glm::vec3(0));
+		void SetLightParameters(glm::vec3 color, float intensity, glm::vec3 direction = glm::vec3(0));
 
 		void BindTexture() override;
 
 	private:
-		glm::vec3 myColor;
-		float myIntensity;
-		glm::vec3 myDirection;
+		glm::vec3 _myColor;
+		float _myIntensity;
+		glm::vec3 _myDirection;
 	};
 	/// <summary>
 	/// 自定义射线
@@ -70,8 +70,8 @@ namespace Game
 
 
 	protected:
-		glm::vec3 myColor;
-		float myIntensity;
+		glm::vec3 _myColor;
+		float _myIntensity;
 		glm::vec3 myDirection;
 
 
@@ -108,7 +108,7 @@ namespace Game
 		/// <param name="ifLight"></param>
 		/// <param name="ifShadow"></param>
 		CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLight = false, bool ifShadow = false,bool enableDepth=false);
-
+		virtual ~CustomModelShader() override;
 		CustomModelShader();
 
 		virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写
@@ -142,7 +142,7 @@ namespace Game
 	{
 	public:
 		CustomModelInstance();
-		~CustomModelInstance();
+		virtual ~CustomModelInstance() override ;
 		CustomModelInstance(const std::string& name,
 			const ModelData& modelData,
 			bool isSkinnedMesh,
@@ -200,9 +200,9 @@ namespace Game
 
 #pragma endregion
 
-#pragma region  测试蝴蝶模型
+#pragma region  蝴蝶模型
 	/// <summary>
-	/// 用于测试的蝴蝶，后期可更改
+	/// 蝴蝶，后期可更改
 	/// </summary>
 	class ButterflyScriptShader :public CustomModelShader
 	{

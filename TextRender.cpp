@@ -23,8 +23,8 @@ TextRender::TextRender() {
 // 析构函数
 TextRender::~TextRender() {
     // 清理OpenGL资源等
-    glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &_VBO);
+    glDeleteVertexArrays(1, &_VAO);
 }
 
 void TextRender::PrintBitmap(const FT_Bitmap& bitmap) {
@@ -92,7 +92,7 @@ void TextRender::MakeFronts() {
         };
 
         // 插入字符到unordered_map
-        TextMapDic[c] = character;
+        _TextMapDic[c] = character;
 
     }
    // glPixelStorei(GL_UNPACK_ALIGNMENT, 4);//恢复默认状态
@@ -136,21 +136,21 @@ void TextRender::InitializeTextRender(const char* textRenderVertex, const char* 
     CheckShaderCompilation(fragmentShader, "FRAGMENT");
 
     // 创建着色器程序并链接
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
+    _shaderProgram = glCreateProgram();
+    glAttachShader(_shaderProgram, vertexShader);
+    glAttachShader(_shaderProgram, fragmentShader);
+    glLinkProgram(_shaderProgram);
     //这里实际上是检查链接，使用一个方法进行统一
-    CheckShaderCompilation(shaderProgram, "PROGRAM");
+    CheckShaderCompilation(_shaderProgram, "PROGRAM");
 
     // 删除着色器对象
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glGenVertexArrays(1, &_VAO);
+    glGenBuffers(1, &_VBO);
+    glBindVertexArray(_VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
@@ -167,28 +167,28 @@ void TextRender::RenderText(const std::string& text, float x, float y, float sca
     //--关于UI 的渲染  
 #pragma region 状态处理区域，处理完成之后需要归还状态
 
-    glUseProgram(shaderProgram);
+    glUseProgram(_shaderProgram);
 
     // 创建正交投影矩阵
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(2400), 0.0f, static_cast<float>(1200));
 
     // 传递正交矩阵到着色器
-    GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+    GLuint projectionLoc = glGetUniformLocation(_shaderProgram, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 
     // 设置文本颜色,从外部传入参数
-    GLint textColorLocation = glGetUniformLocation(shaderProgram, "textColor");
+    GLint textColorLocation = glGetUniformLocation(_shaderProgram, "textColor");
     glUniform3f(textColorLocation, color.x, color.y, color.z);
 
     glActiveTexture(GL_TEXTURE0);
 
     // 绑定 VAO
-    glBindVertexArray(VAO);
+    glBindVertexArray(_VAO);
 
     // 使用OpenGL绘制每个字符
     for (std::string::const_iterator c = text.begin(); c != text.end(); c++) {
-        TextCharacter ch = TextMapDic[*c];
+        TextCharacter ch = _TextMapDic[*c];
 
         GLfloat xpos = x + ch.Bearing.x * scale;
         GLfloat ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
@@ -211,7 +211,7 @@ void TextRender::RenderText(const std::string& text, float x, float y, float sca
         };
 
         // 更新VBO数据
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // 缓冲区分支更新，处理字体时的优化方式
 
         // 绘制字符

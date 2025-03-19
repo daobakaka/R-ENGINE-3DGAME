@@ -80,8 +80,6 @@ namespace Game {
 		//构建坐标系，全局深度图shader
 		void BuildWidgetShader(MeshDataManager* meshData, LifecycleManager<CustomModel>* customModle);
 
-		//游戏数据结构管理
-		static Octree* OCTREET;
 	
 	private:
 		static Controller* instance;

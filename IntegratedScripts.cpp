@@ -1,21 +1,21 @@
-#include "IntergratedScripts.h"
+#include "IntegratedScripts.h"
 #include "ScriptModel.h"
 #include "CustomModel.h"
 #include "LifecycleManager.h"
 using namespace Game;
-IntergratedScripts *IntergratedScripts:: instance = nullptr;//静态变量必须在CPP类中声明
+IntegratedScripts *IntegratedScripts:: instance = nullptr;//静态变量必须在CPP类中声明
 extern LifecycleManager<CustomModel>* manager;
 
 
-IntergratedScripts *IntergratedScripts::GetInstance()
+IntegratedScripts *IntegratedScripts::GetInstance()
 {
     if (instance == nullptr) {
-        instance = new IntergratedScripts();
+        instance = new IntegratedScripts();
     }
     return instance;
 }
 
-IntergratedScripts::IntergratedScripts()
+IntegratedScripts::IntegratedScripts()
 { // 使用随机设备初始化随机数生成器
     std::random_device rd;
     gen = std::mt19937(rd());  // 初始化梅森旋转引
@@ -25,31 +25,31 @@ IntergratedScripts::IntergratedScripts()
      manager = LifecycleManager<CustomModel>::GetInstance();
 }
 
-IntergratedScripts::~IntergratedScripts()
+IntegratedScripts::~IntegratedScripts()
 {
 }
 
 //--
-float IntergratedScripts::TGetRandomFloat(float min, float max) {
+float IntegratedScripts::TGetRandomFloat(float min, float max) {
     std::uniform_real_distribution<float> dis(min, max);
    
     return dis(gen);
 }
 
-void IntergratedScripts::TChangeRandom(float min, float max)
+void IntegratedScripts::TChangeRandom(float min, float max)
 {
     randomFloat = TGetRandomFloat(min, max);
     randomInt = TGetRandomInt((int)min, (int)max);
 }
 
 // 获取一个范围在[min, max]之间的随机整数
-int IntergratedScripts:: TGetRandomInt(int min, int max) {
+int IntegratedScripts:: TGetRandomInt(int min, int max) {
     std::uniform_int_distribution<int> dis(min, max);
 
     return dis(gen);
 }
 //CubeE
-void IntergratedScripts::CubeUpdateFun(GameObject *gameObject)
+void IntegratedScripts::CubeUpdateFun(GameObject *gameObject)
 {
     
     gameObject->position += glm::vec3(-0.01+randomFloat, 0, -0.01f+ randomFloat);
@@ -58,7 +58,7 @@ void IntergratedScripts::CubeUpdateFun(GameObject *gameObject)
 }
 //TestCubeE
 
-void IntergratedScripts::TestUpdateFun(GameObject* gameObject)
+void IntegratedScripts::TestUpdateFun(GameObject* gameObject)
 {
 
     //gameObject->position += glm::vec3(-0.01 + randomFloat, 0, -0.01f + randomFloat);
@@ -67,7 +67,7 @@ void IntergratedScripts::TestUpdateFun(GameObject* gameObject)
 
 }
 
-void Game::IntergratedScripts::ActorButtfly(GameObject* gameObject)
+void Game::IntegratedScripts::ActorButtfly(GameObject* gameObject)
 {
     // 使用 GLFW 获取全局时间（单位：秒）
     float time = static_cast<float>(glfwGetTime());
@@ -111,7 +111,7 @@ void Game::IntergratedScripts::ActorButtfly(GameObject* gameObject)
     gameObject->rotation *= glm::quat(glm::vec3(rotX, rotY, rotZ));
 }
 
-void Game::IntergratedScripts::PlayerControl(GLFWwindow* window, CustomModel* other)
+void Game::IntegratedScripts::PlayerControl(GLFWwindow* window, CustomModel* other)
 {
     // 发射周期控制
     if (!_enableShoot)
@@ -158,7 +158,7 @@ void Game::IntergratedScripts::PlayerControl(GLFWwindow* window, CustomModel* ot
 
 
 
-int Game::IntergratedScripts::TUpdateFPS()
+int Game::IntegratedScripts::TUpdateFPS()
 {
     static double lastTime = 0.0; // 上一帧的时间，使用 static 保持其状态
     static int frameCount = 0;     // 当前帧数，使用 static 保持其状态
@@ -172,7 +172,7 @@ int Game::IntergratedScripts::TUpdateFPS()
     return static_cast<int>(fps);  // 返回整数类型的帧率
 }
 
-void Game::IntergratedScripts::TControlFrameRate(float targetFrameRate)
+void Game::IntegratedScripts::TControlFrameRate(float targetFrameRate)
 {
     // 获取当前时间
     static double lastTime = glfwGetTime();
@@ -196,7 +196,7 @@ void Game::IntergratedScripts::TControlFrameRate(float targetFrameRate)
     lastTime = glfwGetTime();
 }
 
-void Game::IntergratedScripts::TParallelLightRotation(GameObject *object)
+void Game::IntegratedScripts::TParallelLightRotation(GameObject *object)
 {
 
    // object->rotation *= glm::quat(glm::vec3(0, 0.1f + 0.1f * randomFloat, 0.0f));
@@ -204,7 +204,7 @@ void Game::IntergratedScripts::TParallelLightRotation(GameObject *object)
    
 }
 
-void Game::IntergratedScripts::TPosition(GameObject* object)
+void Game::IntegratedScripts::TPosition(GameObject* object)
 {
 
 

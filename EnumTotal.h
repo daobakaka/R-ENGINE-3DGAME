@@ -45,7 +45,7 @@ namespace Game {
 		BaseP,
 		NormalP,
 		SpecularP,
-		HightP,
+		HeightP,
 		RoughnessP,
 		AOP,
 		OpacityP,//Í¸Ã÷¶ÈÌùÍ¼

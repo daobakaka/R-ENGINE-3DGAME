@@ -1,4 +1,4 @@
-#include "AnimationIntergrated.h"
+#include "AnimationIntegrated.h"
 #include <iostream> // 仅用于调试
 #include "CustomModel.h"
 using namespace Game;
@@ -107,7 +107,7 @@ void AnimationController::AddAnimation( Animation* animation) {
 
 }
 
-// 播放指定索引的动画，记住不能同时播放两个动画
+// 播放指定索引的动画，不能同时播放两个动画
 void AnimationController::PlayAnimation(int index, float deltaTime,CustomModel* model)
 {
    //std::cout << "开始播放：" << index << std::endl;

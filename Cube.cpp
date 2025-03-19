@@ -124,15 +124,6 @@ Game::Cube::Cube()
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-    //这一步完成之后，就可以使用这个项目了，同时也可以删除顶点和片元着色器，
-    //glGenVertexArrays(1, &_skyboxVAO);
-    //glGenBuffers(1, &_skyboxVBO);
-    //glBindVertexArray(_skyboxVAO);
-    //glBindBuffer(GL_ARRAY_BUFFER, _skyboxVBO);
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(_skyboxVertices), _skyboxVertices, GL_STATIC_DRAW);
-    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-    //glEnableVertexAttribArray(0);
-    //glBindVertexArray(0);
 
     //附加绘制索引的方法
     glGenVertexArrays(1, &_skyboxVAO);
@@ -234,7 +225,6 @@ Game::Cube::Cube()
          glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
          glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
          glUniformMatrix4fv(projectionLoc, 1, 0, glm::value_ptr(projection));
-         //这里的glm是一个常用的数学库，专门用与图形的矩阵操作，这里就充分诠释了 CPU之负责传输数据，GPU 来负责传输图形，
          // shader语言里面 使用 gl_Position = projection * view * model * vec4(aPos, 1.0f);进行渲染计算 
          glBindVertexArray(VAO);
          //绑定顶点数组对象（VAO），激活与 VAO 关联的顶点缓冲对象（VBO）和索引缓冲对象（EBO）。

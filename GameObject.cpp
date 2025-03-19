@@ -7,9 +7,6 @@ GameObject::GameObject() {
     Initialize(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
     variant = ModelClass::OriginalE;
     ifLight = false;
-    //controller = Controller::GetInstance();//获取控制器实例
-    //view = controller->GetViewMatrix();
-    //projection = controller->GetProjectionMatrix();
 
 }
 
@@ -23,15 +20,13 @@ void GameObject::Initialize(glm::vec3 position, glm::quat rotation, glm::vec3 sc
     this->rotation = rotation;
     this->scale = scale;
     UpdateTransform();  // 初始化时更新变换矩阵
-    //controller = Controller::GetInstance();//获取控制器实例
-    //view = controller->GetViewMatrix();
-    //projection = controller->GetProjectionMatrix();
+
 }
 
 void GameObject::UpdateTransform() {
     // 计算变换矩阵：平移、旋转、缩放
     transform = glm::mat4(1.0f);  // 初始化为单位矩阵
-    transform = glm::translate(transform, position);  // 平移，这里对物体平移的实现事实上是调用了一个GL中 translate的API
+    transform = glm::translate(transform, position);  
     transform *= glm::mat4_cast(rotation);  // 旋转
     transform = glm::scale(transform, scale);  // 缩放
 }
@@ -89,7 +84,6 @@ bool Game::GameObject::GetIfCollision()
 
 #pragma endregion
 #pragma region 渲染模块
-//传入默认空指针的定义，通常在头文件中进行，不然会报错
 bool GameObject::Draw(glm::mat4 view, glm::mat4 projection ) {
     glUseProgram(shaderProgram);
 
@@ -99,9 +93,7 @@ bool GameObject::Draw(glm::mat4 view, glm::mat4 projection ) {
     //这里是对 三个定义的 参数进行抓取，在shaderProgram 里面，这个参数是写在对应的shader里面进行定义的
     glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
     glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
-    glUniformMatrix4fv(projectionLoc, 1, 0, glm::value_ptr(projection));
-    //这里的glm是一个常用的数学库，专门用与图形的矩阵操作，这里就充分诠释了 CPU之负责传输数据，GPU 来负责传输图形，
-    // shader语言里面 使用 gl_Position = projection * view * model * vec4(aPos, 1.0f);进行渲染计算 
+    glUniformMatrix4fv(projectionLoc, 1, 0, glm::value_ptr(projection)); 
     glBindVertexArray(VAO);
     //绑定顶点数组对象（VAO），激活与 VAO 关联的顶点缓冲对象（VBO）和索引缓冲对象（EBO）。
     //保存顶点属性的配置，例如位置、颜色、法线、纹理坐标等，与 VBO 和 EBO 关联，用于存储顶点数据和绘制索引。
@@ -111,10 +103,6 @@ bool GameObject::Draw(glm::mat4 view, glm::mat4 projection ) {
 
     return true;
 }
-//bool GameObject::AttachTexture(GLuint name, int order)
-//{
-//    return false;
-//}
 //着色器编译检查
 void GameObject::CheckShaderCompilation(GLuint shader)
 {

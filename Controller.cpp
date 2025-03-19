@@ -7,11 +7,9 @@
 using namespace Game;
 extern const char* axisVertexShaderSource;
 extern const char* axisFragmentShaderSource;
-//深度着色器，利用opengl面向过程机制，定义一个，全局渲染
 extern const char* depthShaderVertexShaderSource;
 extern const char* depthShaderFragmentShaderSource;
-Controller* Controller::instance = nullptr;  // ！在源文件中初始化静态成员变量,而且需要放在类外部进行，它是属于整个程序生命周期的级别，和类隶属同意级别
-//这里是定义指针方法的写法，即返回一个指向Controller的指针，需要显示声明
+Controller* Controller::instance = nullptr;  // ！在源文件中初始化静态成员变量,而且需要放在类外部进行，它是属于整个程序生命周期的级别
 extern CoordinateSystemCus* axisWidget = nullptr;//这种方式定义，避免多重引用错误
 Controller::Controller()
     : position(0.0f, 30.0f, 100.0f),  // 位置初始化
@@ -32,9 +30,6 @@ Controller::Controller()
     //初始化控制器
 
 
-    ////八叉树在controller基本控制类中初始化
-    //OCTREET = new Octree(glm::vec3(0), glm::vec3(1000,1000,1000),5,1000);
-
 }
 
 Controller::~Controller()
@@ -52,9 +47,6 @@ void Controller::ProcessInput(GLFWwindow* window, glm::vec3& objectPosition)
     // 检查按键输入
     float moveSpeed = 0.5f;  // 控制移动的速度
 
-    // 计算摄像机的右向向量（水平）和上向向量
-    //glm::vec3 right = glm::normalize(glm::cross(front, up));  // 右向向量
-  //  glm::vec3 up = glm::normalize(glm::cross(right, front));       // 上向向量
 
     // 前进和后退，保持水平分量
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
@@ -196,7 +188,7 @@ void Controller::ProcessMouseInput(GLFWwindow* window, float& pitch, float& yaw,
         if ((xpos - tempX) * (xpos - tempX) + (ypos - tempY) * (ypos - tempY) > 1.0f)//一次点击判断只有不相等时，才移动，也就时移动鼠标时才移动
         {
          
-            // 计算鼠标相对屏幕中心的偏移量,必须手写，OPENGL里没有直接的API
+            // 计算鼠标相对屏幕中心的偏移量
             float offsetX = static_cast<float>(xpos - windowWidth / 2.0);  // 以屏幕中心为原点
             float offsetY = static_cast<float>(windowHeight / 2.0 - ypos); // Y轴反向，屏幕上方是负方向
             // std::cout << offsetX << "and" << offsetY << std::endl;//这个坐标值是准确的
@@ -362,9 +354,6 @@ glm::mat4 Controller::GetViewMatrix()
         // 归一化前向向量
         front = glm::normalize(_front);
 
-        //// 重新计算右向量和上向量
-        //right = glm::normalize(glm::cross(front, up));  // 右向量是前向向量和上向量的叉积
-        //up = glm::normalize(glm::cross(right, front));   // 上向量是右向量和前向向量的叉积
     }
     // 重新计算右向量和上向量
     right = glm::normalize(glm::cross(front, up));  // 右向量是前向向量和上向量的叉积

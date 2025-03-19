@@ -42,7 +42,7 @@ namespace Game {
 	{
 	public:
 		MonsterAbstractSon(std::string name, float health, int leavel);
-		virtual void AbstractFunc() = 0;//=0 表示为该函数为纯虚函数，等同c#中的抽象函数，如何一个类里面全是纯虚函数，则为C#中的接口，被重写的函数前面必须加关键字virtual
+		virtual void AbstractFunc() = 0;//=0 表示为该函数为纯虚函数
 
 
 	};

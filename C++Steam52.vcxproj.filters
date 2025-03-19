@@ -78,7 +78,7 @@
     <ClCompile Include="LifecycleManager.cpp">
       <Filter>源文件\GameObjectLogic</Filter>
     </ClCompile>
-    <ClCompile Include="IntergratedScripts.cpp">
+    <ClCompile Include="IntegratedScripts.cpp">
       <Filter>源文件\GameObjectLogic</Filter>
     </ClCompile>
     <ClCompile Include="CustomModel.cpp">
@@ -93,7 +93,7 @@
     <ClCompile Include="stb_image.cpp">
       <Filter>源文件\File</Filter>
     </ClCompile>
-    <ClCompile Include="AnimationIntergrated.cpp">
+    <ClCompile Include="AnimationIntegrated.cpp">
       <Filter>源文件\ComponentController</Filter>
     </ClCompile>
     <ClCompile Include="ObsoleteCode.cpp">
@@ -161,7 +161,7 @@
     <ClInclude Include="LifecycleManager.h">
       <Filter>头文件\GameObjectLogic</Filter>
     </ClInclude>
-    <ClInclude Include="IntergratedScripts.h">
+    <ClInclude Include="IntegratedScripts.h">
       <Filter>头文件\GameObjectLogic</Filter>
     </ClInclude>
     <ClInclude Include="CustomModel.h">
@@ -185,7 +185,7 @@
     <ClInclude Include="stb_image.h">
       <Filter>头文件\File</Filter>
     </ClInclude>
-    <ClInclude Include="AnimationIntergrated.h">
+    <ClInclude Include="AnimationIntegrated.h">
       <Filter>头文件\ComponentController</Filter>
     </ClInclude>
     <ClInclude Include="IComponent.h">

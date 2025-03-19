@@ -6,7 +6,7 @@
 #include "Cube.h"
 #include "Controller.h"
 #include "LifecycleManager.h"
-#include "IntergratedScripts.h"
+#include "IntegratedScripts.h"
 #include <list>  // 包含 list 容器
 #include "MeshDataManager.h"
 #include "CustomModel.h"
@@ -27,7 +27,7 @@ template <typename T>
 LifecycleManager<T>* LifecycleManager<T>::instance = nullptr;
 Controller* controller;
 LifecycleManager<CustomModel>* manager ;
-IntergratedScripts* scripts ;
+IntegratedScripts* scripts ;
 MeshDataManager* meshData ;
 TextRender* cusText ;
 CoroutineMethod* coroutine ;
@@ -60,7 +60,7 @@ GLFWwindow* GLinitializeT()
     //设置Opengl使用版本，4.5
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-    //设置OpenGL渲染模式，核心模式，非立即渲染,这个添加了之后貌似不卡了
+    //设置OpenGL渲染模式，核心模式
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     if (GLEW_OK != glewInitResult) {
         std::cerr << "Error initializing GLEW: " << glewGetErrorString(glewInitResult) << std::endl;
@@ -90,7 +90,7 @@ void GameAwakeT()
     //获取生命周期管理器,内含动画控制等
     manager = LifecycleManager<CustomModel>::GetInstance();//管理所有继承了MonoBehaviour的类,这里实例化为了CustomModel
     //获取综合脚本控制器
-    scripts = IntergratedScripts::GetInstance();
+    scripts = IntegratedScripts::GetInstance();
     //获取网格管理器
     meshData = MeshDataManager::GetInstance();
     //获取字体渲染器
@@ -134,16 +134,16 @@ void LightInitialization()
     lightRender->CreatePostProcessingMap();
     //点光源生成使用灯光控制器完成,测试定义4个灯光，物体形态的变化
   //  auto pointLight2 = lightSpawner->SpawPointLight(glm::vec3(60, 5, 20), glm::vec3(1, 1, 1), 10);
-    auto pointLight = lightSpawner->SpawPointLight(glm::vec3(30, 5, 0), glm::vec3(0, 1, 1), 10);
-    auto pointLight3 = lightSpawner->SpawPointLight(glm::vec3(-15, 5, 0), glm::vec3(0, 1, 0), 10);
-    auto pointLight4 = lightSpawner->SpawPointLight(glm::vec3(-30, 5, -30), glm::vec3(0, 0, 1), 10);
+    auto pointLight = lightSpawner->SpawnPointLight(glm::vec3(30, 5, 0), glm::vec3(0, 1, 1), 10);
+    auto pointLight3 = lightSpawner->SpawnPointLight(glm::vec3(-15, 5, 0), glm::vec3(0, 1, 0), 10);
+    auto pointLight4 = lightSpawner->SpawnPointLight(glm::vec3(-30, 5, -30), glm::vec3(0, 0, 1), 10);
     //增加场景灯光
-    auto pointLight5 = lightSpawner->SpawPointLight(glm::vec3(-70, 5, -10), glm::vec3(1, 0, 1), 10);
+    auto pointLight5 = lightSpawner->SpawnPointLight(glm::vec3(-70, 5, -10), glm::vec3(1, 0, 1), 10);
    // auto pointLight6 = lightSpawner->SpawPointLight(glm::vec3(70, 5, 30), glm::vec3(1, 0, 0), 10);
     //平行光使用灯光生成器生成，默认一个
-    auto parallelLight = lightSpawner->SpawParallelLight(glm::vec3(1,-1,1), glm::vec3(1, 1, 1), 1);//使用默认值 强度10
+    auto parallelLight = lightSpawner->SpawnParallelLight(glm::vec3(1,-1,1), glm::vec3(1, 1, 1), 1);//使用默认值 强度10
     //手电筒光使用灯光生成器生成，默认支持4个
-    auto splashLight = lightSpawner->SpawFlashLight(glm::vec3(30, 30, 0), glm::vec3(0, -1, 0),glm::vec3(0.8F,0.5F,0.3F),30,0.6f);//使用默认值 强度10
+    auto splashLight = lightSpawner->SpawnFlashLight(glm::vec3(30, 30, 0), glm::vec3(0, -1, 0),glm::vec3(0.8F,0.5F,0.3F),30,0.6f);//使用默认值 强度10
 
 }
 CustomModel* GameStartT()

@@ -11,7 +11,7 @@ Game::CustomModel::CustomModel()
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat *vertices, GLuint *indices, size_t vertexCount, size_t indexCount,bool ifLightIn)
 {
 
-    index = indexCount; 
+    _index = indexCount; 
     ifLight = ifLightIn;
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSourceIn, nullptr);
@@ -23,8 +23,6 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
     glCompileShader(fragmentShader);
     CheckShaderCompilation(fragmentShader);
 
-    //这里就是传入两个shader  一个顶点 一个片元，然后对代码的两个shader 进行编译 glcompileShaer,后面一个自定义检查方法，检查shader编译是否成功，nullptr 
-    //C风格的字符串以\0结尾,中间的数字1，代表字符串数组的资源数量 ，当前1个如果有多个则为const GLchar* sources[] = { source1, source2 }; glShaderSource(shader, 2, sources, nullptr);
 
     shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
@@ -58,7 +56,6 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);// GL_ELEMENT_ARRAY_BUFFER 0x8893  绑定元素缓冲对象，或者叫索引缓冲对象，储存数组的索引信息
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(GLuint), indices, GL_STATIC_DRAW);//GL_STATIC_DRAW 0x88E4   静态绘制区域
 
-    //这里绘制需要的数据 都必须进入到 静态绘制区域才行，这样才能绘制，索引数组和顶点数组都在 cube.h的头文件中定义
 
 
     // 设置顶点属性指针，实际上就是告诉 OpenGL，缓冲区中存储的顶点属性数据包含 3 个浮点数 的位置信息，存储在每 3 个浮点数（有颜色则为6）的起始位置，且位置信息从偏移量 0 开始。
@@ -72,7 +69,7 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, GLfloat* vertices, GLuint* indices, size_t vertexCount, size_t indexCount,int ifVariant ,bool ifLightIn)
 {
 
-    index = indexCount;
+    _index = indexCount;
     ifLight = ifLightIn;
 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -130,7 +127,7 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 {
 
     justDrawVerteies = true;
-    index = vertices.size();  // 获取索引的数量，即顶点索引的数量
+    _index = vertices.size();  // 获取索引的数量，即顶点索引的数量
     ifLight = ifLightIn;
     // Create vertex and fragment shaders
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -166,9 +163,6 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
 
-    //因为没有进行顶点复用，所以，这里的索引数组就不再被需要了
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, index * sizeof(GLuint), &vertices[0], GL_STATIC_DRAW);
 
     // Set up position attribute (location = 0)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
@@ -198,8 +192,8 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, std::vector<Vertex>& vertices, std::vector<unsigned int>& finalIndices,bool ifLightIn)
 {
 
-    vertexCount = vertices.size();
-    index = finalIndices.size();
+    _vertexCount = vertices.size();
+    _index = finalIndices.size();
     verticesTras = vertices;
     ifLight = ifLightIn;
    
@@ -277,8 +271,8 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 {
 
     //verticesTras = new std::vector<Vertex>(vertices);  // 这种才是指针的有效初始化，析构中才能使用delete
-    vertexCount = vertices.size();
-    index = finalIndices.size();
+    _vertexCount = vertices.size();
+    _index = finalIndices.size();
     verticesTras = vertices;
     IsSkinnedMesh = isSkinnedMesh;
     ifLight = ifLightIn;
@@ -354,8 +348,8 @@ CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentS
 CustomModel::CustomModel(const char* vertexShaderSourceIn, const char* fragmentShaderSourceIn, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow)
 {
 
-    vertexCount = modelData.verticesStruct.size();
-    index = modelData.indices.size();
+    _vertexCount = modelData.verticesStruct.size();
+    _index = modelData.indices.size();
     verticesTras = modelData.verticesStruct;
     IsSkinnedMesh = isSkinnedMesh;
     ifLight = ifLightIn;
@@ -439,18 +433,15 @@ bool CustomModel::DrawDynamical(glm::mat4 view, glm::mat4 projection)
     glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
     glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
     glUniformMatrix4fv(projectionLoc, 1, 0, glm::value_ptr(projection));
-    //这里的glm是一个常用的数学库，专门用与图形的矩阵操作，这里就充分诠释了 CPU之负责传输数据，GPU 来负责传输图形，
-    // shader语言里面 使用 gl_Position = projection * view * model * vec4(aPos, 1.0f);进行渲染计算 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  //  glBufferSubData(GL_ARRAY_BUFFER, 0,vertex * sizeof(glm::vec3), (void*)&((*verticesTras)[0].Position));//指向容器的数据
     glBufferData(GL_ARRAY_BUFFER,
         verticesTras.size() * sizeof(Vertex),
         verticesTras.data(),
         GL_DYNAMIC_DRAW);
     //绑定顶点数组对象（VAO），激活与 VAO 关联的顶点缓冲对象（VBO）和索引缓冲对象（EBO）。
     //保存顶点属性的配置，例如位置、颜色、法线、纹理坐标等，与 VBO 和 EBO 关联，用于存储顶点数据和绘制索引。
-    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0); 
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, _index) : glDrawElements(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0); 
     //索引数组存储在 EBO（Element Buffer Object）中，EBO 已绑定到 VAO，三角形，36个索引，无符号整形数组，由0开始
     glBindVertexArray(0);
     //集成纹理渲染方法
@@ -665,7 +656,7 @@ void CustomModel::DrawDepthPic(glm::mat4 lightSpaceMatrix,GLuint shader)
 
 
     glBindVertexArray(VAO);
-    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, _index) : glDrawElements(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
 
@@ -684,7 +675,7 @@ void CustomModel::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shade
         verticesTras.size() * sizeof(Vertex),
         verticesTras.data(),
         GL_DYNAMIC_DRAW);
-    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, _index) : glDrawElements(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
     //集成纹理渲染方法
 
@@ -824,12 +815,10 @@ bool CustomModel::Draw (glm::mat4 view, glm::mat4 projection)
     glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
     glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
     glUniformMatrix4fv(projectionLoc, 1, 0, glm::value_ptr(projection));
-    //这里的glm是一个常用的数学库，专门用与图形的矩阵操作，这里就充分诠释了 CPU之负责传输数据，GPU 来负责传输图形，
-    // shader语言里面 使用 gl_Position = projection * view * model * vec4(aPos, 1.0f);进行渲染计算 
     glBindVertexArray(VAO);
     //绑定顶点数组对象（VAO），激活与 VAO 关联的顶点缓冲对象（VBO）和索引缓冲对象（EBO）。
     //保存顶点属性的配置，例如位置、颜色、法线、纹理坐标等，与 VBO 和 EBO 关联，用于存储顶点数据和绘制索引。
-    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, _index) : glDrawElements(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0);
     //索引数组存储在 EBO（Element Buffer Object）中，EBO 已绑定到 VAO，三角形，36个索引，无符号整形数组，由0开始
     glBindVertexArray(0);
     
@@ -863,7 +852,7 @@ bool CustomModel::DrawLine(glm::mat4 view, glm::mat4 projection)
     glBindVertexArray(VAO);
 
     // 直接使用 GL_LINES 模式绘制线段
-    glDrawElements(GL_LINES, index, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_LINES, _index, GL_UNSIGNED_INT, 0);
 
     // 解绑 VAO
     glBindVertexArray(0);
@@ -893,11 +882,7 @@ bool CustomModel::DrawLineFixedWidget(glm::mat4 view, glm::mat4 projection)
     // 切换视口到 widget 区域
     glViewport(widgetPosX, widgetPosY, 300, 200);
 
-    //auto fixedView = Controller::GetInstance()->GetFixedViewMatrix();
-  // auto NProjection= glm::mat4(1.0f);  // 初始化为单位矩阵
-  // transform = glm::translate(NProjection, glm::vec3(0,0,-5));  // 平移，这里对物体平移的实现事实上是调用了一个GL中 translate的API
-   
-  //  glDisable(GL_DEPTH_TEST);
+
 // 激活当前的着色器程序
     glUseProgram(shaderProgram);
 
@@ -915,7 +900,7 @@ bool CustomModel::DrawLineFixedWidget(glm::mat4 view, glm::mat4 projection)
     glBindVertexArray(VAO);
 
     // 直接使用 GL_LINES 模式绘制线段
-    glDrawElements(GL_LINES, index, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_LINES, _index, GL_UNSIGNED_INT, 0);
 
     // 解绑 VAO
     glBindVertexArray(0);
@@ -932,11 +917,6 @@ CustomModel::~CustomModel()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
-    //glDeleteShader(shaderProgram);//删除创建的对象,这里由于是外部赋值，所以不需要删
-    //glDeleteProgram(shaderProgram);//删除链接好的对象,但是这是删除全局的
-    //主对象析构之后，指针貌似已经被释放了
-   // delete verticesTras;//释放内存即释放栈上的引用，引用丢失，内存无意义，告诉编译器指向地址可以重新分配
-   // verticesTras = nullptr;//避免内存污染，解决潜在问题
 
     if (_animator != nullptr)
         delete _animator;
@@ -1003,30 +983,4 @@ void Game::CustomModel::SelfIns()
 {
 }
 
-//// GetComponent 方法
-//template <typename T>
-//T* CustomModel::GetComponent()
-//{
-//    if (std::is_same<T, AnimationController>::value)
-//    {
-//        return animator;
-//    }
-//    else if (std::is_same<T, PhysicalEngine>::value)
-//    {
-//        return PhysicsBody;
-//    }
-//    else if (std::is_same<T, CollisionBody>::value)
-//    {
-//        return collider;
-//    }
-//
-//    // 如果找不到匹配的类型，抛出异常或返回 nullptr
-//    throw std::runtime_error("Requested component type not found!");
-//    // 或者使用返回nullptr的方式：
-//    // return nullptr;
-//}
-//
-//// 显式实例化模板
-//template AnimationController* CustomModel::GetComponent<AnimationController>();
-//template PhysicalEngine* CustomModel::GetComponent<PhysicalEngine>();
-//template CollisionBody* CustomModel::GetComponent<CollisionBody>();
+

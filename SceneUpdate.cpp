@@ -6,7 +6,7 @@
 #include "Cube.h"
 #include "Controller.h"
 #include "LifecycleManager.h"
-#include "IntergratedScripts.h"
+#include "IntegratedScripts.h"
 #include <list>  // 包含 list 容器
 #include "MeshDataManager.h"
 #include "CustomModel.h"
@@ -23,7 +23,7 @@ using namespace Game;
 //控制组件标识
 extern Controller* controller;
 extern LifecycleManager<CustomModel>* manager;
-extern IntergratedScripts* scripts;
+extern IntegratedScripts* scripts;
 extern MeshDataManager* meshData;
 extern TextRender* cusText;
 extern CoroutineMethod* coroutine;
@@ -157,7 +157,7 @@ void RenderingTextureGlobal(GLuint shaderProgram, const std::unordered_map<Pictu
             glUniform1i(specularTextureLoc, textureUnit);
             break;
         }
-        case HightP: { 
+        case HeightP: { 
             GLuint heightTextureLoc = glGetUniformLocation(shaderProgram, "heightTexture");
             glActiveTexture(GL_TEXTURE0 + textureUnit);
             glBindTexture(GL_TEXTURE_2D, textureID);

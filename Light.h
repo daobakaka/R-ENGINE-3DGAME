@@ -40,16 +40,16 @@ namespace Game {
         static LightSpawner* GetInstance();
 
         // 创建点光源（按值传参），并存储到内部容器中
-        CustomPointLight SpawPointLight(glm::vec3 position = glm::vec3(0.0f),
+        CustomPointLight SpawnPointLight(glm::vec3 position = glm::vec3(0.0f),
             glm::vec3 color = glm::vec3(1.0f),
             float intensity = 1.0f);
 
         // 初始化或更新全局平行光
-        CustomParallelLight SpawParallelLight(glm::vec3 direction = glm::vec3(1.0f, 1.0f, 1.0f),
+        CustomParallelLight SpawnParallelLight(glm::vec3 direction = glm::vec3(1.0f, 1.0f, 1.0f),
             glm::vec3 color = glm::vec3(1.0f),
             float intensity = 10.0f);
         // 创建手电筒光（聚光灯），默认位置为 (1, 1, 1)，默认方向指向原点
-        CustomFlashLight SpawFlashLight(
+        CustomFlashLight SpawnFlashLight(
             glm::vec3 position = glm::vec3(1.0f, 1.0f, 1.0f),
             glm::vec3 direction = glm::vec3(-0.57735f, -0.57735f, -0.57735f), // 指向原点的归一化向量
             glm::vec3 color = glm::vec3(1.0f, .0f, .0f),//默认红色
@@ -172,14 +172,14 @@ namespace Game {
     private:
         //可以使用一组复用，这里先用三组分用
         //平行光正交深度
-        GLuint quadVAO = 0;
-        GLuint quadVBO;
+        GLuint _quadVAO = 0;
+        GLuint _quadVBO;
         //视口透视深度
-        GLuint quadVAO1 = 0;
-        GLuint quadVBO1;
+        GLuint _quadVAO1 = 0;
+        GLuint _quadVBO1;
         //后处理全局纹理
-        GLuint quadVAO2 = 0;
-        GLuint quadVBO2;
+        GLuint _quadVAO2 = 0;
+        GLuint _quadVBO2;
     };
 
 

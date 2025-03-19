@@ -52,7 +52,7 @@ LightSpawner::~LightSpawner() {
     // 如有需要，进行清理操作
 }
 
-CustomPointLight LightSpawner::SpawPointLight(glm::vec3 position, glm::vec3 color, float intensity) {
+CustomPointLight LightSpawner::SpawnPointLight(glm::vec3 position, glm::vec3 color, float intensity) {
     CustomPointLight pointLight;
     pointLight.position = position;
     pointLight.color = color;
@@ -72,14 +72,14 @@ CustomPointLight LightSpawner::SpawPointLight(glm::vec3 position, glm::vec3 colo
         manager->RegisterObject(pointLightPtr);
         pointLightPtr->AttachTexture(TextureDic["light"]);
         //子类的方法，设置灯光参数
-        pointLightPtr->SteLightParameters(color, intensity);
+        pointLightPtr->SetLightParameters(color, intensity);
     }
 
 
     return pointLight;
 }
 
-CustomParallelLight LightSpawner::SpawParallelLight(glm::vec3 direction, glm::vec3 color, float intensity) {
+CustomParallelLight LightSpawner::SpawnParallelLight(glm::vec3 direction, glm::vec3 color, float intensity) {
 
 
     parallelLight.direction = glm::normalize(direction);
@@ -95,7 +95,7 @@ CustomParallelLight LightSpawner::SpawParallelLight(glm::vec3 direction, glm::ve
         manager->RegisterObject(pointLightPtr);
         pointLightPtr->AttachTexture(TextureDic["light"]);
         //子类的方法，设置灯光参数
-        pointLightPtr->SteLightParameters(color, intensity);
+        pointLightPtr->SetLightParameters(color, intensity);
 
     }
 
@@ -103,7 +103,7 @@ CustomParallelLight LightSpawner::SpawParallelLight(glm::vec3 direction, glm::ve
     return parallelLight;
 }
 
-CustomFlashLight LightSpawner::SpawFlashLight(glm::vec3 position, glm::vec3 direction, glm::vec3 color, float intensity, float cutoff) {
+CustomFlashLight LightSpawner::SpawnFlashLight(glm::vec3 position, glm::vec3 direction, glm::vec3 color, float intensity, float cutoff) {
     CustomFlashLight flashLight;
     flashLight.position = position;
     flashLight.direction = -glm::normalize(direction);
@@ -147,7 +147,7 @@ CustomFlashLight LightSpawner::SpawFlashLight(glm::vec3 position, glm::vec3 dire
         manager->RegisterObject(pointLightPtr);
         pointLightPtr->AttachTexture(TextureDic["light"]);
         //子类的方法，设置灯光参数
-        pointLightPtr->SteLightParameters(color, intensity);
+        pointLightPtr->SetLightParameters(color, intensity);
 
         //--构建手电筒参考射线-------------
         //这里采用自定义顶点，这样更方便，便于更改射线长度
@@ -384,7 +384,7 @@ void Game::LightRender::RenderShadowTexture(GLuint shader)
     glUniform1i(depthMapLoc, 0);  // 将纹理单元0传递给着色器
 
 
-    if (quadVAO == 0)
+    if (_quadVAO == 0)
     {
         float quadVertices[] = {
             // positions        // texture Coords
@@ -394,17 +394,17 @@ void Game::LightRender::RenderShadowTexture(GLuint shader)
              1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
         };
         // setup plane VAO
-        glGenVertexArrays(1, &quadVAO);
-        glGenBuffers(1, &quadVBO);
-        glBindVertexArray(quadVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glGenVertexArrays(1, &_quadVAO);
+        glGenBuffers(1, &_quadVBO);
+        glBindVertexArray(_quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, _quadVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     }
-    glBindVertexArray(quadVAO);
+    glBindVertexArray(_quadVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
 }
@@ -453,7 +453,7 @@ void Game::LightRender::RenderDepthTestTexture(GLuint shader)
     glUniform1i(depthMapLoc, 0);  // 将纹理单元0传递给着色器
 
 
-    if (quadVAO1 == 0)
+    if (_quadVAO1 == 0)
     {
         float quadVertices[] = {
             // positions        // texture Coords
@@ -463,17 +463,17 @@ void Game::LightRender::RenderDepthTestTexture(GLuint shader)
              1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
         };
         // setup plane VAO
-        glGenVertexArrays(1, &quadVAO1);
-        glGenBuffers(1, &quadVBO1);
-        glBindVertexArray(quadVAO1);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO1);
+        glGenVertexArrays(1, &_quadVAO1);
+        glGenBuffers(1, &_quadVBO1);
+        glBindVertexArray(_quadVAO1);
+        glBindBuffer(GL_ARRAY_BUFFER, _quadVBO1);
         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     }
-    glBindVertexArray(quadVAO1);
+    glBindVertexArray(_quadVAO1);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
 
@@ -560,7 +560,7 @@ void Game::LightRender::RenderDepthTestTexture(GLuint shader)
      glUniform1i(postProcessingMapLoc, 0);  // 将纹理单元0传递给着色器
 
 
-     if (quadVAO2 == 0)
+     if (_quadVAO2 == 0)
      {
          float quadVertices[] = {
              // positions        // texture Coords
@@ -570,17 +570,17 @@ void Game::LightRender::RenderDepthTestTexture(GLuint shader)
               1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
          };
          // setup plane VAO
-         glGenVertexArrays(1, &quadVAO2);
-         glGenBuffers(1, &quadVBO2);
-         glBindVertexArray(quadVAO2);
-         glBindBuffer(GL_ARRAY_BUFFER, quadVBO2);
+         glGenVertexArrays(1, &_quadVAO2);
+         glGenBuffers(1, &_quadVBO2);
+         glBindVertexArray(_quadVAO2);
+         glBindBuffer(GL_ARRAY_BUFFER, _quadVBO2);
          glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
          glEnableVertexAttribArray(0);
          glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
          glEnableVertexAttribArray(1);
          glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
      }
-     glBindVertexArray(quadVAO2);
+     glBindVertexArray(_quadVAO2);
      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
      glBindVertexArray(0);
  }

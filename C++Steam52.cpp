@@ -11,7 +11,7 @@
 #include "MicroCpp.h"
 #include "Controller.h"
 #include "LifecycleManager.h"
-#include "IntergratedScripts.h"
+#include "IntegratedScripts.h"
 #include <list>  // 包含 list 容器
 #include "MeshDataManager.h"
 #include "CustomModel.h"
@@ -50,7 +50,7 @@ extern void StaticShaderGlobalParametersPassingT(const glm::mat4& view, const gl
 //控制组件标识
 extern Controller* controller;
 extern LifecycleManager<CustomModel>* manager;
-extern IntergratedScripts* scripts;
+extern IntegratedScripts* scripts;
 extern MeshDataManager* meshData;
 extern TextRender* cusText;
 extern CoroutineMethod* coroutine;
@@ -155,6 +155,7 @@ int GLins() {
     glfwTerminate();
     // 删除 Cube 对象
     manager->DestroyAll();
+    delete skybox;//释放天空盒内存
     //delete animator;
     return 0;
 #pragma endregion

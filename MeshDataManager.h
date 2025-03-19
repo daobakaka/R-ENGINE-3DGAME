@@ -1,8 +1,8 @@
 #ifndef MESH_DATA_MANAGER_H
 #define MESH_DATA_MANAGER_H
 #include <vector>
-#include <GL/glew.h>  // OpenGL ¿â
-#include <glm/glm.hpp> // GLM ÊýÑ§¿â
+#include <GL/glew.h>  
+#include <glm/glm.hpp> /
  namespace Game {
     class MeshDataManager {
     public:

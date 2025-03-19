@@ -5,8 +5,6 @@
 #include <random>
 using namespace Game;
 #pragma region 测试蝴蝶
-//extern LifecycleManager<CustomModel>* manager;//获取管理器控制器
-
 
 void ButterflyScript::UpdateVariant(glm::mat4 view, glm::mat4 projection)
 {
@@ -26,11 +24,11 @@ void CoordinateSystemCus::Update(glm::mat4 view, glm::mat4 projection)
 #pragma endregion
 #pragma region 光源模型
 
-void LightModel::SteLightParameters(glm::vec3 color, float intensity, glm::vec3 dirction)
+void LightModel::SetLightParameters(glm::vec3 color, float intensity, glm::vec3 dirction)
 {
-    myColor = color;
-    myIntensity = intensity;
-    myDirection = dirction;
+    _myColor = color;
+    _myIntensity = intensity;
+    _myDirection = dirction;
 }
 
 void LightModel::BindTexture()
@@ -40,13 +38,13 @@ void LightModel::BindTexture()
 
     // 2) 设置 baseColor
     GLint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
-    glUniform3fv(baseColorLoc, 1, glm::value_ptr(myColor));
+    glUniform3fv(baseColorLoc, 1, glm::value_ptr(_myColor));
     // 3) 设置 lightIntensity
     GLint intensityLoc = glGetUniformLocation(shaderProgram, "lightIntensity");
-    glUniform1f(intensityLoc, myIntensity);
+    glUniform1f(intensityLoc, _myIntensity);
     //3.1)设置 lightDirection
     GLuint dirtionLoc = glGetUniformLocation(shaderProgram, "lightDirction");
-    glUniform3fv(dirtionLoc, 1, glm::value_ptr(myDirection));
+    glUniform3fv(dirtionLoc, 1, glm::value_ptr(_myDirection));
 
     // 4) 找到 sampler uniform "texture1"
     GLint samplerLoc = glGetUniformLocation(shaderProgram, "texture1");
@@ -80,7 +78,7 @@ bool CustomizeRay::DrawLine(glm::mat4 view, glm::mat4 projection)
 
     // 2) 设置射线颜色,这里是对drawline的父级方法进行重写
     GLint baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
-    glUniform3fv(baseColorLoc, 1, glm::value_ptr(myColor));
+    glUniform3fv(baseColorLoc, 1, glm::value_ptr(_myColor));
 
     // 获取 shader 中 "model"、"view" 和 "projection" uniform 变量的位置
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
@@ -96,7 +94,7 @@ bool CustomizeRay::DrawLine(glm::mat4 view, glm::mat4 projection)
     glBindVertexArray(VAO);
 
     // 直接使用 GL_LINES 模式绘制线段
-    glDrawElements(GL_LINES, index, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_LINES, _index, GL_UNSIGNED_INT, 0);
 
     // 解绑 VAO
     glBindVertexArray(0);
@@ -107,8 +105,8 @@ bool CustomizeRay::DrawLine(glm::mat4 view, glm::mat4 projection)
 
 void CustomizeRay::SetRayPar(glm::vec3 color,float intensity)
 {
-    myColor = color;
-    myIntensity = intensity;
+    _myColor = color;
+    _myIntensity = intensity;
 }
 
 #pragma endregion
@@ -122,7 +120,7 @@ void ShadowTexture::DrawDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader)
 
 
     glBindVertexArray(VAO);
-    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, _index) : glDrawElements(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
 
@@ -143,7 +141,7 @@ void ShadowTexture::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint sha
         verticesTras.size() * sizeof(Vertex),
         verticesTras.data(),
         GL_DYNAMIC_DRAW);
-    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, _index) : glDrawElements(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
 
@@ -154,8 +152,8 @@ void ShadowTexture::DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint sha
 CustomModelShader::CustomModelShader(const std::string& name, const ModelData& modelData, bool isSkinnedMesh, bool ifLightIn, bool ifShadow,bool enableDepth)
 {
    
-    vertexCount = modelData.verticesStruct.size();
-    index = modelData.indices.size();
+    _vertexCount = modelData.verticesStruct.size();
+    _index = modelData.indices.size();
     verticesTras = modelData.verticesStruct;
     IsSkinnedMesh = isSkinnedMesh;
     ifLight = ifLightIn;
@@ -213,6 +211,10 @@ CustomModelShader::CustomModelShader(const std::string& name, const ModelData& m
     glBindVertexArray(0);
 }
 
+Game::CustomModelShader::~CustomModelShader()
+{
+}
+
 
 
 CustomModelShader::CustomModelShader()
@@ -229,7 +231,7 @@ bool CustomModelShader::Draw(glm::mat4 view, glm::mat4 projection)
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
     glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(transform));
     glBindVertexArray(VAO);
-    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, _index) : glDrawElements(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
     //集成纹理渲染方法
@@ -251,7 +253,7 @@ bool Game::CustomModelShader::DrawDynamical(glm::mat4 view, glm::mat4 projection
         verticesTras.size() * sizeof(Vertex),
         verticesTras.data(),
         GL_DYNAMIC_DRAW);
-    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+    justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, _index) : glDrawElements(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
     return true;
@@ -336,7 +338,7 @@ void Game::CustomModelShader::BindTextureAdditional()
             glUniform1i(specularTextureLoc, textureUnit); // 传递纹理单元
             break;
         }
-        case HightP: {
+        case HeightP: {
             GLuint heightTextureLoc = glGetUniformLocation(shaderProgram, "heightTexture");
             glActiveTexture(GL_TEXTURE0 + textureUnit); // 激活纹理单元
             glBindTexture(GL_TEXTURE_2D, textureID); // 绑定高度纹理
@@ -360,7 +362,7 @@ void Game::CustomModelShader::BindTextureAdditional()
         case OpacityP: {
             GLuint opacityTextureLoc = glGetUniformLocation(shaderProgram, "opacityTexture");
             glActiveTexture(GL_TEXTURE0 + textureUnit); // 激活纹理单元
-            glBindTexture(GL_TEXTURE_2D, textureID); // 绑定 AO 纹理
+            glBindTexture(GL_TEXTURE_2D, textureID); // 绑定 Opcity 纹理单元
             glUniform1i(opacityTextureLoc, textureUnit); // 传递纹理单元
             break;
         }
@@ -383,10 +385,7 @@ void Game::CustomModelShader::BindTextureAdditional()
 
 void Game::CustomModelShader::UniformParametersChange()
 {
-    // 溶解度，默认传入0 不溶解
-//    GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
-//    glUniform1f(dissolveThresholdLoc, _dissolveThreshold);
-//}
+
 }
 void Game::CustomModelShader::RenderingLight()
 {
@@ -518,8 +517,8 @@ CustomModelInstance::CustomModelInstance(const std::string& name, const ModelDat
     _positionOffset = positionOffset;
     _rotationAxis = rotationAxis;
 
-    vertexCount = modelData.verticesStruct.size();
-    index = modelData.indices.size();
+    _vertexCount = modelData.verticesStruct.size();
+    _index = modelData.indices.size();
     verticesTras = modelData.verticesStruct;
     IsSkinnedMesh = isSkinnedMesh;
     ifLight = ifLightIn;
@@ -819,8 +818,8 @@ bool Game::CustomModelInstance::Draw(glm::mat4 view, glm::mat4 projection)
 
     // 使用实例化绘制
     justDrawVerteies == true
-        ? glDrawArraysInstanced(GL_TRIANGLES, 0, index, _modelMatrices.size())  // 使用 glDrawArraysInstanced
-        : glDrawElementsInstanced(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0, _modelMatrices.size());  // 使用 glDrawElementsInstanced
+        ? glDrawArraysInstanced(GL_TRIANGLES, 0, _index, _modelMatrices.size())  // 使用 glDrawArraysInstanced
+        : glDrawElementsInstanced(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0, _modelMatrices.size());  // 使用 glDrawElementsInstanced
 
     // 解绑VAO
     glBindVertexArray(0);
@@ -857,8 +856,8 @@ bool Game::CustomModelInstance::DrawDynamical(glm::mat4 view, glm::mat4 projecti
 
     // 使用实例化绘制
     justDrawVerteies == true
-        ? glDrawArraysInstanced(GL_TRIANGLES, 0, index, _modelMatrices.size())  // 使用 glDrawArraysInstanced
-        : glDrawElementsInstanced(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0, _modelMatrices.size());  // 使用 glDrawElementsInstanced
+        ? glDrawArraysInstanced(GL_TRIANGLES, 0, _index, _modelMatrices.size())  // 使用 glDrawArraysInstanced
+        : glDrawElementsInstanced(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0, _modelMatrices.size());  // 使用 glDrawElementsInstanced
 
     // 解绑VAO
     glBindVertexArray(0);
@@ -1049,7 +1048,7 @@ void Game::GamePlayer::RenderingStencilTest()
             verticesTras.size() * sizeof(Vertex),
             verticesTras.data(),
             GL_DYNAMIC_DRAW);
-        justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+        justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, _index) : glDrawElements(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
     
@@ -1057,7 +1056,7 @@ void Game::GamePlayer::RenderingStencilTest()
     else
     {
         glBindVertexArray(VAO);
-        justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, index) : glDrawElements(GL_TRIANGLES, index, GL_UNSIGNED_INT, 0);
+        justDrawVerteies == true ? glDrawArrays(GL_TRIANGLES, 0, _index) : glDrawElements(GL_TRIANGLES, _index, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
     }
@@ -1098,10 +1097,10 @@ void Game::GameBullet::UniformParametersChange()
     glUniform1f(waveFrequencyLoc, _waveFrequency);
     glUniform1f(waveSpeedLoc, _waveSpeed);
 
-    if (_timeAccumulator < 1.01*5 )
+    if (_timeAccumulator < 1.01*1 )
     {
         GLuint dissolveThresholdLoc = glGetUniformLocation(shaderProgram, "dissolveThreshold");
-        glUniform1f(dissolveThresholdLoc, 1 - _timeAccumulator/10);
+        glUniform1f(dissolveThresholdLoc, 1 - _timeAccumulator/1);
     }
     else if (_timeAccumulator >= 1.01*5 && _timeAccumulator <= 25)
     {

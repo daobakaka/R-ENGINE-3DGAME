@@ -14,7 +14,7 @@ namespace Game {
 		~DesignModel();
 
 		virtual bool Draw(glm::mat4 view, glm::mat4 projection) override;//静态绘制可重写;
-		virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;//动态绘制可重写，与IntergtatedAnimatior联动
+		virtual bool DrawDynamical(glm::mat4 view, glm::mat4 projection) override;//动态绘制可重写，与IntegtatedAnimatior联动
 
 		virtual void DrawDepthPicDynamical(glm::mat4 lightSpaceMatrix, GLuint shader) override;//动态绘制深度图，可重写
 		virtual void DrawDepthPic(glm::mat4 lightSpaceMatrix, GLuint shader) override; //静态绘制深度图，可重写
