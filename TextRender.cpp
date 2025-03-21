@@ -57,7 +57,7 @@ void TextRender::PrintBitmap(const FT_Bitmap& bitmap) {
 // ³õÊ¼»¯×ÖÌå
 void TextRender::MakeFronts() {
 
-    const char* fontPath = "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fronts\\2.ttf";
+    const char* fontPath = "Assets\\Fronts\\2.ttf";
     FT_Library ft;
     if (FT_Init_FreeType(&ft)) {
         std::cerr << "Could not initialize FreeType Library" << std::endl;

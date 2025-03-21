@@ -7,19 +7,19 @@ std::vector<glm::vec3> vertices;
 std::vector<glm::vec2> uvs;
 std::vector<glm::vec3> normals;
 std::vector <unsigned int> indeies;
-bool res = LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assests\\Obj\\butterfly2.obj", vertices, uvs, normals);
+bool res = LoadOBJ("Assests\\Obj\\butterfly2.obj", vertices, uvs, normals);
 if (!res) {
     std::cerr << "Failed to load OBJ file!" << std::endl;
     return -1;
 }
 std::vector<Vertex> verticesStruct;
 std::vector<unsigned int> indices;
-if (!LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assests\\Obj\\butterfly1.obj", verticesStruct, indices)) {
+if (!LoadOBJ("Assests\\Obj\\butterfly1.obj", verticesStruct, indices)) {
     DEBUGLOG("Faild to load obj verteices only");
 }
 //解压图片信息为可用格式
 // 加载纹理
-GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assests\\Texture\\1.png");
+GLuint picTexture = LoadPicTexture("Assests\\Texture\\1.png");
 if (picTexture == 0)
 {
     // 处理加载失败的情况
@@ -37,14 +37,14 @@ GLuint picData = glGetUniformLocation(LDmodel->shaderProgram, "texture1");
      // Load OBJ file
 std::vector<Vertex> verticesStruct;
 std::vector<unsigned int> indices;
-if (!LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assests\\Obj\\butterfly1.obj", verticesStruct, indices)) {
+if (!LoadOBJ("Assests\\Obj\\butterfly1.obj", verticesStruct, indices)) {
     DEBUGLOG("Faild to load obj verteices only");
 }
 
 
 CustomModel* LDmodel = new CustomModel(noneLightVertexShaderSource, noneLightcubeFragmentShaderSource, ModelDic["butterfly"].verticesStruct, ModelDic["butterfly"].indices, true);//定义的是地址，也就是传入引用，这种方式类似于ref
 ///--加载纹理
-GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assests\\Texture\\1.png");
+GLuint picTexture = LoadPicTexture("Assests\\Texture\\1.png");
 
 
 // 创建动画，设置是否循环播放，播放速度，引用动画制作形成的动画控制文件

@@ -5,6 +5,8 @@ VisualStudioVersion = 17.10.35013.160
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "C++Steam52", "C++Steam52.vcxproj", "{F79732C3-BC82-4B62-A33E-80C85E56C07C}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "GameDemo", "..\GameDemo\GameDemo.vdproj", "{82E46042-EAAB-4CFA-A214-FA4B53760C69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,10 @@ Global
 		{F79732C3-BC82-4B62-A33E-80C85E56C07C}.Release|x64.Build.0 = Release|x64
 		{F79732C3-BC82-4B62-A33E-80C85E56C07C}.Release|x86.ActiveCfg = Release|Win32
 		{F79732C3-BC82-4B62-A33E-80C85E56C07C}.Release|x86.Build.0 = Release|Win32
+		{82E46042-EAAB-4CFA-A214-FA4B53760C69}.Debug|x64.ActiveCfg = Debug
+		{82E46042-EAAB-4CFA-A214-FA4B53760C69}.Debug|x86.ActiveCfg = Debug
+		{82E46042-EAAB-4CFA-A214-FA4B53760C69}.Release|x64.ActiveCfg = Release
+		{82E46042-EAAB-4CFA-A214-FA4B53760C69}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

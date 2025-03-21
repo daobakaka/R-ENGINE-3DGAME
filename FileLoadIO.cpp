@@ -429,7 +429,7 @@ std::vector<Vertex> Game::LoadVerticesFromFile(const std::string& name)
     std::vector<unsigned int> indices;
 
     // 合并路径与文件名
-    std::string path = "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\" + name;
+    std::string path = "Assets\\Obj\\" + name;
 
     // 调用 LoadOBJ 函数来加载文件
     if (!LoadOBJ(path.c_str(), vertices, indices)) {
@@ -523,7 +523,7 @@ void Game::MakeModel()
     std::vector<Vertex> verticesStruct;
     std::vector<unsigned int> indices;
 
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\butterfly1.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\butterfly1.obj", verticesStruct, indices);
 
     ModelData modelData;
     
@@ -534,7 +534,7 @@ void Game::MakeModel()
 
 #pragma region 基础形状区域
     //立方体
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\baseCube.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\baseCube.obj", verticesStruct, indices);
  
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -542,7 +542,7 @@ void Game::MakeModel()
     ModelDic["baseCube"] = modelData;
     
     //经纬球
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\baseSphere.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\baseSphere.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -551,7 +551,7 @@ void Game::MakeModel()
 
 
     //圆锥
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\baseCone.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\baseCone.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -559,7 +559,7 @@ void Game::MakeModel()
     ModelDic["baseCone"] = modelData;
 
     //圆柱
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\baseCylinder.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\baseCylinder.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -568,7 +568,7 @@ void Game::MakeModel()
 
 
     //平面
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\basePlane.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\basePlane.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -576,7 +576,7 @@ void Game::MakeModel()
     ModelDic["basePlane"] = modelData;
     
     //测试猴子
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\testMonkey.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\testMonkey.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -586,7 +586,7 @@ void Game::MakeModel()
 #pragma region 打石头游戏
 
     //树
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\tree.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\tree.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -594,7 +594,7 @@ void Game::MakeModel()
     ModelDic["tree"] = modelData;
 
     //宝箱
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\chest.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\chest.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -603,7 +603,7 @@ void Game::MakeModel()
 
 
     //石头怪
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\stoneMonster.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\stoneMonster.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -611,7 +611,7 @@ void Game::MakeModel()
     ModelDic["stoneMonster"] = modelData;
 
     //碎石1
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\stone1.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\stone1.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -619,7 +619,7 @@ void Game::MakeModel()
     ModelDic["stone1"] = modelData;
 
     //碎石2
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\stone2.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\stone2.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -628,28 +628,28 @@ void Game::MakeModel()
 
 
     ////背包
-    //LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\backpack.obj", verticesStruct, indices);
+    //LoadOBJ("Assets\\Fbx\\backpack.obj", verticesStruct, indices);
 
     //modelData.verticesStruct = verticesStruct;
     //modelData.indices = indices;
 
     //ModelDic["backpack"] = modelData;
     //草
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\grass.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\grass.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
 
     ModelDic["grass1"] = modelData;
     //草2
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\grass2.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\grass2.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
 
     ModelDic["grass2"] = modelData;
     //黑洞
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\blackHole.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\blackHole.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -657,7 +657,7 @@ void Game::MakeModel()
     ModelDic["blackHole"] = modelData;
 
     //玩家
-    LoadOBJ("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Obj\\player.obj", verticesStruct, indices);
+    LoadOBJ("Assets\\Obj\\player.obj", verticesStruct, indices);
 
     modelData.verticesStruct = verticesStruct;
     modelData.indices = indices;
@@ -673,11 +673,11 @@ void Game::MakeModel()
 
 void Game::MakeModelFbx()
 {
-  // LoadFBX("chest", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\Chest.obj");
+  // LoadFBX("chest", "Assets\\Fbx\\Chest.obj");
   //加载宝箱模型
-    //LoadFBX("chest", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\Chest.obj");
+    //LoadFBX("chest", "Assets\\Fbx\\Chest.obj");
 
-  // LoadFBX("backpack", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\backpack.obj");
+  // LoadFBX("backpack", "Assets\\Fbx\\backpack.obj");
   // 通过名称获取模型
   auto& model = Game::ModelDesignDic["chest"];
 
@@ -767,48 +767,48 @@ void Game::MakeTxture()
     //纹理坐标翻转，原生的图像格式纹理坐标与opengl不一致，这里非常重要
     stbi_set_flip_vertically_on_load(true);
 
-    GLuint defaultTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\default.bmp");
-    GLuint defaultW = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\defaultW.jpg");
-    GLuint picTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\butterfly.png");
-    GLuint lightTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\light.bmp");
-    GLuint skyboxTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\front.jpg");
-    GLuint nosie1Texture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\noise1.png");
-    GLuint nosie2Texture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\noise3.png");
+    GLuint defaultTexture = LoadPicTexture("Assets\\Texture\\default.bmp");
+    GLuint defaultW = LoadPicTexture("Assets\\Texture\\defaultW.jpg");
+    GLuint picTexture = LoadPicTexture("Assets\\Texture\\butterfly.png");
+    GLuint lightTexture = LoadPicTexture("Assets\\Texture\\light.bmp");
+    GLuint skyboxTexture = LoadPicTexture("Assets\\Texture\\front.jpg");
+    GLuint nosie1Texture = LoadPicTexture("Assets\\Texture\\noise1.png");
+    GLuint nosie2Texture = LoadPicTexture("Assets\\Texture\\noise3.png");
     //--地形
-    GLuint grassTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\grass.jpg");
-    GLuint stoneTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\stone.jpg");
+    GLuint grassTexture = LoadPicTexture("Assets\\Texture\\grass.jpg");
+    GLuint stoneTexture = LoadPicTexture("Assets\\Texture\\stone.jpg");
     //打石头游戏树
-    GLuint treeTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_texture.png");
-    //GLuint treeTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\treePaint.png");
-    GLuint treeTextureNromal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_normal.png");
-    GLuint treeTextureSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Pine_tree_specular.png");
+    GLuint treeTexture = LoadPicTexture("Assets\\Texture\\tree\\outPng\\Pine_tree_texture.png");
+    //GLuint treeTexture = LoadPicTexture("Assets\\Texture\\tree\\outPng\\treePaint.png");
+    GLuint treeTextureNromal = LoadPicTexture("Assets\\Texture\\tree\\outPng\\Pine_tree_normal.png");
+    GLuint treeTextureSpecular = LoadPicTexture("Assets\\Texture\\tree\\outPng\\Pine_tree_specular.png");
     //打石头游戏宝箱
-    GLuint chestTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Chest_texture.png");
-    GLuint chestTextureNormal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Chest_normal.png");
-    GLuint chseTextureSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Chest_specular.png");
+    GLuint chestTexture = LoadPicTexture("Assets\\Texture\\tree\\outPng\\Chest_texture.png");
+    GLuint chestTextureNormal = LoadPicTexture("Assets\\Texture\\tree\\outPng\\Chest_normal.png");
+    GLuint chseTextureSpecular = LoadPicTexture("Assets\\Texture\\tree\\outPng\\Chest_specular.png");
     //石头怪
-    GLuint stoneMonsterTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\stoneMonster.png");
+    GLuint stoneMonsterTexture = LoadPicTexture("Assets\\Texture\\stoneMonster.png");
     //碎石纹理
-    GLuint stone = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Rocks_3_4_texture.png");
-    GLuint stoneNormal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Rocks_3_4_normal.png");
-    GLuint stoneSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\tree\\outPng\\Rocks_3_4_specular.png");
+    GLuint stone = LoadPicTexture("Assets\\Texture\\tree\\outPng\\Rocks_3_4_texture.png");
+    GLuint stoneNormal = LoadPicTexture("Assets\\Texture\\tree\\outPng\\Rocks_3_4_normal.png");
+    GLuint stoneSpecular = LoadPicTexture("Assets\\Texture\\tree\\outPng\\Rocks_3_4_specular.png");
     //高清背包
-    GLuint backpage = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\diffuse.jpg");
-    GLuint backpageNormal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\normal.png");
-    GLuint backpageSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\specular.jpg");
-    GLuint backpageRoughnees = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\roughness.jpg");
-    GLuint backpageAO = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\backpack\\ao.jpg");
+    GLuint backpage = LoadPicTexture("Assets\\Texture\\backpack\\diffuse.jpg");
+    GLuint backpageNormal = LoadPicTexture("Assets\\Texture\\backpack\\normal.png");
+    GLuint backpageSpecular = LoadPicTexture("Assets\\Texture\\backpack\\specular.jpg");
+    GLuint backpageRoughnees = LoadPicTexture("Assets\\Texture\\backpack\\roughness.jpg");
+    GLuint backpageAO = LoadPicTexture("Assets\\Texture\\backpack\\ao.jpg");
     //两种草
-    GLuint grass1Texture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\grass1.png");
-    GLuint grass2Texture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\grass2.png");
+    GLuint grass1Texture = LoadPicTexture("Assets\\Texture\\grass1.png");
+    GLuint grass2Texture = LoadPicTexture("Assets\\Texture\\grass2.png");
     //气泡弹
-    GLuint water = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\water\\waterDiffuse.png");
-    GLuint waterNormal = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\water\\waterNormal.png");
-    GLuint waterSpecular = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\water\\waterNormal1.png");
-    GLuint waterHeight = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\water\\waterHeight.png");
-    GLuint waterOpacity = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\water\\waterOpacity.png");
+    GLuint water = LoadPicTexture("Assets\\Texture\\water\\waterDiffuse.png");
+    GLuint waterNormal = LoadPicTexture("Assets\\Texture\\water\\waterNormal.png");
+    GLuint waterSpecular = LoadPicTexture("Assets\\Texture\\water\\waterNormal1.png");
+    GLuint waterHeight = LoadPicTexture("Assets\\Texture\\water\\waterHeight.png");
+    GLuint waterOpacity = LoadPicTexture("Assets\\Texture\\water\\waterOpacity.png");
     //轮子
-    GLuint wheelTexture = LoadPicTexture("E:\\C++\\FirstOne\\C++Steam52\\Assets\\Texture\\wheel.png");
+    GLuint wheelTexture = LoadPicTexture("Assets\\Texture\\wheel.png");
     //初始化参数
     std::vector<GLuint> picd;
     //加载默认纹理
