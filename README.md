@@ -934,5 +934,5 @@ void PostProcessingT(const glm::mat4& view, const glm::mat4& projection, GLFWwin
 
  ## 附言
  - demo中还有很多细节未能展示，开发者可根据源码加深理解
- - 打包的relase文件包含了demo的场景，开发者可以体验游戏过程
+ - 打包的releases文件包含了demo的场景，开发者可以体验游戏过程
  - 对项目感觉兴趣的朋友可留言或发送邮件至我邮箱a373823424@qq.com
