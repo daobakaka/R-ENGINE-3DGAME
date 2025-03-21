@@ -236,5 +236,6 @@
     <Text Include="DElETE.txt">
       <Filter>源文件\Test</Filter>
     </Text>
+    <Text Include="LICENSE.txt" />
   </ItemGroup>
 </Project>

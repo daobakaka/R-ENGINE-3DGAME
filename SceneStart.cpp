@@ -47,7 +47,7 @@ void CallbackMouseScrollGlobal(GLFWwindow* window, double xoffset, double yoffse
 
 GLFWwindow* GLinitializeT()
 {
-    GLFWwindow* window = glfwCreateWindow(controller->windowWidth, controller->windowHeight, "OpenGL Window", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(controller->windowWidth, controller->windowHeight, "R-ENGINE-GAME", nullptr, nullptr);
     if (!window) {
         glfwTerminate();
         std::cerr << "Failed to create OpenGL window!" << std::endl;
