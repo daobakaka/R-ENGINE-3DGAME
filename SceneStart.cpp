@@ -158,7 +158,7 @@ CustomModel* GameStartT()
     basePlane->AttachPhysicalEngine(true);//声明为静态类型，目前注册为1
     basePlane->AttachCollider(CollisionType::Box,SpecialType::BasePlane,1);//注册特殊碰撞体--地板
 
-    //生成光照游戏玩家
+    //生成游戏玩家
     auto* gamePlayer = new  GamePlayer("aloneCommonLight", ModelDic["testMonkey"], false, true, true,true);
     gamePlayer->SetVariant(ModelClass::Player);
     gamePlayer->Initialize(glm::vec3(0.0f, 5.0f, 0.0f), glm::quat(glm::vec3(0.0f,0, 0.0f)), glm::vec3(3));

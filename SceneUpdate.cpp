@@ -111,6 +111,8 @@ void PostProcessingT(const glm::mat4& view, const glm::mat4& projection, GLFWwin
         shaderManager->SetFloat("postProcessingBloom", "deathProgress", timer);//设置shader玩家的死亡效果
     }
     lightRender->RenderPostProcessingTexture(shaderManager->GetShader("postProcessingBloom"));
+    //shaderManager->SetInt("postProcessingCommon", "effectType", 4);
+    //lightRender->RenderPostProcessingTexture(shaderManager->GetShader("postProcessingCommon"));
     
 }
 /// <summary>

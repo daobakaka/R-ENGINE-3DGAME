@@ -677,7 +677,7 @@ void Game::MakeModelFbx()
   //加载宝箱模型
     //LoadFBX("chest", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\Chest.obj");
 
-   // LoadFBX("backpack", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\backpack.obj");
+  // LoadFBX("backpack", "E:\\C++\\FirstOne\\C++Steam52\\Assets\\Fbx\\backpack.obj");
   // 通过名称获取模型
   auto& model = Game::ModelDesignDic["chest"];
 
