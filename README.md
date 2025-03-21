@@ -1,11 +1,11 @@
 
 # R-ENGINE 3D Game Engine
 
-**R-ENGINE** 是一个基于 C++ 和 OpenGL 构建的游戏引擎基础框架，提供渲染管线、物理模拟、动画控制、碰撞检测、资源管理、游戏逻辑支持等，附带完整的 3D 游戏示例 Demo。
+**R-ENGINE** 是一个基于 OpenGL 构建的游戏引擎基础框架，提供自定义多通道渲染、物理模拟、动画控制、碰撞检测、资源管理、游戏逻辑支持等，附带完整的 3D 游戏示例 Demo。
 
 框架集成了PBR渲染、动态阴影、GPU 实例化、八叉树空间划分、基础物理引擎、基础碰撞检测、对象生命周期管理、基础协程异步功能，能够满足基本的 3D 游戏开发需求。
 
-框架适用于有一定图形学基础的人群，需对游戏引擎有一定的了解，需对图形学或者游戏开发有一定的程度的热爱，欢迎朋友们探讨。
+框架适用于有一定图形学以及游戏引擎基础，同时对图形学或者游戏开发充满热爱的开发者。
 
 ---
 
@@ -33,10 +33,11 @@
 - [后期改进](#后期改进)
 - [许可证](#许可证)
 - [Demo示例](#Demo示例)
+- [附言](#附言)
 
 ## 项目简介
 
-**R-ENGINE** 为开发者提供从基础图形渲染到通用游戏逻辑的底层基础解决方案，便于二次开发和项目扩展。项目结构较清晰，具有良好的扩展性，但整体框架较为简陋，存在较大改进空间。
+**R-ENGINE** 为开发者提供从基础图形渲染到通用游戏逻辑的基础解决方案，便于二次开发和项目扩展。项目结构较清晰，具有良好的扩展性，但整体框架较为简陋，代码较为底层，存在较大完善空间。
 
 ---
 
@@ -45,13 +46,14 @@
 - 基于物理的渲染（PBR）
 - 实时阴影与深度贴图
 - GPU 实例化与动态实例化渲染
-- 基础碰撞检测（AABB + 八叉树）
+- 基础碰撞检测（AABB、八叉树分布）
+- 基础物理引擎（速度、加速度、弹性系数、摩檫力、旋转阻尼）
 - 骨骼动画与顶点动画控制
 - Shader 动态管理与后处理效果
-- 协程管理与异步资源加载
-- 对象生命周期与内存优化管理
+- 协程管理与资源加载
+- 对象生命周期管理与pool结构
 - 模型、纹理资源完整导入与管理系统
-- 渲染后处理
+- 渲染参数控制(伽马矫正、抗锯齿、多重线性采样)
 
 ---
 
@@ -193,12 +195,13 @@ cd R-ENGINE-3DGAME
 - 场景对象静态批处理与动态批处理
 - 深入的性能监控与分析工具
 - 完整工具链与编辑器（场景编辑、材质编辑）
+- 项目打包及跨平台策略
 ---
 
 ## 许可证
 
 - 本项目采用 MIT 开源许可证，详细信息参阅项目根目录的 LICENSE 文件。
-- 声明：本引擎旨在提供学习和二次开发的基础框架，欢迎与社区开发者交流探讨，共同推动R引擎技术进步。
+- 声明：本引擎旨在提供二次开发的测试性框架，欢迎与社区开发者交流探讨，共同推动技术进步。
 
 ---
 
@@ -265,18 +268,30 @@ cd R-ENGINE-3DGAME
 
 }
 ```
-  - CustomModelShader: 派生自CustomModel 派生自 GameObject 基类 派生自 MonoBehaviour 接口，这四重结构，定义了对象的位置、平移、缩放、渲染、阴影渲染、状态管理等多种功能
-  - 构造函数：传入编译好的GLuint shader，传入加载好的模型，传入动态网络、是否接收光照、是否渲染阴影、是否作为视口深度图的捕捉对象、是否进行渲染参数批量传入等参数 
-  - Variant:变体，作为生命周期管理器的基本标识，用于全局的对象分类管理，生成的对象需要注册进入管理器之后，才能享受生命周期的自动管理功能
-  - AttachTexture：附加纹理，类似于成熟商业引擎中的组件，为对象附件纹理，运行时在内部自动调用绘制纹理的Draw Call
-  - UniformParametersIns：全局参数初始化，对于构造的shader进行全局参数的初始化，在CustomModel内部用相应变量储存
-  - AttachPhysicalEngine：附加物理组件，拥有物理引擎模拟计算的基本功能
-  - AttachCollider：附加碰撞组件，拥有碰撞功能，该功能基于物理组件的参数设定，就碰撞的对象进行物理计算，内置较齐全的碰撞结构体
-  - GetComponent<PhysicalEngine>()：模板设计，所有组件均可通过模板方法获取相应指针，并对组件参数进行更改
-  - AttachAnimationController：添加动画控制器，基于状态机进行管理
-  - GetComponent<AnimationController>()：对象未来所需要使用的动画，声明并添加到对象的动画控制器进行管理
-  - GetComponent<PhysicalEngine>()：碰撞参数设定，碰撞参数可以设置碰撞半径、是否为触发器（触发器只进行碰撞检测，不进行物理计算），设置对象游戏参数等，这里有生命值、速度、攻击力、死亡状态等基本参数，可基于需求自行添加
-  - 鉴于FBX文件的版权问题，目前该框架的DesignModel类可以读取带骨骼的多mesh动画模型，但示例项目中使用的obj模型，动画模块采用的顶点动画设计
+- **CustomModelShader**: 派生自 CustomModel、GameObject 基类、MonoBehaviour 接口，这四重结构定义了对象的位置、平移、缩放、渲染、阴影渲染、状态管理等多种功能
+
+- **构造函数**: 传入编译好的 GLuint shader、加载好的模型、动态网络、是否接收光照、是否渲染阴影、是否作为视口深度图的捕捉对象、是否进行渲染参数批量传入等参数 
+
+- **Variant**: 变体，作为生命周期管理器的基本标识，用于全局的对象分类管理，生成的对象需要注册进入管理器之后，才能享受生命周期的自动管理功能
+
+- **AttachTexture**：附加纹理，类似于成熟商业引擎中的组件，为对象附加纹理，运行时在内部自动调用绘制纹理的 Draw Call
+
+- **UniformParametersIns**：全局参数初始化，对于构造的 shader 进行全局参数的初始化，在 CustomModel 内部用相应变量储存
+
+- **AttachPhysicalEngine**：附加物理组件，拥有物理引擎模拟计算的基本功能
+
+- **AttachCollider**：附加碰撞组件，拥有碰撞功能，该功能基于物理组件的参数设定，对碰撞对象进行物理计算，内置较齐全的碰撞结构体
+
+- `GetComponent<PhysicalEngine>()`：模板设计，所有组件均可通过模板方法获取相应指针，并对组件参数进行更改
+
+- **AttachAnimationController**：添加动画控制器，基于状态机进行管理
+
+- `GetComponent<AnimationController>()`：对象未来所需要使用的动画，声明并添加到对象的动画控制器进行管理
+
+- `GetComponent<PhysicalEngine>()`：碰撞参数设定，碰撞参数可以设置碰撞半径、是否为触发器（触发器只进行碰撞检测，不进行物理计算），设置对象游戏参数等，这里有生命值、速度、攻击力、死亡状态等基本参数，可基于需求自行添加
+
+- 鉴于 FBX 文件的版权问题，目前该框架的 DesignModel 类可以读取带骨骼的多 mesh 动画模型，但示例项目中使用的 obj 模型，动画模块采用的是顶点动画设计
+
 ---
 
 ### 生命周期管理器
@@ -337,7 +352,7 @@ void LightInitialization()
     auto splashLight = lightSpawner->SpawnFlashLight(glm::vec3(30, 30, 0), glm::vec3(0, -1, 0),glm::vec3(0.8F,0.5F,0.3F),30,0.6f);//使用默认值 强度10
 }
 ```
-- 支持实多个时电光源、多个手电筒光源以及唯一平行光，光照计算时，对象自动获取举例最近的4个点光源和4个手电筒光源进行光照计算
+- 支持多个时点光源、多个手电筒光源以及唯一平行光，光照计算时，对象自动获取距离最近的4个点光源和4个手电筒光源进行光照计算
 - 可以自由配置各种光源的颜色、强度、方向、位置、聚光角等参数
 - 开启/关闭灯光标识
 ```html
@@ -346,7 +361,7 @@ void LightInitialization()
   lightSpawner->modelIdentification = true;
 ```
 
-- 灯光标识便于开发者标识灯光位置，具备光照计算的预期
+- 灯光标识便于开发者标识灯光位置，实现光照计算的位置预期
 
 ---
 
@@ -380,8 +395,8 @@ void LightInitialization()
   stone1Instance->AttachTexture(TextureDic["stoneInstance"]);
 ```
 
-- 基础实例化：new  CustomModelInstance 采用基础的实例化shader ，传入初始化的基本参数，shader类型、模型类型、是否动态网格、是否接收光照、是否渲染阴影，位置步长、旋转步长、实例化矩阵类型
-- 后处理实例化：以场景中的树为例，采用noneLightDepthCalInstancer这个专用的shader，用于利用第二渲染通道的视口深度图的信息进行相关的计算，如批量全局无序透视效果
+- 基础实例化：new  CustomModelInstance，采用基础的实例化shader ，传入初始化的基本参数，shader类型、模型类型、是否动态网格、是否接收光照、是否渲染阴影，位置步长、旋转步长、实例化矩阵类型
+- 后处理实例化：以场景中的树为例，采用noneLightDepthCalInstancer这个专用的shader，使用第二个渲染通道生成的视口深度图进行相关计算，如实现批量全局无序透视效果
 - 动态实例化： new  FireflyInstance，同样采用专门的fireflyInstanceShader，配合实例化中矩阵位置的实时更新，实现动态的萤火虫效果、顶点动画效果，开发者可根据自己需求定义
 
 ---
@@ -457,9 +472,9 @@ void LightInitialization()
      }
 ```
 
-- 纹理绑定：场景种单一的对象，使用初始化传入的是否批量标识和shader索引，控制shader的渲染方式
-- 如果确定为批量参数传入，则内部的update方法无法渲染，需要在外部进行批量参数传入
-- 场景中的空气泡飞行道具，可以明显看到prb中对于外界环境的静态映射，次Demo中采用静态立方体贴图，开发者可基于基础逻辑设计光照探针
+- 纹理绑定：单次渲染的对象，可根据初始化传入的批量传参标识和shader索引，控制shader的渲染方式
+- 多次渲染的对象在批量传参标识为true时，内部的update方法无法渲染，需要在外部进行批量渲染参数传入，并且使用生命周期管理器调用更新方法
+- 场景中的空气泡飞行道具，可以明显看到prb中对于外界环境的静态映射，Demo中采用静态立方体贴图，开发者可基于基础逻辑设计光照探针
 
 ```html
 case ModelClass::TsetButterfly:
@@ -485,7 +500,7 @@ void CustomModel::Update(glm::mat4 view, glm::mat4 projection)
      //再进行变体方法计算
      UpdateVariant(view,projection);
     //再进行坐标更新
-    //这种写法就，直接封装了更新变化和通知CPU渲染的两个方法，如果具体定义方法，只需要在其他脚本里面单独定义某个方法，更改transform即可，由管理池泛型调用
+    //直接封装了更新变化和Draw Call方法，如果定义具体方法，只需要在其他脚本里面单独定义某个方法，更改transform即可，由管理池泛型调用
     UpdateTransform();
     //确认动态绘制或者静态绘制
     InnerRendringTexture(view, projection);
@@ -508,7 +523,7 @@ void Game::CustomModel::InnerRendringTexture(const glm::mat4& view, const glm::m
 ```
 
 - 以上示例涉及到CustomModel渲染执行类的内部自动更新和外部渲染参数批量传入的两种状态
-- UpdateVariant：变体方法，需要在customModel的基础派生，并且重写变体方法，外部的生命周期控制器可以全局调用执行每个对象内部的变体方法，以实现各自独立的状态，同样的逻辑还有UniformParametersChange和BindTextureAdditional等
+- UpdateVariant：变体方法，需要在customModel的基础派生，并且重写变体方法，外部的生命周期管理器可以全局调用执行每个对象内部的变体方法，以实现各自独立的状态，同样的逻辑还有UniformParametersChange和BindTextureAdditional等
   
 ```html
  GLuint ShaderCompile(const char* ver, const char* fra, const std::string& name);
@@ -571,7 +586,7 @@ void Game::CustomModel::InnerRendringTexture(const glm::mat4& view, const glm::m
   void RenderPostProcessingTexture(GLuint shader);
 ```
 
-- LightRender：光照渲染器，除了封装主要的CPU端光照计算外，还集成了平行光正交阴影映射、视口深度映射、后处理贴图渲染的功能
+- LightRender：光照渲染器，除了封装主要的CPU端光照计算外，还集成了平行光正交阴影映射、视口透视深度映射、后处理贴图渲染的功能
 - 基础框架只设计了基于平行光的正交深度图生成，并且作为主渲染逻辑的第一通道
 
 ---
@@ -725,7 +740,7 @@ void GameUpdateMainLogicT(const glm::mat4& view, const glm::mat4& projection, GL
 
  - 主体逻辑通过引用生命周期管理器，访问初始化对象时注入原始对象池的对象，根据其ModelClass类型进行对象的分类计算
  - IntegratedScripts：执行综合脚本逻辑，如玩家在GL中的控制PlayerControl，蝴蝶批量飞舞ActorButtfly等，开发者可以利用这个综合类构建自定义的方法，并在主体方法中引用
- - 缓存对象管理：主体逻辑中，基于生命周期控制器，对pool结构进行增、删、改、查，对于复用率高的对象可以进行失活/激活处理，对于复用率低的对象进行销毁处理，灵活的管理优化内存资源
+ - 缓存对象管理：主体逻辑中，基于生命周期管理器，对pool结构进行增、删、改、查，对于复用率高的对象可以进行失活/激活处理，对于复用率低的对象进行销毁处理，灵活的管理优化内存资源
  - 当前的pool结构是较为基础的版本，开发者可以根据实际需求进行拓展
 
 ---
@@ -765,8 +780,8 @@ void GameUpdateMainLogicT(const glm::mat4& view, const glm::mat4& projection, GL
 ```
 
 - 模板测试：Opengl中通过相应的API直接引用，这里需要一个专用的着色器用于渲染模板测试的结果
-- GetSpecialObjects：特殊对象，用于在不同的环境中获取对象参数，由生命周期控制器统一管理，其所在的渲染阶段通常有差别，需使用生命周期控制器单独调用
-- 模板测试可以实现中如透视镜、遮挡绘制、对象描边等多种功能，开发者可基于不同的情况自行研发，但通常需要进行特殊对象注入，并在开发中注意渲染流程
+- GetSpecialObjects：特殊对象，用于在不同的环境中获取对象参数，由生命周期管理器统一管理，其所在的渲染阶段通常有差别，需生命周期管理器单独引用
+- 模板测试可以实现游戏中诸如透视镜、遮挡绘制、对象描边等多种功能，开发者可基于不同的情况自行研发，但通常需要进行特殊对象注入，并在开发中注意渲染流程
 
 ---
 
@@ -780,7 +795,7 @@ void GameUpdateMainLogicT(const glm::mat4& view, const glm::mat4& projection, GL
   
 ![灰度](https://github.com/user-attachments/assets/8aac572e-a354-443d-b087-2a54d95029b5)
 
-- 后处理位于渲染的第四通道，Demo中自带一通用的后处理shader，开发者可以根据需求自行拓展
+- 后处理位于渲染的第四通道，Demo中自带一个通用的后处理shader，开发者可以根据需求自行拓展
 
 ```html
 //全局后处理
@@ -917,4 +932,7 @@ void PostProcessingT(const glm::mat4& view, const glm::mat4& projection, GLFWwin
 
  ---
 
- 
+ ## 附言
+ - demo中还有很多细节未能展示，开发者可根据源码加深理解
+ - 打包的relase文件包含了demo的场景，开发者可以体验游戏过程
+ - 对项目感觉兴趣的朋友可留言或发送邮件至我邮箱a373823424@qq.com
