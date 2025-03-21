@@ -772,9 +772,6 @@ void GameUpdateMainLogicT(const glm::mat4& view, const glm::mat4& projection, GL
 
 ### 后处理
 
-- 反色
-![反色](https://github.com/user-attachments/assets/f03a35c5-1d76-4551-a0c4-d1fff870d450)
-
 - 锐化
 
 ![锐化](https://github.com/user-attachments/assets/128f4df2-3a42-427a-9825-eba4cd5fa065)
